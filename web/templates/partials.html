@@ -1,0 +1,63 @@
+{{define "sidebar"}}
+<aside class="fixed inset-y-0 left-0 w-64 flex flex-col z-40"
+       style="background:#161616; border-right:1px solid #242424;">
+
+  <!-- Marka -->
+  <div class="flex items-center gap-3 h-16 px-5 flex-shrink-0"
+       style="border-bottom:1px solid #242424;">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+         style="background:rgba(0,255,0,0.1); border:1px solid rgba(0,255,0,0.18);">
+      <svg class="w-5 h-5" viewBox="0 0 36 28" fill="#00ff00">
+        <rect x="0"    y="7"  width="7" height="10" rx="1.5"/>
+        <rect x="14.5" y="0"  width="7" height="17" rx="1.5"/>
+        <rect x="29"   y="7"  width="7" height="10" rx="1.5"/>
+        <rect x="0"    y="17" width="36" height="11" rx="2"/>
+      </svg>
+    </div>
+    <div>
+      <p class="font-bold text-sm leading-none tracking-wide" style="color:#ececec;">Hisar Tour</p>
+      <p class="text-xs mt-0.5" style="color:#484848;">Muhasebe</p>
+    </div>
+  </div>
+
+  <!-- Navigasyon -->
+  <nav class="flex-1 px-3 py-5 space-y-0.5 overflow-y-auto">
+    <p class="text-xs font-semibold uppercase tracking-widest px-3 mb-3" style="color:#383838;">Muhasebe</p>
+
+    <a href="/accounts"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
+       style="{{if eq .active "accounts"}}background:rgba(0,255,0,0.1); color:#00ff00; border-left:2px solid #00ff00; padding-left:10px;{{else}}color:#606060;{{end}}"
+       {{if not (eq .active "accounts")}}
+       onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#aaaaaa';"
+       onmouseout="this.style.background=''; this.style.color='#606060';"
+       {{end}}>
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+      </svg>
+      <span class="text-sm font-medium">Hesaplar</span>
+    </a>
+
+    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-not-allowed select-none"
+         style="color:#333333;">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+      </svg>
+      <span class="text-sm font-medium flex-1">Turlar</span>
+      <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e1e1e; color:#383838; border:1px solid #282828;">yakında</span>
+    </div>
+
+    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-not-allowed select-none"
+         style="color:#333333;">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+      </svg>
+      <span class="text-sm font-medium flex-1">Gelir ve giderler</span>
+      <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e1e1e; color:#383838; border:1px solid #282828;">yakında</span>
+    </div>
+  </nav>
+
+  <div class="px-5 py-4" style="border-top:1px solid #242424;">
+    <p class="text-xs" style="color:#383838;">v1.0.0</p>
+  </div>
+</aside>
+{{end}}

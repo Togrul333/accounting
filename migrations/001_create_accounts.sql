@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS accounts (
+    id             BIGINT         NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name           VARCHAR(255)   NOT NULL,
+    account_number VARCHAR(50)    NOT NULL UNIQUE,
+    currency       VARCHAR(10)    NOT NULL DEFAULT 'AZN',
+    balance        DECIMAL(18,2)  NOT NULL DEFAULT 0,
+    description    VARCHAR(1000)  NOT NULL DEFAULT '',
+    created_at     DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
