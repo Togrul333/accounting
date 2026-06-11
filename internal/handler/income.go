@@ -64,6 +64,24 @@ func (h *IncomeHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, income)
 }
 
+func (h *IncomeHandler) BulkCreate(c *gin.Context) {
+	var reqs []model.CreateIncomeRequest
+	if err := c.ShouldBindJSON(&reqs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+	if len(reqs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "empty list"})
+		return
+	}
+	incomes, err := h.svc.BulkCreate(c.Request.Context(), reqs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, incomes)
+}
+
 func (h *IncomeHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {

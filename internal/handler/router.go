@@ -45,6 +45,7 @@ func NewRouter(
 
 		api.GET("/incomes", incomes.GetAll)
 		api.POST("/incomes", incomes.Create)
+		api.POST("/incomes/bulk", incomes.BulkCreate)
 		api.GET("/incomes/:id", incomes.GetByID)
 		api.PUT("/incomes/:id", incomes.Update)
 		api.DELETE("/incomes/:id", incomes.Delete)
@@ -57,6 +58,7 @@ func NewRouter(
 
 		api.GET("/expenses", expenses.GetAll)
 		api.POST("/expenses", expenses.Create)
+		api.POST("/expenses/bulk", expenses.BulkCreate)
 		api.GET("/expenses/:id", expenses.GetByID)
 		api.PUT("/expenses/:id", expenses.Update)
 		api.DELETE("/expenses/:id", expenses.Delete)

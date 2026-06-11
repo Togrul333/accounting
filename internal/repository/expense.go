@@ -12,6 +12,7 @@ type ExpenseRepository interface {
 	GetByID(ctx context.Context, id int64) (*model.Expense, error)
 	GetByAccountID(ctx context.Context, accountID int64) ([]model.Expense, error)
 	Create(ctx context.Context, req model.CreateExpenseRequest) (*model.Expense, error)
+	BulkCreate(ctx context.Context, reqs []model.CreateExpenseRequest) ([]model.Expense, error)
 	Update(ctx context.Context, id int64, req model.UpdateExpenseRequest) (*model.Expense, error)
 	Delete(ctx context.Context, id int64) error
 }
@@ -100,6 +101,42 @@ func (r *expenseRepo) Create(ctx context.Context, req model.CreateExpenseRequest
 		return nil, err
 	}
 	return r.GetByID(ctx, id)
+}
+
+func (r *expenseRepo) BulkCreate(ctx context.Context, reqs []model.CreateExpenseRequest) ([]model.Expense, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	ids := make([]int64, 0, len(reqs))
+	for _, req := range reqs {
+		res, err := tx.ExecContext(ctx,
+			`INSERT INTO expenses (name, amount, date, expense_category_id, account_id) VALUES (?, ?, ?, ?, ?)`,
+			req.Name, req.Amount, req.Date, req.ExpenseCategoryID, req.AccountID)
+		if err != nil {
+			return nil, err
+		}
+		id, err := res.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	result := make([]model.Expense, 0, len(ids))
+	for _, id := range ids {
+		exp, err := r.GetByID(ctx, id)
+		if err != nil {
+			continue
+		}
+		result = append(result, *exp)
+	}
+	return result, nil
 }
 
 func (r *expenseRepo) Update(ctx context.Context, id int64, req model.UpdateExpenseRequest) (*model.Expense, error) {

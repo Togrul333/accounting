@@ -31,6 +31,10 @@ func (s *ExpenseService) Create(ctx context.Context, req model.CreateExpenseRequ
 	return s.repo.Create(ctx, req)
 }
 
+func (s *ExpenseService) BulkCreate(ctx context.Context, reqs []model.CreateExpenseRequest) ([]model.Expense, error) {
+	return s.repo.BulkCreate(ctx, reqs)
+}
+
 func (s *ExpenseService) Update(ctx context.Context, id int64, req model.UpdateExpenseRequest) (*model.Expense, error) {
 	return s.repo.Update(ctx, id, req)
 }

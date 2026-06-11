@@ -12,6 +12,7 @@ type IncomeRepository interface {
 	GetByID(ctx context.Context, id int64) (*model.Income, error)
 	GetByAccountID(ctx context.Context, accountID int64) ([]model.Income, error)
 	Create(ctx context.Context, req model.CreateIncomeRequest) (*model.Income, error)
+	BulkCreate(ctx context.Context, reqs []model.CreateIncomeRequest) ([]model.Income, error)
 	Update(ctx context.Context, id int64, req model.UpdateIncomeRequest) (*model.Income, error)
 	Delete(ctx context.Context, id int64) error
 }
@@ -100,6 +101,42 @@ func (r *incomeRepo) Create(ctx context.Context, req model.CreateIncomeRequest) 
 		return nil, err
 	}
 	return r.GetByID(ctx, id)
+}
+
+func (r *incomeRepo) BulkCreate(ctx context.Context, reqs []model.CreateIncomeRequest) ([]model.Income, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	ids := make([]int64, 0, len(reqs))
+	for _, req := range reqs {
+		res, err := tx.ExecContext(ctx,
+			`INSERT INTO incomes (name, amount, date, income_category_id, account_id) VALUES (?, ?, ?, ?, ?)`,
+			req.Name, req.Amount, req.Date, req.IncomeCategoryID, req.AccountID)
+		if err != nil {
+			return nil, err
+		}
+		id, err := res.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	result := make([]model.Income, 0, len(ids))
+	for _, id := range ids {
+		inc, err := r.GetByID(ctx, id)
+		if err != nil {
+			continue
+		}
+		result = append(result, *inc)
+	}
+	return result, nil
 }
 
 func (r *incomeRepo) Update(ctx context.Context, id int64, req model.UpdateIncomeRequest) (*model.Income, error) {

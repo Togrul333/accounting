@@ -31,6 +31,10 @@ func (s *IncomeService) Create(ctx context.Context, req model.CreateIncomeReques
 	return s.repo.Create(ctx, req)
 }
 
+func (s *IncomeService) BulkCreate(ctx context.Context, reqs []model.CreateIncomeRequest) ([]model.Income, error) {
+	return s.repo.BulkCreate(ctx, reqs)
+}
+
 func (s *IncomeService) Update(ctx context.Context, id int64, req model.UpdateIncomeRequest) (*model.Income, error) {
 	return s.repo.Update(ctx, id, req)
 }
