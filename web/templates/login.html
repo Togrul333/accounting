@@ -13,18 +13,19 @@
 
     .input-field {
       width: 100%; padding: 12px 16px; border-radius: 10px;
-      border: 1px solid #2a2a2a; background: #1a1a1a;
-      color: #e8e8e8; font-size: 14px; outline: none; transition: all .2s;
+      border: 1px solid rgba(0,0,0,0.15); background: rgba(0,0,0,0.1);
+      color: #0d1a12; font-size: 14px; outline: none; transition: all .2s;
     }
-    .input-field::placeholder { color: #484848; }
-    .input-field:focus { border-color: #00ff00; box-shadow: 0 0 0 3px rgba(0,255,0,0.07); }
+    .input-field::placeholder { color: rgba(0,0,0,0.3); }
+    .input-field:focus { border-color: #00d4ff; box-shadow: 0 0 0 3px rgba(0,212,255,0.12); }
 
     .btn-login {
       width: 100%; padding: 13px; border-radius: 10px; border: none;
-      background: #00ff00; color: #0a0a0a; font-size: 14px;
+      background: linear-gradient(135deg, #00d4ff, #7b2fff);
+      color: #fff; font-size: 14px;
       font-weight: 700; cursor: pointer; transition: all .15s; letter-spacing: .02em;
     }
-    .btn-login:hover { background: #00e600; box-shadow: 0 0 28px rgba(0,255,0,0.2); }
+    .btn-login:hover { filter: brightness(1.08); box-shadow: 0 0 28px rgba(0,212,255,0.25); }
     .btn-login:active { transform: scale(.99); }
   </style>
 </head>
@@ -34,12 +35,11 @@
   <div class="hidden lg:flex lg:w-5/12 flex-col relative overflow-hidden"
        style="background:#161616; border-right:1px solid #242424;">
 
-    <!-- Dekoratif arka plan -->
     <div style="position:absolute;width:500px;height:500px;border-radius:50%;
-                background:radial-gradient(circle, rgba(0,255,0,0.04) 0%, transparent 70%);
+                background:radial-gradient(circle, rgba(0,212,255,0.05) 0%, transparent 70%);
                 top:-150px; left:-150px; pointer-events:none;"></div>
     <div style="position:absolute;width:400px;height:400px;border-radius:50%;
-                background:radial-gradient(circle, rgba(0,255,0,0.03) 0%, transparent 70%);
+                background:radial-gradient(circle, rgba(123,47,255,0.04) 0%, transparent 70%);
                 bottom:-100px; right:-100px; pointer-events:none;"></div>
 
     <div class="relative z-10 flex flex-col h-full p-12">
@@ -47,8 +47,8 @@
       <!-- Logo -->
       <div class="flex items-center gap-3">
         <div class="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-             style="background:rgba(0,255,0,0.08); border:1px solid rgba(0,255,0,0.15);">
-          <svg class="w-6 h-6" viewBox="0 0 36 28" fill="#00ff00">
+             style="background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.18);">
+          <svg class="w-6 h-6" viewBox="0 0 36 28" fill="#00d4ff">
             <rect x="0"    y="7"  width="7" height="10" rx="1.5"/>
             <rect x="14.5" y="0"  width="7" height="17" rx="1.5"/>
             <rect x="29"   y="7"  width="7" height="10" rx="1.5"/>
@@ -61,10 +61,9 @@
         </div>
       </div>
 
-      <!-- Ana metin -->
       <div class="flex-1 flex flex-col justify-center">
         <h1 class="font-extrabold leading-tight mb-5" style="font-size:2.8rem; color:#ececec;">
-          Finans<br><span style="color:#00ff00;">kontrolde</span>
+          Finans<br><span style="color:#00d4ff;">kontrolde</span>
         </h1>
         <p class="text-sm leading-relaxed mb-12" style="color:#585858; max-width:260px;">
           Turizm işletmeniz için geliştirilmiş muhasebe sistemi.
@@ -73,8 +72,8 @@
         <div class="space-y-3">
           <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#1e1e1e; border:1px solid #2a2a2a;">
             <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                 style="background:rgba(0,255,0,0.1);">
-              <svg class="w-3.5 h-3.5" fill="#00ff00" viewBox="0 0 20 20">
+                 style="background:rgba(0,212,255,0.1);">
+              <svg class="w-3.5 h-3.5" fill="#00d4ff" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
               </svg>
             </div>
@@ -82,8 +81,8 @@
           </div>
           <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#1e1e1e; border:1px solid #2a2a2a;">
             <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                 style="background:rgba(0,255,0,0.1);">
-              <svg class="w-3.5 h-3.5" fill="#00ff00" viewBox="0 0 20 20">
+                 style="background:rgba(0,212,255,0.1);">
+              <svg class="w-3.5 h-3.5" fill="#00d4ff" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
               </svg>
             </div>
@@ -91,8 +90,8 @@
           </div>
           <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#1e1e1e; border:1px solid #2a2a2a;">
             <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                 style="background:rgba(0,255,0,0.1);">
-              <svg class="w-3.5 h-3.5" fill="#00ff00" viewBox="0 0 20 20">
+                 style="background:rgba(123,47,255,0.12);">
+              <svg class="w-3.5 h-3.5" fill="#7b2fff" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
               </svg>
             </div>
@@ -109,11 +108,10 @@
   <div class="flex-1 flex items-center justify-center p-8" style="background:#0d0d0d;">
     <div class="w-full max-w-sm">
 
-      <!-- Mobil logo -->
       <div class="flex lg:hidden items-center gap-3 mb-10">
         <div class="w-10 h-10 rounded-xl flex items-center justify-center"
-             style="background:rgba(0,255,0,0.08); border:1px solid rgba(0,255,0,0.15);">
-          <svg class="w-6 h-6" viewBox="0 0 36 28" fill="#00ff00">
+             style="background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.18);">
+          <svg class="w-6 h-6" viewBox="0 0 36 28" fill="#00d4ff">
             <rect x="0"    y="7"  width="7" height="10" rx="1.5"/>
             <rect x="14.5" y="0"  width="7" height="17" rx="1.5"/>
             <rect x="29"   y="7"  width="7" height="10" rx="1.5"/>
@@ -124,17 +122,17 @@
       </div>
 
       <!-- Form kartı -->
-      <div style="background:#161616; border:1px solid #242424; border-radius:20px; padding:36px;">
-        <h2 class="text-xl font-bold mb-1" style="color:#ececec;">Hoş geldiniz</h2>
-        <p class="text-sm mb-7" style="color:#484848;">Muhasebe sistemine giriş yapın</p>
+      <div style="background:rgb(99,218,160); border:1px solid rgba(0,0,0,0.08); border-radius:20px; padding:36px;">
+        <h2 class="text-xl font-bold mb-1" style="color:#0d1a12;">Hoş geldiniz</h2>
+        <p class="text-sm mb-7" style="color:#2a5035;">Muhasebe sistemine giriş yapın</p>
 
         <form action="/accounts" method="GET" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#686868;">E-posta</label>
+            <label class="block text-sm font-medium mb-1.5" style="color:#2a5035;">E-posta</label>
             <input type="email" placeholder="admin@hisartour.az" class="input-field">
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#686868;">Şifre</label>
+            <label class="block text-sm font-medium mb-1.5" style="color:#2a5035;">Şifre</label>
             <input type="password" placeholder="••••••••" class="input-field">
           </div>
           <div class="pt-1">
@@ -144,7 +142,7 @@
       </div>
 
       <div class="flex items-center justify-center gap-2 mt-5">
-        <svg class="w-3.5 h-3.5" viewBox="0 0 36 28" fill="#00ff00" opacity=".35">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 36 28" fill="#00d4ff" opacity=".35">
           <rect x="0"    y="7"  width="7" height="10" rx="1.5"/>
           <rect x="14.5" y="0"  width="7" height="17" rx="1.5"/>
           <rect x="29"   y="7"  width="7" height="10" rx="1.5"/>

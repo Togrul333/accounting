@@ -6,8 +6,8 @@
   <div class="flex items-center gap-3 h-16 px-5 flex-shrink-0"
        style="border-bottom:1px solid #242424;">
     <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-         style="background:rgba(0,255,0,0.1); border:1px solid rgba(0,255,0,0.18);">
-      <svg class="w-5 h-5" viewBox="0 0 36 28" fill="#00ff00">
+         style="background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.18);">
+      <svg class="w-5 h-5" viewBox="0 0 36 28" fill="#00d4ff">
         <rect x="0"    y="7"  width="7" height="10" rx="1.5"/>
         <rect x="14.5" y="0"  width="7" height="17" rx="1.5"/>
         <rect x="29"   y="7"  width="7" height="10" rx="1.5"/>
@@ -26,7 +26,7 @@
 
     <a href="/accounts"
        class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
-       style="{{if eq .active "accounts"}}background:rgba(0,255,0,0.1); color:#00ff00; border-left:2px solid #00ff00; padding-left:10px;{{else}}color:#606060;{{end}}"
+       style="{{if eq .active "accounts"}}background:rgba(0,212,255,0.1); color:#00d4ff; border-left:2px solid #00d4ff; padding-left:10px;{{else}}color:#606060;{{end}}"
        {{if not (eq .active "accounts")}}
        onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#aaaaaa';"
        onmouseout="this.style.background=''; this.style.color='#606060';"
@@ -46,14 +46,32 @@
       <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e1e1e; color:#383838; border:1px solid #282828;">yakında</span>
     </div>
 
-    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-not-allowed select-none"
-         style="color:#333333;">
+    <a href="/incomes"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
+       style="{{if eq .active "incomes"}}background:rgba(0,212,255,0.1); color:#00d4ff; border-left:2px solid #00d4ff; padding-left:10px;{{else}}color:#606060;{{end}}"
+       {{if not (eq .active "incomes")}}
+       onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#aaaaaa';"
+       onmouseout="this.style.background=''; this.style.color='#606060';"
+       {{end}}>
       <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
       </svg>
-      <span class="text-sm font-medium flex-1">Gelir ve giderler</span>
-      <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e1e1e; color:#383838; border:1px solid #282828;">yakında</span>
-    </div>
+      <span class="text-sm font-medium">Gelirler</span>
+    </a>
+
+    <a href="/income-categories"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 ml-4"
+       style="{{if eq .active "income-categories"}}background:rgba(123,47,255,0.12); color:#7b2fff; border-left:2px solid #7b2fff; padding-left:10px;{{else}}color:#484848;{{end}}"
+       {{if not (eq .active "income-categories")}}
+       onmouseover="this.style.background='rgba(255,255,255,0.04)'; this.style.color='#888888';"
+       onmouseout="this.style.background=''; this.style.color='#484848';"
+       {{end}}>
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
+      </svg>
+      <span class="text-sm font-medium">Gelir Kategorileri</span>
+    </a>
   </nav>
 
   <div class="px-5 py-4" style="border-top:1px solid #242424;">
