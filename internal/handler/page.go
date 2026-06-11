@@ -20,6 +20,7 @@ type PageHandler struct {
 	tourCategorySvc    *service.TourCategoryService
 	roomSvc            *service.RoomService
 	tourSvc            *service.TourService
+	clientSvc          *service.ClientService
 }
 
 func NewPageHandler(
@@ -31,6 +32,7 @@ func NewPageHandler(
 	tourCategorySvc *service.TourCategoryService,
 	roomSvc *service.RoomService,
 	tourSvc *service.TourService,
+	clientSvc *service.ClientService,
 ) *PageHandler {
 	return &PageHandler{
 		accountSvc:         accountSvc,
@@ -41,6 +43,7 @@ func NewPageHandler(
 		tourCategorySvc:    tourCategorySvc,
 		roomSvc:            roomSvc,
 		tourSvc:            tourSvc,
+		clientSvc:          clientSvc,
 	}
 }
 
@@ -225,6 +228,21 @@ func (h *PageHandler) Tours(c *gin.Context) {
 		"categories": cats,
 		"rooms":      rooms,
 		"active":     "tours",
+	})
+}
+
+func (h *PageHandler) Clients(c *gin.Context) {
+	clients, err := h.clientSvc.GetAll(c.Request.Context())
+	if err != nil {
+		log.Printf("clients page error: %v", err)
+		clients = []model.Client{}
+	}
+	if clients == nil {
+		clients = []model.Client{}
+	}
+	c.HTML(http.StatusOK, "clients.html", gin.H{
+		"clients": clients,
+		"active":  "clients",
 	})
 }
 

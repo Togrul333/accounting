@@ -16,6 +16,7 @@ func NewRouter(
 	tourCategories *TourCategoryHandler,
 	rooms *RoomHandler,
 	tours *TourHandler,
+	clients *ClientHandler,
 	pages *PageHandler,
 	tmpl *template.Template,
 ) *gin.Engine {
@@ -34,6 +35,7 @@ func NewRouter(
 	r.GET("/tours", pages.Tours)
 	r.GET("/tour-categories", pages.TourCategories)
 	r.GET("/rooms", pages.Rooms)
+	r.GET("/clients", pages.Clients)
 
 	api := r.Group("/api")
 	{
@@ -86,6 +88,12 @@ func NewRouter(
 		api.GET("/tours/:id", tours.GetByID)
 		api.PUT("/tours/:id", tours.Update)
 		api.DELETE("/tours/:id", tours.Delete)
+
+		api.GET("/clients", clients.GetAll)
+		api.POST("/clients", clients.Create)
+		api.GET("/clients/:id", clients.GetByID)
+		api.PUT("/clients/:id", clients.Update)
+		api.DELETE("/clients/:id", clients.Delete)
 	}
 
 	return r

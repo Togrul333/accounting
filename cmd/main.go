@@ -71,6 +71,9 @@ func main() {
 	tourRepo := repository.NewTourRepository(db)
 	tourSvc := service.NewTourService(tourRepo)
 
+	clientRepo := repository.NewClientRepository(db)
+	clientSvc := service.NewClientService(clientRepo)
+
 	accountHandler := handler.NewAccountHandler(accountSvc)
 	incomeCategoryHandler := handler.NewIncomeCategoryHandler(incomeCategorySvc)
 	incomeHandler := handler.NewIncomeHandler(incomeSvc)
@@ -79,8 +82,9 @@ func main() {
 	tourCategoryHandler := handler.NewTourCategoryHandler(tourCategorySvc)
 	roomHandler := handler.NewRoomHandler(roomSvc)
 	tourHandler := handler.NewTourHandler(tourSvc)
-	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, tourSvc)
+	clientHandler := handler.NewClientHandler(clientSvc)
+	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, tourSvc, clientSvc)
 
-	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, tourHandler, pageHandler, tmpl)
+	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, tourHandler, clientHandler, pageHandler, tmpl)
 	router.Run(":" + os.Getenv("PORT"))
 }
