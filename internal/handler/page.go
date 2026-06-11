@@ -11,20 +11,26 @@ import (
 )
 
 type PageHandler struct {
-	accountSvc        *service.AccountService
-	incomeCategorySvc *service.IncomeCategoryService
-	incomeSvc         *service.IncomeService
+	accountSvc         *service.AccountService
+	incomeCategorySvc  *service.IncomeCategoryService
+	incomeSvc          *service.IncomeService
+	expenseCategorySvc *service.ExpenseCategoryService
+	expenseSvc         *service.ExpenseService
 }
 
 func NewPageHandler(
 	accountSvc *service.AccountService,
 	incomeCategorySvc *service.IncomeCategoryService,
 	incomeSvc *service.IncomeService,
+	expenseCategorySvc *service.ExpenseCategoryService,
+	expenseSvc *service.ExpenseService,
 ) *PageHandler {
 	return &PageHandler{
-		accountSvc:        accountSvc,
-		incomeCategorySvc: incomeCategorySvc,
-		incomeSvc:         incomeSvc,
+		accountSvc:         accountSvc,
+		incomeCategorySvc:  incomeCategorySvc,
+		incomeSvc:          incomeSvc,
+		expenseCategorySvc: expenseCategorySvc,
+		expenseSvc:         expenseSvc,
 	}
 }
 
@@ -100,5 +106,54 @@ func (h *PageHandler) Incomes(c *gin.Context) {
 		"accounts":   accounts,
 		"total":      total,
 		"active":     "incomes",
+	})
+}
+
+func (h *PageHandler) ExpenseCategories(c *gin.Context) {
+	cats, err := h.expenseCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		log.Printf("expense categories page error: %v", err)
+		cats = []model.ExpenseCategory{}
+	}
+	if cats == nil {
+		cats = []model.ExpenseCategory{}
+	}
+	c.HTML(http.StatusOK, "expense_categories.html", gin.H{
+		"categories": cats,
+		"active":     "expense-categories",
+	})
+}
+
+func (h *PageHandler) Expenses(c *gin.Context) {
+	expenses, err := h.expenseSvc.GetAll(c.Request.Context())
+	if err != nil {
+		log.Printf("expenses page error: %v", err)
+		expenses = []model.Expense{}
+	}
+	if expenses == nil {
+		expenses = []model.Expense{}
+	}
+
+	cats, err := h.expenseCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		cats = []model.ExpenseCategory{}
+	}
+
+	accounts, err := h.accountSvc.GetAll(c.Request.Context())
+	if err != nil {
+		accounts = []model.Account{}
+	}
+
+	var total float64
+	for _, exp := range expenses {
+		total += exp.Amount
+	}
+
+	c.HTML(http.StatusOK, "expenses.html", gin.H{
+		"expenses":   expenses,
+		"categories": cats,
+		"accounts":   accounts,
+		"total":      total,
+		"active":     "expenses",
 	})
 }

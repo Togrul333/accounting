@@ -56,11 +56,19 @@ func main() {
 	incomeRepo := repository.NewIncomeRepository(db)
 	incomeSvc := service.NewIncomeService(incomeRepo)
 
+	expenseCategoryRepo := repository.NewExpenseCategoryRepository(db)
+	expenseCategorySvc := service.NewExpenseCategoryService(expenseCategoryRepo)
+
+	expenseRepo := repository.NewExpenseRepository(db)
+	expenseSvc := service.NewExpenseService(expenseRepo)
+
 	accountHandler := handler.NewAccountHandler(accountSvc)
 	incomeCategoryHandler := handler.NewIncomeCategoryHandler(incomeCategorySvc)
 	incomeHandler := handler.NewIncomeHandler(incomeSvc)
-	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc)
+	expenseCategoryHandler := handler.NewExpenseCategoryHandler(expenseCategorySvc)
+	expenseHandler := handler.NewExpenseHandler(expenseSvc)
+	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc)
 
-	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, pageHandler, tmpl)
+	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, pageHandler, tmpl)
 	router.Run(":" + os.Getenv("PORT"))
 }

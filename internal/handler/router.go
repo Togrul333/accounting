@@ -11,6 +11,8 @@ func NewRouter(
 	accounts *AccountHandler,
 	incomeCategories *IncomeCategoryHandler,
 	incomes *IncomeHandler,
+	expenseCategories *ExpenseCategoryHandler,
+	expenses *ExpenseHandler,
 	pages *PageHandler,
 	tmpl *template.Template,
 ) *gin.Engine {
@@ -23,6 +25,8 @@ func NewRouter(
 	r.GET("/accounts", pages.Accounts)
 	r.GET("/incomes", pages.Incomes)
 	r.GET("/income-categories", pages.IncomeCategories)
+	r.GET("/expenses", pages.Expenses)
+	r.GET("/expense-categories", pages.ExpenseCategories)
 
 	api := r.Group("/api")
 	{
@@ -43,6 +47,18 @@ func NewRouter(
 		api.GET("/incomes/:id", incomes.GetByID)
 		api.PUT("/incomes/:id", incomes.Update)
 		api.DELETE("/incomes/:id", incomes.Delete)
+
+		api.GET("/expense-categories", expenseCategories.GetAll)
+		api.POST("/expense-categories", expenseCategories.Create)
+		api.GET("/expense-categories/:id", expenseCategories.GetByID)
+		api.PUT("/expense-categories/:id", expenseCategories.Update)
+		api.DELETE("/expense-categories/:id", expenseCategories.Delete)
+
+		api.GET("/expenses", expenses.GetAll)
+		api.POST("/expenses", expenses.Create)
+		api.GET("/expenses/:id", expenses.GetByID)
+		api.PUT("/expenses/:id", expenses.Update)
+		api.DELETE("/expenses/:id", expenses.Delete)
 	}
 
 	return r
