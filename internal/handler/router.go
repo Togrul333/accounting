@@ -13,6 +13,9 @@ func NewRouter(
 	incomes *IncomeHandler,
 	expenseCategories *ExpenseCategoryHandler,
 	expenses *ExpenseHandler,
+	tourCategories *TourCategoryHandler,
+	rooms *RoomHandler,
+	tours *TourHandler,
 	pages *PageHandler,
 	tmpl *template.Template,
 ) *gin.Engine {
@@ -28,6 +31,9 @@ func NewRouter(
 	r.GET("/income-categories", pages.IncomeCategories)
 	r.GET("/expenses", pages.Expenses)
 	r.GET("/expense-categories", pages.ExpenseCategories)
+	r.GET("/tours", pages.Tours)
+	r.GET("/tour-categories", pages.TourCategories)
+	r.GET("/rooms", pages.Rooms)
 
 	api := r.Group("/api")
 	{
@@ -62,6 +68,24 @@ func NewRouter(
 		api.GET("/expenses/:id", expenses.GetByID)
 		api.PUT("/expenses/:id", expenses.Update)
 		api.DELETE("/expenses/:id", expenses.Delete)
+
+		api.GET("/tour-categories", tourCategories.GetAll)
+		api.POST("/tour-categories", tourCategories.Create)
+		api.GET("/tour-categories/:id", tourCategories.GetByID)
+		api.PUT("/tour-categories/:id", tourCategories.Update)
+		api.DELETE("/tour-categories/:id", tourCategories.Delete)
+
+		api.GET("/rooms", rooms.GetAll)
+		api.POST("/rooms", rooms.Create)
+		api.GET("/rooms/:id", rooms.GetByID)
+		api.PUT("/rooms/:id", rooms.Update)
+		api.DELETE("/rooms/:id", rooms.Delete)
+
+		api.GET("/tours", tours.GetAll)
+		api.POST("/tours", tours.Create)
+		api.GET("/tours/:id", tours.GetByID)
+		api.PUT("/tours/:id", tours.Update)
+		api.DELETE("/tours/:id", tours.Delete)
 	}
 
 	return r

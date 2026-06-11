@@ -17,6 +17,9 @@ type PageHandler struct {
 	incomeSvc          *service.IncomeService
 	expenseCategorySvc *service.ExpenseCategoryService
 	expenseSvc         *service.ExpenseService
+	tourCategorySvc    *service.TourCategoryService
+	roomSvc            *service.RoomService
+	tourSvc            *service.TourService
 }
 
 func NewPageHandler(
@@ -25,6 +28,9 @@ func NewPageHandler(
 	incomeSvc *service.IncomeService,
 	expenseCategorySvc *service.ExpenseCategoryService,
 	expenseSvc *service.ExpenseService,
+	tourCategorySvc *service.TourCategoryService,
+	roomSvc *service.RoomService,
+	tourSvc *service.TourService,
 ) *PageHandler {
 	return &PageHandler{
 		accountSvc:         accountSvc,
@@ -32,6 +38,9 @@ func NewPageHandler(
 		incomeSvc:          incomeSvc,
 		expenseCategorySvc: expenseCategorySvc,
 		expenseSvc:         expenseSvc,
+		tourCategorySvc:    tourCategorySvc,
+		roomSvc:            roomSvc,
+		tourSvc:            tourSvc,
 	}
 }
 
@@ -158,6 +167,64 @@ func (h *PageHandler) ExpenseCategories(c *gin.Context) {
 	c.HTML(http.StatusOK, "expense_categories.html", gin.H{
 		"categories": cats,
 		"active":     "expense-categories",
+	})
+}
+
+func (h *PageHandler) TourCategories(c *gin.Context) {
+	cats, err := h.tourCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		log.Printf("tour categories page error: %v", err)
+		cats = []model.TourCategory{}
+	}
+	if cats == nil {
+		cats = []model.TourCategory{}
+	}
+	c.HTML(http.StatusOK, "tour_categories.html", gin.H{
+		"categories": cats,
+		"active":     "tour-categories",
+	})
+}
+
+func (h *PageHandler) Rooms(c *gin.Context) {
+	rooms, err := h.roomSvc.GetAll(c.Request.Context())
+	if err != nil {
+		log.Printf("rooms page error: %v", err)
+		rooms = []model.Room{}
+	}
+	if rooms == nil {
+		rooms = []model.Room{}
+	}
+	c.HTML(http.StatusOK, "rooms.html", gin.H{
+		"rooms":  rooms,
+		"active": "rooms",
+	})
+}
+
+func (h *PageHandler) Tours(c *gin.Context) {
+	tours, err := h.tourSvc.GetAll(c.Request.Context())
+	if err != nil {
+		log.Printf("tours page error: %v", err)
+		tours = []model.Tour{}
+	}
+	if tours == nil {
+		tours = []model.Tour{}
+	}
+
+	cats, err := h.tourCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		cats = []model.TourCategory{}
+	}
+
+	rooms, err := h.roomSvc.GetAll(c.Request.Context())
+	if err != nil {
+		rooms = []model.Room{}
+	}
+
+	c.HTML(http.StatusOK, "tours.html", gin.H{
+		"tours":      tours,
+		"categories": cats,
+		"rooms":      rooms,
+		"active":     "tours",
 	})
 }
 
