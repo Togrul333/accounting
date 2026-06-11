@@ -23,6 +23,10 @@ func (s *IncomeService) GetByID(ctx context.Context, id int64) (*model.Income, e
 	return s.repo.GetByID(ctx, id)
 }
 
+func (s *IncomeService) GetByAccountID(ctx context.Context, accountID int64) ([]model.Income, error) {
+	return s.repo.GetByAccountID(ctx, accountID)
+}
+
 func (s *IncomeService) Create(ctx context.Context, req model.CreateIncomeRequest) (*model.Income, error) {
 	return s.repo.Create(ctx, req)
 }

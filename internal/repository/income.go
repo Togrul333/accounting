@@ -10,6 +10,7 @@ import (
 type IncomeRepository interface {
 	GetAll(ctx context.Context) ([]model.Income, error)
 	GetByID(ctx context.Context, id int64) (*model.Income, error)
+	GetByAccountID(ctx context.Context, accountID int64) ([]model.Income, error)
 	Create(ctx context.Context, req model.CreateIncomeRequest) (*model.Income, error)
 	Update(ctx context.Context, id int64, req model.UpdateIncomeRequest) (*model.Income, error)
 	Delete(ctx context.Context, id int64) error
@@ -60,6 +61,31 @@ func (r *incomeRepo) GetByID(ctx context.Context, id int64) (*model.Income, erro
 		return nil, err
 	}
 	return &inc, nil
+}
+
+func (r *incomeRepo) GetByAccountID(ctx context.Context, accountID int64) ([]model.Income, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT i.id, i.name, i.amount, i.date, i.income_category_id, c.name, i.account_id, a.name, i.created_at, i.updated_at
+		FROM incomes i
+		JOIN income_categories c ON c.id = i.income_category_id
+		JOIN accounts a ON a.id = i.account_id
+		WHERE i.account_id = ?
+		ORDER BY i.date DESC, i.id DESC
+	`, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var incomes []model.Income
+	for rows.Next() {
+		var inc model.Income
+		if err := rows.Scan(&inc.ID, &inc.Name, &inc.Amount, &inc.Date, &inc.IncomeCategoryID, &inc.IncomeCategoryName, &inc.AccountID, &inc.AccountName, &inc.CreatedAt, &inc.UpdatedAt); err != nil {
+			return nil, err
+		}
+		incomes = append(incomes, inc)
+	}
+	return incomes, rows.Err()
 }
 
 func (r *incomeRepo) Create(ctx context.Context, req model.CreateIncomeRequest) (*model.Income, error) {

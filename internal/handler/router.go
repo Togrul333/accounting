@@ -23,6 +23,7 @@ func NewRouter(
 	r.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/login") })
 	r.GET("/login", pages.Login)
 	r.GET("/accounts", pages.Accounts)
+	r.GET("/accounts/:id/edit", pages.AccountEdit)
 	r.GET("/incomes", pages.Incomes)
 	r.GET("/income-categories", pages.IncomeCategories)
 	r.GET("/expenses", pages.Expenses)

@@ -23,6 +23,10 @@ func (s *ExpenseService) GetByID(ctx context.Context, id int64) (*model.Expense,
 	return s.repo.GetByID(ctx, id)
 }
 
+func (s *ExpenseService) GetByAccountID(ctx context.Context, accountID int64) ([]model.Expense, error) {
+	return s.repo.GetByAccountID(ctx, accountID)
+}
+
 func (s *ExpenseService) Create(ctx context.Context, req model.CreateExpenseRequest) (*model.Expense, error) {
 	return s.repo.Create(ctx, req)
 }

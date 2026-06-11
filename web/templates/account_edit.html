@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hesabı Düzenle — Hisar Tour</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+
+    .input-field {
+      width: 100%; padding: 11px 14px; border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.15); background: rgba(0,0,0,0.1);
+      color: #0d1a12; font-size: 14px; outline: none; transition: all .2s;
+    }
+    .input-field::placeholder { color: rgba(0,0,0,0.3); }
+    .input-field:focus { border-color: #00d4ff; box-shadow: 0 0 0 3px rgba(0,212,255,0.12); }
+    select.input-field { cursor: pointer; }
+    textarea.input-field { resize: none; }
+
+    .btn-save {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 28px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #00d4ff, #7b2fff);
+      color: #fff; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: all .15s;
+    }
+    .btn-save:hover { filter: brightness(1.08); box-shadow: 0 0 24px rgba(0,212,255,0.2); }
+
+    .btn-cancel {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 28px; border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.08); color: #2a5035;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all .15s; text-decoration: none;
+    }
+    .btn-cancel:hover { background: rgba(0,0,0,0.14); color: #0d1a12; }
+
+    .sub-table thead tr { background: rgba(0,0,0,0.08); border-bottom: 1px solid rgba(0,0,0,0.12); }
+    .sub-table tbody tr { border-bottom: 1px solid rgba(0,0,0,0.07); transition: background .1s; }
+    .sub-table tbody tr:hover { background: rgba(0,0,0,0.04); }
+    .sub-table tbody tr:last-child { border-bottom: none; }
+
+    .toast {
+      position: fixed; top: 20px; right: 20px; z-index: 100;
+      padding: 11px 18px; border-radius: 12px;
+      font-size: 13px; font-weight: 500; display: none;
+    }
+    .toast.show { display: flex; align-items: center; gap: 8px; }
+    .toast.success { background: rgba(0,212,255,0.15); color: #00d4ff; border: 1px solid rgba(0,212,255,0.25); }
+    .toast.error   { background: rgba(255,85,85,0.15); color: #ff5555; border: 1px solid rgba(255,85,85,0.25); }
+  </style>
+</head>
+<body style="background:#0d0d0d; min-height:100vh;">
+
+  {{template "sidebar" .}}
+
+  <div class="ml-64 min-h-screen flex flex-col" style="background: rgb(99, 218, 160);">
+
+    <!-- Üst bar -->
+    <div class="px-8 h-16 flex items-center gap-4 flex-shrink-0"
+         style="background:rgba(0,0,0,0.08); border-bottom:1px solid rgba(0,0,0,0.1);">
+      <a href="/accounts"
+         style="padding:6px 8px; border-radius:8px; border:1px solid rgba(0,0,0,0.14);
+                color:rgba(0,0,0,0.45); display:inline-flex; align-items:center; transition:.15s;"
+         onmouseover="this.style.background='rgba(0,0,0,0.1)'; this.style.color='#0d1a12';"
+         onmouseout="this.style.background='transparent'; this.style.color='rgba(0,0,0,0.45)';">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+      </a>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+             style="background:rgba(0,212,255,0.15); border:1px solid rgba(0,212,255,0.25);">
+          <svg class="w-4 h-4" viewBox="0 0 36 28" fill="#00d4ff">
+            <rect x="0"    y="7"  width="7" height="10" rx="1.5"/>
+            <rect x="14.5" y="0"  width="7" height="17" rx="1.5"/>
+            <rect x="29"   y="7"  width="7" height="10" rx="1.5"/>
+            <rect x="0"    y="17" width="36" height="11" rx="2"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold leading-none" style="color:#0d1a12;">Hesabı Düzenle</h1>
+          <p class="text-xs mt-0.5" style="color:#2a5035;">{{.account.Name}}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-8 flex-1">
+
+      <!-- Bakiye stat + form -->
+      <div class="max-w-lg mb-10">
+
+        <!-- Bakiye kartı -->
+        <div class="mb-6 px-5 py-4 rounded-2xl flex items-center gap-5"
+             style="background:rgba(0,0,0,0.1); border:1px solid rgba(0,0,0,0.12);">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+               style="background:rgba(123,47,255,0.15); border:1px solid rgba(123,47,255,0.2);">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="#7b2fff">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color:#2a5035;">Bakiye</p>
+            {{if lt .account.Balance 0.0}}
+              <p class="text-2xl font-extrabold tabular-nums" style="color:#c0392b;">{{printf "%.2f" .account.Balance}} {{.account.Currency}}</p>
+            {{else}}
+              <p class="text-2xl font-extrabold tabular-nums" style="color:#7b2fff;">{{printf "%.2f" .account.Balance}} {{.account.Currency}}</p>
+            {{end}}
+            <p class="text-xs mt-0.5" style="color:rgba(0,0,0,0.4);">Gelirler − Giderler</p>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <form id="editForm" onsubmit="saveAccount(event)" class="space-y-5">
+          <div>
+            <label class="block text-sm font-semibold mb-1.5" style="color:#2a5035;">
+              Ad <span style="color:#c0392b;">*</span>
+            </label>
+            <input id="fName" type="text" required class="input-field"
+                   value="{{.account.Name}}">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold mb-1.5" style="color:#2a5035;">
+              Hesap No <span style="color:#c0392b;">*</span>
+            </label>
+            <input id="fAccountNumber" type="text" required class="input-field"
+                   style="font-family:'Courier New',monospace; font-size:13px;"
+                   value="{{.account.AccountNumber}}">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold mb-1.5" style="color:#2a5035;">Para Birimi</label>
+            <select id="fCurrency" class="input-field">
+              <option value="AZN" {{if eq .account.Currency "AZN"}}selected{{end}}>AZN — Manat</option>
+              <option value="USD" {{if eq .account.Currency "USD"}}selected{{end}}>USD — Dolar</option>
+              <option value="EUR" {{if eq .account.Currency "EUR"}}selected{{end}}>EUR — Euro</option>
+              <option value="RUB" {{if eq .account.Currency "RUB"}}selected{{end}}>RUB — Ruble</option>
+              <option value="TRY" {{if eq .account.Currency "TRY"}}selected{{end}}>TRY — Lira</option>
+              <option value="GBP" {{if eq .account.Currency "GBP"}}selected{{end}}>GBP — Sterlin</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold mb-1.5" style="color:#2a5035;">Açıklama</label>
+            <textarea id="fDescription" rows="3" class="input-field"
+                      placeholder="İsteğe bağlı not...">{{.account.Description}}</textarea>
+          </div>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button type="submit" class="btn-save">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              Kaydet
+            </button>
+            <a href="/accounts" class="btn-cancel">İptal</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Gelirler tablosu -->
+      <div class="mb-8" style="max-width:860px;">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-2 h-2 rounded-full" style="background:#00d4ff;"></div>
+          <h2 class="text-sm font-bold uppercase tracking-wider" style="color:#2a5035;">Gelirler</h2>
+          <span class="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style="background:rgba(0,212,255,0.15); color:#00d4ff; border:1px solid rgba(0,212,255,0.25);">
+            {{len .incomes}}
+          </span>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.1); border-radius:14px; overflow:hidden;">
+          {{if .incomes}}
+          <table class="w-full sub-table">
+            <thead>
+              <tr>
+                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Ad</th>
+                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Kategori</th>
+                <th class="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tutar</th>
+                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tarih</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .incomes}}
+              <tr>
+                <td class="px-5 py-3">
+                  <span class="text-sm font-medium" style="color:#0d1a12;">{{.Name}}</span>
+                </td>
+                <td class="px-5 py-3">
+                  <span class="text-xs px-2.5 py-1 rounded-full font-semibold"
+                        style="background:rgba(0,212,255,0.15); color:#00c0e0; border:1px solid rgba(0,212,255,0.25);">
+                    {{.IncomeCategoryName}}
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-right">
+                  <span class="font-bold text-sm tabular-nums" style="color:#0d6e3a;">+{{printf "%.2f" .Amount}}</span>
+                </td>
+                <td class="px-5 py-3">
+                  <span class="text-xs" style="color:#3a5a40;">{{.Date.Format "02.01.2006"}}</span>
+                </td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+          {{else}}
+          <div class="flex items-center justify-center py-10">
+            <p class="text-sm" style="color:rgba(0,0,0,0.35);">Bu hesaba ait gelir yok</p>
+          </div>
+          {{end}}
+        </div>
+      </div>
+
+      <!-- Giderler tablosu -->
+      <div style="max-width:860px;">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-2 h-2 rounded-full" style="background:#ff5555;"></div>
+          <h2 class="text-sm font-bold uppercase tracking-wider" style="color:#2a5035;">Giderler</h2>
+          <span class="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style="background:rgba(255,85,85,0.15); color:#ff5555; border:1px solid rgba(255,85,85,0.25);">
+            {{len .expenses}}
+          </span>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.1); border-radius:14px; overflow:hidden;">
+          {{if .expenses}}
+          <table class="w-full sub-table">
+            <thead>
+              <tr>
+                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Ad</th>
+                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Kategori</th>
+                <th class="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tutar</th>
+                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tarih</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .expenses}}
+              <tr>
+                <td class="px-5 py-3">
+                  <span class="text-sm font-medium" style="color:#0d1a12;">{{.Name}}</span>
+                </td>
+                <td class="px-5 py-3">
+                  <span class="text-xs px-2.5 py-1 rounded-full font-semibold"
+                        style="background:rgba(255,85,85,0.15); color:#ff5555; border:1px solid rgba(255,85,85,0.25);">
+                    {{.ExpenseCategoryName}}
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-right">
+                  <span class="font-bold text-sm tabular-nums" style="color:#c0392b;">−{{printf "%.2f" .Amount}}</span>
+                </td>
+                <td class="px-5 py-3">
+                  <span class="text-xs" style="color:#3a5a40;">{{.Date.Format "02.01.2006"}}</span>
+                </td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+          {{else}}
+          <div class="flex items-center justify-center py-10">
+            <p class="text-sm" style="color:rgba(0,0,0,0.35);">Bu hesaba ait gider yok</p>
+          </div>
+          {{end}}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const accountId = {{.account.ID}};
+
+    async function saveAccount(e) {
+      e.preventDefault();
+      const payload = {
+        name:           document.getElementById('fName').value.trim(),
+        account_number: document.getElementById('fAccountNumber').value.trim(),
+        currency:       document.getElementById('fCurrency').value,
+        description:    document.getElementById('fDescription').value.trim(),
+      };
+      try {
+        const res = await fetch(`/api/accounts/${accountId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          showToast('✓ Hesap güncellendi', 'success');
+          setTimeout(() => window.location.href = '/accounts', 700);
+        } else {
+          const err = await res.json();
+          showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'error');
+        }
+      } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
+    }
+
+    function showToast(msg, type) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show ' + type;
+      setTimeout(() => el.classList.remove('show'), 2800);
+    }
+  </script>
+
+</body>
+</html>

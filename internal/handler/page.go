@@ -3,6 +3,7 @@ package handler
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -56,6 +57,42 @@ func (h *PageHandler) Accounts(c *gin.Context) {
 	c.HTML(http.StatusOK, "accounts.html", gin.H{
 		"accounts": accounts,
 		"total":    total,
+		"active":   "accounts",
+	})
+}
+
+func (h *PageHandler) AccountEdit(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/accounts")
+		return
+	}
+	account, err := h.accountSvc.GetByID(c.Request.Context(), id)
+	if err != nil {
+		log.Printf("account edit page error: %v", err)
+		c.Redirect(http.StatusFound, "/accounts")
+		return
+	}
+	incomes, err := h.incomeSvc.GetByAccountID(c.Request.Context(), id)
+	if err != nil {
+		log.Printf("account incomes error: %v", err)
+		incomes = []model.Income{}
+	}
+	if incomes == nil {
+		incomes = []model.Income{}
+	}
+	expenses, err := h.expenseSvc.GetByAccountID(c.Request.Context(), id)
+	if err != nil {
+		log.Printf("account expenses error: %v", err)
+		expenses = []model.Expense{}
+	}
+	if expenses == nil {
+		expenses = []model.Expense{}
+	}
+	c.HTML(http.StatusOK, "account_edit.html", gin.H{
+		"account":  account,
+		"incomes":  incomes,
+		"expenses": expenses,
 		"active":   "accounts",
 	})
 }

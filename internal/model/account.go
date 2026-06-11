@@ -14,17 +14,15 @@ type Account struct {
 }
 
 type CreateAccountRequest struct {
-	Name          string  `json:"name"`
-	AccountNumber string  `json:"account_number"`
-	Currency      string  `json:"currency"`
-	Balance       float64 `json:"balance"`
-	Description   string  `json:"description"`
+	Name          string `json:"name"`
+	AccountNumber string `json:"account_number"`
+	Currency      string `json:"currency"`
+	Description   string `json:"description"`
 }
 
 type UpdateAccountRequest struct {
-	Name          string  `json:"name"`
-	AccountNumber string  `json:"account_number"`
-	Currency      string  `json:"currency"`
-	Balance       float64 `json:"balance"`
-	Description   string  `json:"description"`
+	Name          string `json:"name"`
+	AccountNumber string `json:"account_number"`
+	Currency      string `json:"currency"`
+	Description   string `json:"description"`
 }
