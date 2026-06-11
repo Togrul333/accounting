@@ -3,13 +3,23 @@ package handler
 import (
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"accounting/internal/model"
 	"accounting/internal/service"
 )
+
+type dashboardTransaction struct {
+	IsIncome     bool
+	Name         string
+	CategoryName string
+	Amount       float64
+	Date         time.Time
+}
 
 type PageHandler struct {
 	accountSvc         *service.AccountService
@@ -49,6 +59,107 @@ func NewPageHandler(
 
 func (h *PageHandler) Login(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.html", nil)
+}
+
+func (h *PageHandler) Dashboard(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	accounts, _ := h.accountSvc.GetAll(ctx)
+	if accounts == nil {
+		accounts = []model.Account{}
+	}
+	var totalBalance float64
+	for _, a := range accounts {
+		totalBalance += a.Balance
+	}
+
+	incomes, _ := h.incomeSvc.GetAll(ctx)
+	if incomes == nil {
+		incomes = []model.Income{}
+	}
+	var totalIncome float64
+	for _, inc := range incomes {
+		totalIncome += inc.Amount
+	}
+
+	expenses, _ := h.expenseSvc.GetAll(ctx)
+	if expenses == nil {
+		expenses = []model.Expense{}
+	}
+	var totalExpense float64
+	for _, exp := range expenses {
+		totalExpense += exp.Amount
+	}
+
+	tours, _ := h.tourSvc.GetAll(ctx)
+	if tours == nil {
+		tours = []model.Tour{}
+	}
+	now := time.Now()
+	var activeTourCount int
+	for _, t := range tours {
+		if !now.Before(t.StartDate) && !now.After(t.EndDate) {
+			activeTourCount++
+		}
+	}
+
+	clients, _ := h.clientSvc.GetAll(ctx)
+	if clients == nil {
+		clients = []model.Client{}
+	}
+
+	// Son 5 tur (başlangıç tarihine göre azalan)
+	sortedTours := make([]model.Tour, len(tours))
+	copy(sortedTours, tours)
+	sort.Slice(sortedTours, func(i, j int) bool {
+		return sortedTours[i].StartDate.After(sortedTours[j].StartDate)
+	})
+	if len(sortedTours) > 5 {
+		sortedTours = sortedTours[:5]
+	}
+
+	// Son 10 işlem (gelir + gider karışık, tarihe göre azalan)
+	var txs []dashboardTransaction
+	for _, inc := range incomes {
+		txs = append(txs, dashboardTransaction{
+			IsIncome:     true,
+			Name:         inc.Name,
+			CategoryName: inc.IncomeCategoryName,
+			Amount:       inc.Amount,
+			Date:         inc.Date,
+		})
+	}
+	for _, exp := range expenses {
+		txs = append(txs, dashboardTransaction{
+			IsIncome:     false,
+			Name:         exp.Name,
+			CategoryName: exp.ExpenseCategoryName,
+			Amount:       exp.Amount,
+			Date:         exp.Date,
+		})
+	}
+	sort.Slice(txs, func(i, j int) bool {
+		return txs[i].Date.After(txs[j].Date)
+	})
+	if len(txs) > 8 {
+		txs = txs[:8]
+	}
+
+	c.HTML(http.StatusOK, "dashboard.html", gin.H{
+		"active":               "dashboard",
+		"totalBalance":         totalBalance,
+		"accountCount":         len(accounts),
+		"totalIncome":          totalIncome,
+		"incomeCount":          len(incomes),
+		"totalExpense":         totalExpense,
+		"expenseCount":         len(expenses),
+		"net":                  totalIncome - totalExpense,
+		"tourCount":            len(tours),
+		"activeTourCount":      activeTourCount,
+		"clientCount":          len(clients),
+		"recentTours":          sortedTours,
+		"recentTransactions":   txs,
+	})
 }
 
 func (h *PageHandler) Accounts(c *gin.Context) {

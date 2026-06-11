@@ -2,7 +2,6 @@ package handler
 
 import (
 	"html/template"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,7 +23,7 @@ func NewRouter(
 	r.SetHTMLTemplate(tmpl)
 	r.Static("/static", "web/static")
 
-	r.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/login") })
+	r.GET("/", pages.Dashboard)
 	r.GET("/login", pages.Login)
 	r.GET("/accounts", pages.Accounts)
 	r.GET("/accounts/:id/edit", pages.AccountEdit)
