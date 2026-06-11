@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
-	"database/sql"
+	"time"
+
+	"gorm.io/gorm"
 
 	"accounting/internal/model"
 )
@@ -18,113 +20,93 @@ type ExpenseRepository interface {
 }
 
 type expenseRepo struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewExpenseRepository(db *sql.DB) ExpenseRepository {
+func NewExpenseRepository(db *gorm.DB) ExpenseRepository {
 	return &expenseRepo{db: db}
 }
 
-func (r *expenseRepo) GetAll(ctx context.Context) ([]model.Expense, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT e.id, e.name, e.amount, e.date, e.expense_category_id, c.name, e.account_id, a.name, e.created_at, e.updated_at
-		FROM expenses e
-		JOIN expense_categories c ON c.id = e.expense_category_id
-		JOIN accounts a ON a.id = e.account_id
-		ORDER BY e.date DESC, e.id DESC
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+const expenseSelectQuery = `
+	SELECT e.id, e.name, e.amount, e.date,
+	       e.expense_category_id, c.name AS expense_category_name,
+	       e.account_id, a.name AS account_name,
+	       e.created_at, e.updated_at
+	FROM expenses e
+	JOIN expense_categories c ON c.id = e.expense_category_id
+	JOIN accounts a ON a.id = e.account_id`
 
+func (r *expenseRepo) GetAll(ctx context.Context) ([]model.Expense, error) {
 	var expenses []model.Expense
-	for rows.Next() {
-		var exp model.Expense
-		if err := rows.Scan(&exp.ID, &exp.Name, &exp.Amount, &exp.Date, &exp.ExpenseCategoryID, &exp.ExpenseCategoryName, &exp.AccountID, &exp.AccountName, &exp.CreatedAt, &exp.UpdatedAt); err != nil {
-			return nil, err
-		}
-		expenses = append(expenses, exp)
+	err := r.db.WithContext(ctx).Raw(expenseSelectQuery + ` ORDER BY e.date DESC, e.id DESC`).Scan(&expenses).Error
+	if expenses == nil {
+		expenses = []model.Expense{}
 	}
-	return expenses, rows.Err()
+	return expenses, err
 }
 
 func (r *expenseRepo) GetByID(ctx context.Context, id int64) (*model.Expense, error) {
 	var exp model.Expense
-	err := r.db.QueryRowContext(ctx, `
-		SELECT e.id, e.name, e.amount, e.date, e.expense_category_id, c.name, e.account_id, a.name, e.created_at, e.updated_at
-		FROM expenses e
-		JOIN expense_categories c ON c.id = e.expense_category_id
-		JOIN accounts a ON a.id = e.account_id
-		WHERE e.id=?
-	`, id).Scan(&exp.ID, &exp.Name, &exp.Amount, &exp.Date, &exp.ExpenseCategoryID, &exp.ExpenseCategoryName, &exp.AccountID, &exp.AccountName, &exp.CreatedAt, &exp.UpdatedAt)
-	if err != nil {
-		return nil, err
+	result := r.db.WithContext(ctx).Raw(expenseSelectQuery+` WHERE e.id = ?`, id).Scan(&exp)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	return &exp, nil
 }
 
 func (r *expenseRepo) GetByAccountID(ctx context.Context, accountID int64) ([]model.Expense, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT e.id, e.name, e.amount, e.date, e.expense_category_id, c.name, e.account_id, a.name, e.created_at, e.updated_at
-		FROM expenses e
-		JOIN expense_categories c ON c.id = e.expense_category_id
-		JOIN accounts a ON a.id = e.account_id
-		WHERE e.account_id = ?
-		ORDER BY e.date DESC, e.id DESC
-	`, accountID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	var expenses []model.Expense
-	for rows.Next() {
-		var exp model.Expense
-		if err := rows.Scan(&exp.ID, &exp.Name, &exp.Amount, &exp.Date, &exp.ExpenseCategoryID, &exp.ExpenseCategoryName, &exp.AccountID, &exp.AccountName, &exp.CreatedAt, &exp.UpdatedAt); err != nil {
-			return nil, err
-		}
-		expenses = append(expenses, exp)
+	err := r.db.WithContext(ctx).Raw(expenseSelectQuery+` WHERE e.account_id = ? ORDER BY e.date DESC, e.id DESC`, accountID).Scan(&expenses).Error
+	if expenses == nil {
+		expenses = []model.Expense{}
 	}
-	return expenses, rows.Err()
+	return expenses, err
 }
 
 func (r *expenseRepo) Create(ctx context.Context, req model.CreateExpenseRequest) (*model.Expense, error) {
-	res, err := r.db.ExecContext(ctx, `
-		INSERT INTO expenses (name, amount, date, expense_category_id, account_id) VALUES (?, ?, ?, ?, ?)
-	`, req.Name, req.Amount, req.Date, req.ExpenseCategoryID, req.AccountID)
+	date, err := time.Parse("2006-01-02", req.Date)
 	if err != nil {
 		return nil, err
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
+	exp := model.Expense{
+		Name:              req.Name,
+		Amount:            req.Amount,
+		Date:              date,
+		ExpenseCategoryID: req.ExpenseCategoryID,
+		AccountID:         req.AccountID,
+	}
+	if err := r.db.WithContext(ctx).Create(&exp).Error; err != nil {
 		return nil, err
 	}
-	return r.GetByID(ctx, id)
+	return r.GetByID(ctx, exp.ID)
 }
 
 func (r *expenseRepo) BulkCreate(ctx context.Context, reqs []model.CreateExpenseRequest) ([]model.Expense, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
+	var ids []int64
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, req := range reqs {
+			date, err := time.Parse("2006-01-02", req.Date)
+			if err != nil {
+				return err
+			}
+			exp := model.Expense{
+				Name:              req.Name,
+				Amount:            req.Amount,
+				Date:              date,
+				ExpenseCategoryID: req.ExpenseCategoryID,
+				AccountID:         req.AccountID,
+			}
+			if err := tx.Create(&exp).Error; err != nil {
+				return err
+			}
+			ids = append(ids, exp.ID)
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
-	ids := make([]int64, 0, len(reqs))
-	for _, req := range reqs {
-		res, err := tx.ExecContext(ctx,
-			`INSERT INTO expenses (name, amount, date, expense_category_id, account_id) VALUES (?, ?, ?, ?, ?)`,
-			req.Name, req.Amount, req.Date, req.ExpenseCategoryID, req.AccountID)
-		if err != nil {
-			return nil, err
-		}
-		id, err := res.LastInsertId()
-		if err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 
@@ -140,23 +122,26 @@ func (r *expenseRepo) BulkCreate(ctx context.Context, reqs []model.CreateExpense
 }
 
 func (r *expenseRepo) Update(ctx context.Context, id int64, req model.UpdateExpenseRequest) (*model.Expense, error) {
-	res, err := r.db.ExecContext(ctx, `
-		UPDATE expenses SET name=?, amount=?, date=?, expense_category_id=?, account_id=? WHERE id=?
-	`, req.Name, req.Amount, req.Date, req.ExpenseCategoryID, req.AccountID, id)
+	date, err := time.Parse("2006-01-02", req.Date)
 	if err != nil {
 		return nil, err
 	}
-	n, err := res.RowsAffected()
-	if err != nil {
-		return nil, err
+	result := r.db.WithContext(ctx).Model(&model.Expense{}).Where("id = ?", id).Updates(map[string]any{
+		"name":                req.Name,
+		"amount":              req.Amount,
+		"date":                date,
+		"expense_category_id": req.ExpenseCategoryID,
+		"account_id":          req.AccountID,
+	})
+	if result.Error != nil {
+		return nil, result.Error
 	}
-	if n == 0 {
-		return nil, sql.ErrNoRows
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	return r.GetByID(ctx, id)
 }
 
 func (r *expenseRepo) Delete(ctx context.Context, id int64) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM expenses WHERE id=?`, id)
-	return err
+	return r.db.WithContext(ctx).Delete(&model.Expense{}, id).Error
 }

@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"database/sql"
+
+	"gorm.io/gorm"
 
 	"accounting/internal/model"
 )
@@ -16,35 +17,22 @@ type TourCategoryRepository interface {
 }
 
 type tourCategoryRepo struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewTourCategoryRepository(db *sql.DB) TourCategoryRepository {
+func NewTourCategoryRepository(db *gorm.DB) TourCategoryRepository {
 	return &tourCategoryRepo{db: db}
 }
 
 func (r *tourCategoryRepo) GetAll(ctx context.Context) ([]model.TourCategory, error) {
-	rows, err := r.db.QueryContext(ctx, `SELECT id, name, price, created_at, updated_at FROM tour_categories ORDER BY id`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	var cats []model.TourCategory
-	for rows.Next() {
-		var c model.TourCategory
-		if err := rows.Scan(&c.ID, &c.Name, &c.Price, &c.CreatedAt, &c.UpdatedAt); err != nil {
-			return nil, err
-		}
-		cats = append(cats, c)
-	}
-	return cats, rows.Err()
+	err := r.db.WithContext(ctx).Order("id").Find(&cats).Error
+	return cats, err
 }
 
 func (r *tourCategoryRepo) GetByID(ctx context.Context, id int64) (*model.TourCategory, error) {
 	var c model.TourCategory
-	err := r.db.QueryRowContext(ctx, `SELECT id, name, price, created_at, updated_at FROM tour_categories WHERE id=?`, id).
-		Scan(&c.ID, &c.Name, &c.Price, &c.CreatedAt, &c.UpdatedAt)
+	err := r.db.WithContext(ctx).First(&c, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -52,33 +40,27 @@ func (r *tourCategoryRepo) GetByID(ctx context.Context, id int64) (*model.TourCa
 }
 
 func (r *tourCategoryRepo) Create(ctx context.Context, req model.CreateTourCategoryRequest) (*model.TourCategory, error) {
-	res, err := r.db.ExecContext(ctx, `INSERT INTO tour_categories (name, price) VALUES (?, ?)`, req.Name, req.Price)
-	if err != nil {
+	c := model.TourCategory{Name: req.Name, Price: req.Price}
+	if err := r.db.WithContext(ctx).Create(&c).Error; err != nil {
 		return nil, err
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-	return r.GetByID(ctx, id)
+	return &c, nil
 }
 
 func (r *tourCategoryRepo) Update(ctx context.Context, id int64, req model.UpdateTourCategoryRequest) (*model.TourCategory, error) {
-	res, err := r.db.ExecContext(ctx, `UPDATE tour_categories SET name=?, price=? WHERE id=?`, req.Name, req.Price, id)
-	if err != nil {
-		return nil, err
+	result := r.db.WithContext(ctx).Model(&model.TourCategory{}).Where("id = ?", id).Updates(map[string]any{
+		"name":  req.Name,
+		"price": req.Price,
+	})
+	if result.Error != nil {
+		return nil, result.Error
 	}
-	n, err := res.RowsAffected()
-	if err != nil {
-		return nil, err
-	}
-	if n == 0 {
-		return nil, sql.ErrNoRows
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	return r.GetByID(ctx, id)
 }
 
 func (r *tourCategoryRepo) Delete(ctx context.Context, id int64) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM tour_categories WHERE id=?`, id)
-	return err
+	return r.db.WithContext(ctx).Delete(&model.TourCategory{}, id).Error
 }

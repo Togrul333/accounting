@@ -3,7 +3,7 @@ package model
 import "time"
 
 type ExpenseCategory struct {
-	ID        int64     `json:"id"`
+	ID        int64     `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -18,14 +18,14 @@ type UpdateExpenseCategoryRequest struct {
 }
 
 type Expense struct {
-	ID                  int64     `json:"id"`
+	ID                  int64     `json:"id" gorm:"primaryKey"`
 	Name                string    `json:"name"`
 	Amount              float64   `json:"amount"`
 	Date                time.Time `json:"date"`
 	ExpenseCategoryID   int64     `json:"expense_category_id"`
-	ExpenseCategoryName string    `json:"expense_category_name,omitempty"`
+	ExpenseCategoryName string    `json:"expense_category_name,omitempty" gorm:"<-:false"`
 	AccountID           int64     `json:"account_id"`
-	AccountName         string    `json:"account_name,omitempty"`
+	AccountName         string    `json:"account_name,omitempty" gorm:"<-:false"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 }

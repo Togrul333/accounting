@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
-	"database/sql"
+	"time"
+
+	"gorm.io/gorm"
 
 	"accounting/internal/model"
 )
@@ -18,113 +20,93 @@ type IncomeRepository interface {
 }
 
 type incomeRepo struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewIncomeRepository(db *sql.DB) IncomeRepository {
+func NewIncomeRepository(db *gorm.DB) IncomeRepository {
 	return &incomeRepo{db: db}
 }
 
-func (r *incomeRepo) GetAll(ctx context.Context) ([]model.Income, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT i.id, i.name, i.amount, i.date, i.income_category_id, c.name, i.account_id, a.name, i.created_at, i.updated_at
-		FROM incomes i
-		JOIN income_categories c ON c.id = i.income_category_id
-		JOIN accounts a ON a.id = i.account_id
-		ORDER BY i.date DESC, i.id DESC
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+const incomeSelectQuery = `
+	SELECT i.id, i.name, i.amount, i.date,
+	       i.income_category_id, c.name AS income_category_name,
+	       i.account_id, a.name AS account_name,
+	       i.created_at, i.updated_at
+	FROM incomes i
+	JOIN income_categories c ON c.id = i.income_category_id
+	JOIN accounts a ON a.id = i.account_id`
 
+func (r *incomeRepo) GetAll(ctx context.Context) ([]model.Income, error) {
 	var incomes []model.Income
-	for rows.Next() {
-		var inc model.Income
-		if err := rows.Scan(&inc.ID, &inc.Name, &inc.Amount, &inc.Date, &inc.IncomeCategoryID, &inc.IncomeCategoryName, &inc.AccountID, &inc.AccountName, &inc.CreatedAt, &inc.UpdatedAt); err != nil {
-			return nil, err
-		}
-		incomes = append(incomes, inc)
+	err := r.db.WithContext(ctx).Raw(incomeSelectQuery + ` ORDER BY i.date DESC, i.id DESC`).Scan(&incomes).Error
+	if incomes == nil {
+		incomes = []model.Income{}
 	}
-	return incomes, rows.Err()
+	return incomes, err
 }
 
 func (r *incomeRepo) GetByID(ctx context.Context, id int64) (*model.Income, error) {
 	var inc model.Income
-	err := r.db.QueryRowContext(ctx, `
-		SELECT i.id, i.name, i.amount, i.date, i.income_category_id, c.name, i.account_id, a.name, i.created_at, i.updated_at
-		FROM incomes i
-		JOIN income_categories c ON c.id = i.income_category_id
-		JOIN accounts a ON a.id = i.account_id
-		WHERE i.id=?
-	`, id).Scan(&inc.ID, &inc.Name, &inc.Amount, &inc.Date, &inc.IncomeCategoryID, &inc.IncomeCategoryName, &inc.AccountID, &inc.AccountName, &inc.CreatedAt, &inc.UpdatedAt)
-	if err != nil {
-		return nil, err
+	result := r.db.WithContext(ctx).Raw(incomeSelectQuery+` WHERE i.id = ?`, id).Scan(&inc)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	return &inc, nil
 }
 
 func (r *incomeRepo) GetByAccountID(ctx context.Context, accountID int64) ([]model.Income, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT i.id, i.name, i.amount, i.date, i.income_category_id, c.name, i.account_id, a.name, i.created_at, i.updated_at
-		FROM incomes i
-		JOIN income_categories c ON c.id = i.income_category_id
-		JOIN accounts a ON a.id = i.account_id
-		WHERE i.account_id = ?
-		ORDER BY i.date DESC, i.id DESC
-	`, accountID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	var incomes []model.Income
-	for rows.Next() {
-		var inc model.Income
-		if err := rows.Scan(&inc.ID, &inc.Name, &inc.Amount, &inc.Date, &inc.IncomeCategoryID, &inc.IncomeCategoryName, &inc.AccountID, &inc.AccountName, &inc.CreatedAt, &inc.UpdatedAt); err != nil {
-			return nil, err
-		}
-		incomes = append(incomes, inc)
+	err := r.db.WithContext(ctx).Raw(incomeSelectQuery+` WHERE i.account_id = ? ORDER BY i.date DESC, i.id DESC`, accountID).Scan(&incomes).Error
+	if incomes == nil {
+		incomes = []model.Income{}
 	}
-	return incomes, rows.Err()
+	return incomes, err
 }
 
 func (r *incomeRepo) Create(ctx context.Context, req model.CreateIncomeRequest) (*model.Income, error) {
-	res, err := r.db.ExecContext(ctx, `
-		INSERT INTO incomes (name, amount, date, income_category_id, account_id) VALUES (?, ?, ?, ?, ?)
-	`, req.Name, req.Amount, req.Date, req.IncomeCategoryID, req.AccountID)
+	date, err := time.Parse("2006-01-02", req.Date)
 	if err != nil {
 		return nil, err
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
+	inc := model.Income{
+		Name:             req.Name,
+		Amount:           req.Amount,
+		Date:             date,
+		IncomeCategoryID: req.IncomeCategoryID,
+		AccountID:        req.AccountID,
+	}
+	if err := r.db.WithContext(ctx).Create(&inc).Error; err != nil {
 		return nil, err
 	}
-	return r.GetByID(ctx, id)
+	return r.GetByID(ctx, inc.ID)
 }
 
 func (r *incomeRepo) BulkCreate(ctx context.Context, reqs []model.CreateIncomeRequest) ([]model.Income, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
+	var ids []int64
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, req := range reqs {
+			date, err := time.Parse("2006-01-02", req.Date)
+			if err != nil {
+				return err
+			}
+			inc := model.Income{
+				Name:             req.Name,
+				Amount:           req.Amount,
+				Date:             date,
+				IncomeCategoryID: req.IncomeCategoryID,
+				AccountID:        req.AccountID,
+			}
+			if err := tx.Create(&inc).Error; err != nil {
+				return err
+			}
+			ids = append(ids, inc.ID)
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
-	ids := make([]int64, 0, len(reqs))
-	for _, req := range reqs {
-		res, err := tx.ExecContext(ctx,
-			`INSERT INTO incomes (name, amount, date, income_category_id, account_id) VALUES (?, ?, ?, ?, ?)`,
-			req.Name, req.Amount, req.Date, req.IncomeCategoryID, req.AccountID)
-		if err != nil {
-			return nil, err
-		}
-		id, err := res.LastInsertId()
-		if err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 
@@ -140,23 +122,26 @@ func (r *incomeRepo) BulkCreate(ctx context.Context, reqs []model.CreateIncomeRe
 }
 
 func (r *incomeRepo) Update(ctx context.Context, id int64, req model.UpdateIncomeRequest) (*model.Income, error) {
-	res, err := r.db.ExecContext(ctx, `
-		UPDATE incomes SET name=?, amount=?, date=?, income_category_id=?, account_id=? WHERE id=?
-	`, req.Name, req.Amount, req.Date, req.IncomeCategoryID, req.AccountID, id)
+	date, err := time.Parse("2006-01-02", req.Date)
 	if err != nil {
 		return nil, err
 	}
-	n, err := res.RowsAffected()
-	if err != nil {
-		return nil, err
+	result := r.db.WithContext(ctx).Model(&model.Income{}).Where("id = ?", id).Updates(map[string]any{
+		"name":               req.Name,
+		"amount":             req.Amount,
+		"date":               date,
+		"income_category_id": req.IncomeCategoryID,
+		"account_id":         req.AccountID,
+	})
+	if result.Error != nil {
+		return nil, result.Error
 	}
-	if n == 0 {
-		return nil, sql.ErrNoRows
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	return r.GetByID(ctx, id)
 }
 
 func (r *incomeRepo) Delete(ctx context.Context, id int64) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM incomes WHERE id=?`, id)
-	return err
+	return r.db.WithContext(ctx).Delete(&model.Income{}, id).Error
 }

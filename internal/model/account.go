@@ -3,11 +3,11 @@ package model
 import "time"
 
 type Account struct {
-	ID            int64     `json:"id"`
+	ID            int64     `json:"id" gorm:"primaryKey"`
 	Name          string    `json:"name"`
 	AccountNumber string    `json:"account_number"`
 	Currency      string    `json:"currency"`
-	Balance       float64   `json:"balance"`
+	Balance       float64   `json:"balance" gorm:"<-:false"`
 	Description   string    `json:"description,omitempty"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`

@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"database/sql"
+
+	"gorm.io/gorm"
 
 	"accounting/internal/model"
 )
@@ -16,41 +17,22 @@ type ClientRepository interface {
 }
 
 type clientRepo struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewClientRepository(db *sql.DB) ClientRepository {
+func NewClientRepository(db *gorm.DB) ClientRepository {
 	return &clientRepo{db: db}
 }
 
-const clientCols = `id, first_name, last_name, email, phone, birth_year, created_at, updated_at`
-
-func scanClient(s interface{ Scan(...any) error }) (model.Client, error) {
-	var c model.Client
-	err := s.Scan(&c.ID, &c.FirstName, &c.LastName, &c.Email, &c.Phone, &c.BirthYear, &c.CreatedAt, &c.UpdatedAt)
-	return c, err
-}
-
 func (r *clientRepo) GetAll(ctx context.Context) ([]model.Client, error) {
-	rows, err := r.db.QueryContext(ctx, `SELECT `+clientCols+` FROM clients ORDER BY last_name, first_name`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	var clients []model.Client
-	for rows.Next() {
-		c, err := scanClient(rows)
-		if err != nil {
-			return nil, err
-		}
-		clients = append(clients, c)
-	}
-	return clients, rows.Err()
+	err := r.db.WithContext(ctx).Order("last_name, first_name").Find(&clients).Error
+	return clients, err
 }
 
 func (r *clientRepo) GetByID(ctx context.Context, id int64) (*model.Client, error) {
-	c, err := scanClient(r.db.QueryRowContext(ctx, `SELECT `+clientCols+` FROM clients WHERE id=?`, id))
+	var c model.Client
+	err := r.db.WithContext(ctx).First(&c, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -58,39 +40,36 @@ func (r *clientRepo) GetByID(ctx context.Context, id int64) (*model.Client, erro
 }
 
 func (r *clientRepo) Create(ctx context.Context, req model.CreateClientRequest) (*model.Client, error) {
-	res, err := r.db.ExecContext(ctx,
-		`INSERT INTO clients (first_name, last_name, email, phone, birth_year) VALUES (?, ?, ?, ?, ?)`,
-		req.FirstName, req.LastName, req.Email, req.Phone, req.BirthYear,
-	)
-	if err != nil {
+	c := model.Client{
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Email:     req.Email,
+		Phone:     req.Phone,
+		BirthYear: req.BirthYear,
+	}
+	if err := r.db.WithContext(ctx).Create(&c).Error; err != nil {
 		return nil, err
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-	return r.GetByID(ctx, id)
+	return &c, nil
 }
 
 func (r *clientRepo) Update(ctx context.Context, id int64, req model.UpdateClientRequest) (*model.Client, error) {
-	res, err := r.db.ExecContext(ctx,
-		`UPDATE clients SET first_name=?, last_name=?, email=?, phone=?, birth_year=? WHERE id=?`,
-		req.FirstName, req.LastName, req.Email, req.Phone, req.BirthYear, id,
-	)
-	if err != nil {
-		return nil, err
+	result := r.db.WithContext(ctx).Model(&model.Client{}).Where("id = ?", id).Updates(map[string]any{
+		"first_name": req.FirstName,
+		"last_name":  req.LastName,
+		"email":      req.Email,
+		"phone":      req.Phone,
+		"birth_year": req.BirthYear,
+	})
+	if result.Error != nil {
+		return nil, result.Error
 	}
-	n, err := res.RowsAffected()
-	if err != nil {
-		return nil, err
-	}
-	if n == 0 {
-		return nil, sql.ErrNoRows
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	return r.GetByID(ctx, id)
 }
 
 func (r *clientRepo) Delete(ctx context.Context, id int64) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM clients WHERE id=?`, id)
-	return err
+	return r.db.WithContext(ctx).Delete(&model.Client{}, id).Error
 }

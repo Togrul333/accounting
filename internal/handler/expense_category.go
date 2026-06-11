@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"database/sql"
+	"gorm.io/gorm"
 	"errors"
 	"net/http"
 	"strconv"
@@ -40,7 +40,7 @@ func (h *ExpenseCategoryHandler) GetByID(c *gin.Context) {
 	}
 	cat, err := h.svc.GetByID(c.Request.Context(), id)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "category not found"})
 			return
 		}
@@ -77,7 +77,7 @@ func (h *ExpenseCategoryHandler) Update(c *gin.Context) {
 	}
 	cat, err := h.svc.Update(c.Request.Context(), id, req)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "category not found"})
 			return
 		}

@@ -3,7 +3,7 @@ package model
 import "time"
 
 type IncomeCategory struct {
-	ID        int64     `json:"id"`
+	ID        int64     `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -18,14 +18,14 @@ type UpdateIncomeCategoryRequest struct {
 }
 
 type Income struct {
-	ID                 int64     `json:"id"`
+	ID                 int64     `json:"id" gorm:"primaryKey"`
 	Name               string    `json:"name"`
 	Amount             float64   `json:"amount"`
 	Date               time.Time `json:"date"`
 	IncomeCategoryID   int64     `json:"income_category_id"`
-	IncomeCategoryName string    `json:"income_category_name,omitempty"`
+	IncomeCategoryName string    `json:"income_category_name,omitempty" gorm:"<-:false"`
 	AccountID          int64     `json:"account_id"`
-	AccountName        string    `json:"account_name,omitempty"`
+	AccountName        string    `json:"account_name,omitempty" gorm:"<-:false"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
 }
