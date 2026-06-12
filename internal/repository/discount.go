@@ -26,9 +26,15 @@ func NewDiscountRepository(db *gorm.DB) DiscountRepository {
 
 const discountSelectQuery = `
 	SELECT d.id, d.amount, d.discount_category_id, c.name AS discount_category_name,
+	       d.order_id,
+	       CONCAT(cl.first_name, ' ', cl.last_name) AS order_client_name,
+	       t.code AS order_tour_code,
 	       d.created_at, d.updated_at
 	FROM discounts d
-	JOIN discount_categories c ON c.id = d.discount_category_id`
+	JOIN discount_categories c ON c.id = d.discount_category_id
+	LEFT JOIN orders o  ON o.id  = d.order_id
+	LEFT JOIN clients cl ON cl.id = o.client_id
+	LEFT JOIN tours t   ON t.id  = o.tour_id`
 
 func (r *discountRepo) GetAll(ctx context.Context) ([]model.Discount, error) {
 	var discounts []model.Discount
@@ -55,6 +61,7 @@ func (r *discountRepo) Create(ctx context.Context, req model.CreateDiscountReque
 	d := model.Discount{
 		Amount:             req.Amount,
 		DiscountCategoryID: req.DiscountCategoryID,
+		OrderID:            req.OrderID,
 	}
 	if err := r.db.WithContext(ctx).Create(&d).Error; err != nil {
 		return nil, err
@@ -66,6 +73,7 @@ func (r *discountRepo) Update(ctx context.Context, id int64, req model.UpdateDis
 	result := r.db.WithContext(ctx).Model(&model.Discount{}).Where("id = ?", id).Updates(map[string]any{
 		"amount":               req.Amount,
 		"discount_category_id": req.DiscountCategoryID,
+		"order_id":             req.OrderID,
 	})
 	if result.Error != nil {
 		return nil, result.Error

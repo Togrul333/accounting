@@ -435,6 +435,11 @@ func (h *PageHandler) Discounts(c *gin.Context) {
 		cats = []model.DiscountCategory{}
 	}
 
+	orders, err := h.orderSvc.GetAll(c.Request.Context())
+	if err != nil {
+		orders = []model.Order{}
+	}
+
 	var total float64
 	for _, d := range discounts {
 		total += d.Amount
@@ -443,6 +448,7 @@ func (h *PageHandler) Discounts(c *gin.Context) {
 	c.HTML(http.StatusOK, "discounts.html", gin.H{
 		"discounts":  discounts,
 		"categories": cats,
+		"orders":     orders,
 		"total":      total,
 		"active":     "discounts",
 	})

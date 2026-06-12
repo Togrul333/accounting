@@ -22,6 +22,9 @@ type Discount struct {
 	Amount               float64   `json:"amount"`
 	DiscountCategoryID   int64     `json:"discount_category_id"`
 	DiscountCategoryName string    `json:"discount_category_name,omitempty" gorm:"<-:false"`
+	OrderID              *int64    `json:"order_id"`
+	OrderClientName      string    `json:"order_client_name,omitempty" gorm:"<-:false"`
+	OrderTourCode        string    `json:"order_tour_code,omitempty" gorm:"<-:false"`
 	CreatedAt            time.Time `json:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
 }
@@ -29,9 +32,11 @@ type Discount struct {
 type CreateDiscountRequest struct {
 	Amount             float64 `json:"amount"`
 	DiscountCategoryID int64   `json:"discount_category_id"`
+	OrderID            *int64  `json:"order_id"`
 }
 
 type UpdateDiscountRequest struct {
 	Amount             float64 `json:"amount"`
 	DiscountCategoryID int64   `json:"discount_category_id"`
+	OrderID            *int64  `json:"order_id"`
 }
