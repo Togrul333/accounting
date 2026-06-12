@@ -22,17 +22,19 @@ type dashboardTransaction struct {
 }
 
 type PageHandler struct {
-	accountSvc         *service.AccountService
-	incomeCategorySvc  *service.IncomeCategoryService
-	incomeSvc          *service.IncomeService
-	expenseCategorySvc *service.ExpenseCategoryService
-	expenseSvc         *service.ExpenseService
-	tourCategorySvc    *service.TourCategoryService
-	roomSvc            *service.RoomService
-	tourSvc            *service.TourService
-	clientSvc          *service.ClientService
-	settingSvc         *service.SettingService
-	userSvc            *service.UserService
+	accountSvc             *service.AccountService
+	incomeCategorySvc      *service.IncomeCategoryService
+	incomeSvc              *service.IncomeService
+	expenseCategorySvc     *service.ExpenseCategoryService
+	expenseSvc             *service.ExpenseService
+	tourCategorySvc        *service.TourCategoryService
+	roomSvc                *service.RoomService
+	tourSvc                *service.TourService
+	clientSvc              *service.ClientService
+	settingSvc             *service.SettingService
+	userSvc                *service.UserService
+	discountCategorySvc    *service.DiscountCategoryService
+	discountSvc            *service.DiscountService
 }
 
 func NewPageHandler(
@@ -47,19 +49,23 @@ func NewPageHandler(
 	clientSvc *service.ClientService,
 	settingSvc *service.SettingService,
 	userSvc *service.UserService,
+	discountCategorySvc *service.DiscountCategoryService,
+	discountSvc *service.DiscountService,
 ) *PageHandler {
 	return &PageHandler{
-		accountSvc:         accountSvc,
-		incomeCategorySvc:  incomeCategorySvc,
-		incomeSvc:          incomeSvc,
-		expenseCategorySvc: expenseCategorySvc,
-		expenseSvc:         expenseSvc,
-		tourCategorySvc:    tourCategorySvc,
-		roomSvc:            roomSvc,
-		tourSvc:            tourSvc,
-		clientSvc:          clientSvc,
-		settingSvc:         settingSvc,
-		userSvc:            userSvc,
+		accountSvc:          accountSvc,
+		incomeCategorySvc:   incomeCategorySvc,
+		incomeSvc:           incomeSvc,
+		expenseCategorySvc:  expenseCategorySvc,
+		expenseSvc:          expenseSvc,
+		tourCategorySvc:     tourCategorySvc,
+		roomSvc:             roomSvc,
+		tourSvc:             tourSvc,
+		clientSvc:           clientSvc,
+		settingSvc:          settingSvc,
+		userSvc:             userSvc,
+		discountCategorySvc: discountCategorySvc,
+		discountSvc:         discountSvc,
 	}
 }
 
@@ -384,6 +390,49 @@ func (h *PageHandler) Clients(c *gin.Context) {
 	c.HTML(http.StatusOK, "clients.html", gin.H{
 		"clients": clients,
 		"active":  "clients",
+	})
+}
+
+func (h *PageHandler) DiscountCategories(c *gin.Context) {
+	cats, err := h.discountCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		log.Printf("discount categories page error: %v", err)
+		cats = []model.DiscountCategory{}
+	}
+	if cats == nil {
+		cats = []model.DiscountCategory{}
+	}
+	c.HTML(http.StatusOK, "discount_categories.html", gin.H{
+		"categories": cats,
+		"active":     "discount-categories",
+	})
+}
+
+func (h *PageHandler) Discounts(c *gin.Context) {
+	discounts, err := h.discountSvc.GetAll(c.Request.Context())
+	if err != nil {
+		log.Printf("discounts page error: %v", err)
+		discounts = []model.Discount{}
+	}
+	if discounts == nil {
+		discounts = []model.Discount{}
+	}
+
+	cats, err := h.discountCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		cats = []model.DiscountCategory{}
+	}
+
+	var total float64
+	for _, d := range discounts {
+		total += d.Amount
+	}
+
+	c.HTML(http.StatusOK, "discounts.html", gin.H{
+		"discounts":  discounts,
+		"categories": cats,
+		"total":      total,
+		"active":     "discounts",
 	})
 }
 

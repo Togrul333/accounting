@@ -257,6 +257,33 @@
       </svg>
       <span class="text-sm font-medium">Gelir Kategorileri</span>
     </a>
+
+    <a href="/discounts"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
+       style="{{if eq .active "discounts"}}background:rgba(249,115,22,0.12); color:#f97316; border-left:2px solid #f97316; padding-left:10px;{{else}}color:#606060;{{end}}"
+       {{if not (eq .active "discounts")}}
+       onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#aaaaaa';"
+       onmouseout="this.style.background=''; this.style.color='#606060';"
+       {{end}}>
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185z" />
+      </svg>
+      <span class="text-sm font-medium">İndirimler</span>
+    </a>
+
+    <a href="/discount-categories"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 ml-4"
+       style="{{if eq .active "discount-categories"}}background:rgba(249,115,22,0.1); color:#f97316; border-left:2px solid #f97316; padding-left:10px;{{else}}color:#484848;{{end}}"
+       {{if not (eq .active "discount-categories")}}
+       onmouseover="this.style.background='rgba(255,255,255,0.04)'; this.style.color='#888888';"
+       onmouseout="this.style.background=''; this.style.color='#484848';"
+       {{end}}>
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
+      </svg>
+      <span class="text-sm font-medium">İndirim Kategorileri</span>
+    </a>
   </nav>
 
   <div class="px-5 py-4" style="border-top:1px solid #242424;">

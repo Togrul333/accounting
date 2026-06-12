@@ -19,6 +19,8 @@ func NewRouter(
 	clients *ClientHandler,
 	settings *SettingHandler,
 	users *UserHandler,
+	discountCategories *DiscountCategoryHandler,
+	discounts *DiscountHandler,
 	pages *PageHandler,
 	tmpl *template.Template,
 ) *gin.Engine {
@@ -41,6 +43,8 @@ func NewRouter(
 	r.GET("/tour-categories", pages.TourCategories)
 	r.GET("/rooms", pages.Rooms)
 	r.GET("/clients", pages.Clients)
+	r.GET("/discounts", pages.Discounts)
+	r.GET("/discount-categories", pages.DiscountCategories)
 
 	api := r.Group("/api")
 	{
@@ -104,6 +108,18 @@ func NewRouter(
 
 		api.PUT("/profile", users.UpdateProfile)
 		api.PUT("/profile/password", users.UpdatePassword)
+
+		api.GET("/discount-categories", discountCategories.GetAll)
+		api.POST("/discount-categories", discountCategories.Create)
+		api.GET("/discount-categories/:id", discountCategories.GetByID)
+		api.PUT("/discount-categories/:id", discountCategories.Update)
+		api.DELETE("/discount-categories/:id", discountCategories.Delete)
+
+		api.GET("/discounts", discounts.GetAll)
+		api.POST("/discounts", discounts.Create)
+		api.GET("/discounts/:id", discounts.GetByID)
+		api.PUT("/discounts/:id", discounts.Update)
+		api.DELETE("/discounts/:id", discounts.Delete)
 	}
 
 	return r
