@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Siparişi Düzenle — Hisar Tour</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .input-field {
+      width: 100%; padding: 11px 14px; border-radius: 10px;
+      border: 1px solid #2a2a2a; background: #1e1e1e;
+      color: #ececec; font-size: 14px; outline: none; transition: all .2s;
+    }
+    .input-field::placeholder { color: #383838; }
+    .input-field:focus { border-color: #00d4ff; box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
+    select.input-field option { background: #1e1e1e; color: #ececec; }
+    .card { background:#161616; border:1px solid #242424; border-radius:16px; }
+    .income-row { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:10px; background:#1a1a1a; border:1px solid #242424; }
+    .add-block { border:1px dashed #2a2a2a; border-radius:12px; padding:18px; display:none; margin-top:12px; }
+    .add-block.open { display:block; }
+    .btn-ghost { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; border:1px solid #2a2a2a; background:#1e1e1e; color:#888; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; }
+    .btn-ghost:hover { border-color:#00d4ff; color:#00d4ff; }
+    .divider { border:none; border-top:1px solid #242424; margin:24px 0; }
+    .toast { position:fixed; top:20px; right:20px; z-index:100; padding:11px 18px; border-radius:12px; font-size:13px; font-weight:500; display:none; }
+    .toast.show { display:flex; align-items:center; gap:8px; }
+    .toast.success { background:rgba(0,212,255,0.1); color:#00d4ff; border:1px solid rgba(0,212,255,0.2); }
+    .toast.error   { background:#2a1a1a; color:#ff5555; border:1px solid rgba(255,85,85,0.2); }
+  </style>
+</head>
+<body style="background:#0d0d0d; min-height:100vh;">
+
+  {{template "sidebar" .}}
+  {{template "topbar" .}}
+
+  <div class="ml-64 min-h-screen flex flex-col">
+
+    <div class="px-8 h-16 flex items-center gap-4 flex-shrink-0"
+         style="background:#161616; border-bottom:1px solid #242424;">
+      <a href="/orders"
+         style="padding:6px 8px; border-radius:8px; border:1px solid #2a2a2a; color:#484848; display:inline-flex; align-items:center; transition:.15s;"
+         onmouseover="this.style.borderColor='#00d4ff'; this.style.color='#00d4ff';"
+         onmouseout="this.style.borderColor='#2a2a2a'; this.style.color='#484848';">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+      </a>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+             style="background:#1e1e1e; border:1px solid #2a2a2a;">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00d4ff" opacity=".7">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold leading-none" style="color:#ececec;">Siparişi Düzenle</h1>
+          <p class="text-xs mt-0.5" style="color:#484848;">Sipariş #{{.order.ID}} · {{.order.ClientName}}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-8">
+      <div style="max-width:640px;">
+
+        <!-- Sipariş bilgileri formu -->
+        <div class="card p-7 mb-6">
+          <h2 class="text-sm font-bold uppercase tracking-wider mb-5" style="color:#606060;">Sipariş Bilgileri</h2>
+          <form id="editForm" onsubmit="saveOrder(event)" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Müşteri <span style="color:#ff5555;">*</span></label>
+              <select id="fClient" required class="input-field">
+                <option value="">Müşteri seçin</option>
+                {{range .clients}}
+                <option value="{{.ID}}" {{if eq .ID $.order.ClientID}}selected{{end}}>
+                  {{.FirstName}} {{.LastName}}
+                </option>
+                {{end}}
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Tur <span style="color:#ff5555;">*</span></label>
+              <select id="fTour" required class="input-field">
+                <option value="">Tur seçin</option>
+                {{range .tours}}
+                <option value="{{.ID}}" {{if eq .ID $.order.TourID}}selected{{end}}>
+                  {{.Code}} ({{.StartDate.Format "02.01.2006"}} – {{.EndDate.Format "02.01.2006"}})
+                </option>
+                {{end}}
+              </select>
+            </div>
+            <div class="flex items-center gap-3 pt-2">
+              <button type="submit"
+                      style="padding:11px 28px; border-radius:10px; border:none; background:linear-gradient(135deg,#00d4ff,#7b2fff); color:#fff; font-size:14px; font-weight:700; cursor:pointer; transition:.15s;"
+                      onmouseover="this.style.filter='brightness(1.08)';"
+                      onmouseout="this.style.filter='none';">Kaydet</button>
+              <a href="/orders"
+                 style="padding:11px 28px; border-radius:10px; border:1px solid #2a2a2a; color:#606060; font-size:14px; font-weight:600; cursor:pointer; background:#1e1e1e; text-decoration:none; transition:.15s;"
+                 onmouseover="this.style.borderColor='#484848'; this.style.color='#ececec';"
+                 onmouseout="this.style.borderColor='#2a2a2a'; this.style.color='#606060';">İptal</a>
+            </div>
+          </form>
+        </div>
+
+        <!-- Gelirler bölümü -->
+        <div class="card p-7">
+          <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full" style="background:#22c55e;"></div>
+              <h2 class="text-sm font-bold uppercase tracking-wider" style="color:#606060;">Gelirler</h2>
+              <span id="incomeBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold"
+                    style="background:rgba(34,197,94,0.1); color:#22c55e; border:1px solid rgba(34,197,94,0.2);">
+                {{len .order.Incomes}}
+              </span>
+            </div>
+            <button onclick="toggleAdd()" class="btn-ghost">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Gelir Ekle
+            </button>
+          </div>
+
+          <!-- Mevcut gelirler -->
+          <div id="incomeList" class="space-y-2">
+            {{range .order.Incomes}}
+            <div class="income-row">
+              <div style="flex:1; min-width:0;">
+                <p style="color:#ececec; font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{.Name}}</p>
+                <p style="color:#484848; font-size:12px;">{{.IncomeCategoryName}} · {{.AccountName}} · {{.Date.Format "02.01.2006"}}</p>
+              </div>
+              <span style="color:#22c55e; font-size:13px; font-weight:700; white-space:nowrap; tabular-nums;">{{printf "%.2f" .Amount}} ₺</span>
+              <button onclick="deleteIncome({{.ID}})"
+                      style="padding:5px; border-radius:7px; border:none; cursor:pointer; background:transparent; color:#484848; flex-shrink:0; transition:.15s;"
+                      onmouseover="this.style.color='#ff5555';" onmouseout="this.style.color='#484848';">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            </div>
+            {{else}}
+            <p id="emptyMsg" style="color:#383838; font-size:13px; padding:4px 0;">Henüz gelir eklenmedi</p>
+            {{end}}
+          </div>
+
+          <!-- Gelir ekleme formu -->
+          <div id="addBlock" class="add-block space-y-3">
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Açıklama <span style="color:#ff5555;">*</span></label>
+              <input id="aiName" type="text" placeholder="Tur ödemesi" class="input-field">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Tutar <span style="color:#ff5555;">*</span></label>
+                <input id="aiAmount" type="number" step="0.01" min="0" placeholder="0.00" class="input-field">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Tarih <span style="color:#ff5555;">*</span></label>
+                <input id="aiDate" type="date" class="input-field">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Kategori <span style="color:#ff5555;">*</span></label>
+              <select id="aiCategory" class="input-field">
+                <option value="">Kategori seçin</option>
+                {{range .incomeCategories}}
+                <option value="{{.ID}}">{{.Name}}</option>
+                {{end}}
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Hesap <span style="color:#ff5555;">*</span></label>
+              <select id="aiAccount" class="input-field">
+                <option value="">Hesap seçin</option>
+                {{range .accounts}}
+                <option value="{{.ID}}">{{.Name}}</option>
+                {{end}}
+              </select>
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button type="button" onclick="cancelAdd()"
+                      style="flex:1; padding:9px; border-radius:9px; border:1px solid #2a2a2a; color:#606060; font-size:13px; font-weight:600; cursor:pointer; background:#1e1e1e;">İptal</button>
+              <button type="button" onclick="submitAdd()"
+                      style="flex:1; padding:9px; border-radius:9px; border:none; background:linear-gradient(135deg,#00d4ff,#7b2fff); color:#fff; font-size:13px; font-weight:700; cursor:pointer;">Ekle</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const orderId = {{.order.ID}};
+
+    // ── Sipariş güncelle ──
+    async function saveOrder(e) {
+      e.preventDefault();
+      const payload = {
+        client_id: parseInt(document.getElementById('fClient').value),
+        tour_id:   parseInt(document.getElementById('fTour').value),
+      };
+      try {
+        const res = await fetch(`/api/orders/${orderId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          showToast('✓ Sipariş güncellendi', 'success');
+        } else {
+          const err = await res.json();
+          showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'error');
+        }
+      } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
+    }
+
+    // ── Gelir ekle formu ──
+    function toggleAdd() {
+      const block = document.getElementById('addBlock');
+      const open = block.classList.toggle('open');
+      if (open) {
+        document.getElementById('aiDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('aiName').focus();
+      }
+    }
+    function cancelAdd() {
+      document.getElementById('addBlock').classList.remove('open');
+      document.getElementById('aiName').value = '';
+      document.getElementById('aiAmount').value = '';
+    }
+
+    async function submitAdd() {
+      const name   = document.getElementById('aiName').value.trim();
+      const amount = parseFloat(document.getElementById('aiAmount').value);
+      const date   = document.getElementById('aiDate').value;
+      const cat    = parseInt(document.getElementById('aiCategory').value);
+      const acc    = parseInt(document.getElementById('aiAccount').value);
+      if (!name || !amount || !date || !cat || !acc) {
+        showToast('✕ Tüm alanları doldurun', 'error'); return;
+      }
+      try {
+        const res = await fetch(`/api/orders/${orderId}/incomes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, amount, date, income_category_id: cat, account_id: acc }),
+        });
+        if (res.ok) {
+          showToast('✓ Gelir eklendi', 'success');
+          cancelAdd();
+          await reloadIncomes();
+        } else {
+          const err = await res.json();
+          showToast('✕ ' + (err.error || 'Hata'), 'error');
+        }
+      } catch { showToast('✕ Sunucu hatası', 'error'); }
+    }
+
+    async function deleteIncome(incomeId) {
+      if (!confirm('Bu geliri silmek istediğinizden emin misiniz?')) return;
+      try {
+        const res = await fetch(`/api/incomes/${incomeId}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('✓ Gelir silindi', 'success');
+          await reloadIncomes();
+        } else { showToast('✕ Silme başarısız', 'error'); }
+      } catch { showToast('✕ Sunucu hatası', 'error'); }
+    }
+
+    async function reloadIncomes() {
+      try {
+        const res = await fetch(`/api/orders/${orderId}`);
+        const order = await res.json();
+        const incomes = order.incomes || [];
+        const list = document.getElementById('incomeList');
+        const badge = document.getElementById('incomeBadge');
+        badge.textContent = incomes.length;
+
+        if (incomes.length === 0) {
+          list.innerHTML = '<p style="color:#383838; font-size:13px; padding:4px 0;">Henüz gelir eklenmedi</p>';
+          return;
+        }
+        list.innerHTML = incomes.map(inc => `
+          <div class="income-row">
+            <div style="flex:1; min-width:0;">
+              <p style="color:#ececec; font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${inc.name}</p>
+              <p style="color:#484848; font-size:12px;">${inc.income_category_name || ''} · ${inc.account_name || ''} · ${inc.date ? inc.date.substring(0,10) : ''}</p>
+            </div>
+            <span style="color:#22c55e; font-size:13px; font-weight:700; white-space:nowrap;">${parseFloat(inc.amount).toFixed(2)} ₺</span>
+            <button onclick="deleteIncome(${inc.id})"
+                    style="padding:5px; border-radius:7px; border:none; cursor:pointer; background:transparent; color:#484848; flex-shrink:0; transition:.15s;"
+                    onmouseover="this.style.color='#ff5555';" onmouseout="this.style.color='#484848';">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+            </button>
+          </div>`).join('');
+      } catch { showToast('✕ Gelirler yüklenemedi', 'error'); }
+    }
+
+    function showToast(msg, type) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show ' + type;
+      setTimeout(() => el.classList.remove('show'), 2800);
+    }
+  </script>
+</body>
+</html>

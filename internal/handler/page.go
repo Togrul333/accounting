@@ -454,6 +454,135 @@ func (h *PageHandler) Discounts(c *gin.Context) {
 	})
 }
 
+func (h *PageHandler) TourShow(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/tours")
+		return
+	}
+	tour, err := h.tourSvc.GetByID(c.Request.Context(), id)
+	if err != nil {
+		log.Printf("tour show page error: %v", err)
+		c.Redirect(http.StatusFound, "/tours")
+		return
+	}
+	allOrders, err := h.orderSvc.GetAll(c.Request.Context())
+	if err != nil {
+		allOrders = []model.Order{}
+	}
+	var tourOrders []model.Order
+	var incomeTotal float64
+	for _, o := range allOrders {
+		if o.TourID == id {
+			tourOrders = append(tourOrders, o)
+			incomeTotal += o.IncomeTotal
+		}
+	}
+	if tourOrders == nil {
+		tourOrders = []model.Order{}
+	}
+	c.HTML(http.StatusOK, "tour_show.html", gin.H{
+		"tour":        tour,
+		"orders":      tourOrders,
+		"incomeTotal": incomeTotal,
+		"active":      "tours",
+	})
+}
+
+func (h *PageHandler) TourEdit(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/tours")
+		return
+	}
+	tour, err := h.tourSvc.GetByID(c.Request.Context(), id)
+	if err != nil {
+		log.Printf("tour edit page error: %v", err)
+		c.Redirect(http.StatusFound, "/tours")
+		return
+	}
+	cats, err := h.tourCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		cats = []model.TourCategory{}
+	}
+	rooms, err := h.roomSvc.GetAll(c.Request.Context())
+	if err != nil {
+		rooms = []model.Room{}
+	}
+	c.HTML(http.StatusOK, "tour_edit.html", gin.H{
+		"tour":       tour,
+		"categories": cats,
+		"rooms":      rooms,
+		"active":     "tours",
+	})
+}
+
+func (h *PageHandler) OrderShow(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/orders")
+		return
+	}
+	order, err := h.orderSvc.GetByID(c.Request.Context(), id)
+	if err != nil {
+		log.Printf("order show page error: %v", err)
+		c.Redirect(http.StatusFound, "/orders")
+		return
+	}
+	incomeCategories, err := h.incomeCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		incomeCategories = []model.IncomeCategory{}
+	}
+	accounts, err := h.accountSvc.GetAll(c.Request.Context())
+	if err != nil {
+		accounts = []model.Account{}
+	}
+	c.HTML(http.StatusOK, "order_show.html", gin.H{
+		"order":            order,
+		"incomeCategories": incomeCategories,
+		"accounts":         accounts,
+		"active":           "orders",
+	})
+}
+
+func (h *PageHandler) OrderEdit(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/orders")
+		return
+	}
+	order, err := h.orderSvc.GetByID(c.Request.Context(), id)
+	if err != nil {
+		log.Printf("order edit page error: %v", err)
+		c.Redirect(http.StatusFound, "/orders")
+		return
+	}
+	clients, err := h.clientSvc.GetAll(c.Request.Context())
+	if err != nil {
+		clients = []model.Client{}
+	}
+	tours, err := h.tourSvc.GetAll(c.Request.Context())
+	if err != nil {
+		tours = []model.Tour{}
+	}
+	incomeCategories, err := h.incomeCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		incomeCategories = []model.IncomeCategory{}
+	}
+	accounts, err := h.accountSvc.GetAll(c.Request.Context())
+	if err != nil {
+		accounts = []model.Account{}
+	}
+	c.HTML(http.StatusOK, "order_edit.html", gin.H{
+		"order":            order,
+		"clients":          clients,
+		"tours":            tours,
+		"incomeCategories": incomeCategories,
+		"accounts":         accounts,
+		"active":           "orders",
+	})
+}
+
 func (h *PageHandler) Orders(c *gin.Context) {
 	ctx := c.Request.Context()
 

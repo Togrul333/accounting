@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.tour.Code}} — Hisar Tour</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .card { background:#161616; border:1px solid #242424; border-radius:16px; }
+    .sub-table thead tr { background: rgba(0,212,255,0.04); border-bottom: 1px solid #242424; }
+    .sub-table tbody tr { border-bottom: 1px solid #1e1e1e; transition: background .1s; }
+    .sub-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+    .sub-table tbody tr:last-child { border-bottom: none; }
+  </style>
+</head>
+<body style="background:#0d0d0d; min-height:100vh;">
+
+  {{template "sidebar" .}}
+  {{template "topbar" .}}
+
+  <div class="ml-64 min-h-screen flex flex-col">
+
+    <!-- Üst bar -->
+    <div class="px-8 h-16 flex items-center gap-4 flex-shrink-0"
+         style="background:#161616; border-bottom:1px solid #242424;">
+      <a href="/tours"
+         style="padding:6px 8px; border-radius:8px; border:1px solid #2a2a2a; color:#484848; display:inline-flex; align-items:center; transition:.15s;"
+         onmouseover="this.style.borderColor='#00d4ff'; this.style.color='#00d4ff';"
+         onmouseout="this.style.borderColor='#2a2a2a'; this.style.color='#484848';">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+      </a>
+      <div class="flex items-center gap-3 flex-1">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+             style="background:#1e1e1e; border:1px solid #2a2a2a;">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00d4ff" opacity=".7">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold leading-none" style="color:#ececec;">{{.tour.Code}}</h1>
+          <p class="text-xs mt-0.5" style="color:#484848;">{{.tour.StartDate.Format "02.01.2006"}} — {{.tour.EndDate.Format "02.01.2006"}}</p>
+        </div>
+      </div>
+      <a href="/tours/{{.tour.ID}}/edit"
+         style="display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#00d4ff,#7b2fff);color:#fff;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;transition:.15s;"
+         onmouseover="this.style.filter='brightness(1.08)';" onmouseout="this.style.filter='none';">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+        </svg>
+        Düzenle
+      </a>
+    </div>
+
+    <div class="p-8 flex-1">
+
+      <!-- Detay kartları -->
+      <div class="grid grid-cols-4 gap-4 mb-8">
+        <div class="card p-5">
+          <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Kategori</p>
+          <p class="text-sm font-bold" style="color:#ececec;">{{.tour.TourCategoryName}}</p>
+          <p class="text-xs mt-1 tabular-nums" style="color:#484848;">{{printf "%.2f" .tour.TourCategoryPrice}} ₺</p>
+        </div>
+        <div class="card p-5">
+          <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Oda</p>
+          <p class="text-sm font-bold tabular-nums" style="color:#00d4ff;">{{printf "%.2f" .tour.RoomPrice}} ₺</p>
+          <p class="text-xs mt-1" style="color:#484848;">{{.tour.RoomBedsCount}} yatak</p>
+        </div>
+        <div class="card p-5">
+          <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Sipariş Sayısı</p>
+          <p class="text-3xl font-extrabold tracking-tight" style="color:#ececec;">{{len .orders}}</p>
+        </div>
+        <div class="card p-5">
+          <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Toplam Gelir</p>
+          <p class="text-2xl font-extrabold tracking-tight tabular-nums" style="color:#22c55e;">{{printf "%.2f" .incomeTotal}} ₺</p>
+        </div>
+      </div>
+
+      <!-- Siparişler tablosu -->
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-2 h-2 rounded-full" style="background:#00d4ff;"></div>
+        <h2 class="text-sm font-bold uppercase tracking-wider" style="color:#606060;">Siparişler</h2>
+        <span class="text-xs px-2 py-0.5 rounded-full font-semibold"
+              style="background:rgba(0,212,255,0.1); color:#00d4ff; border:1px solid rgba(0,212,255,0.2);">
+          {{len .orders}}
+        </span>
+      </div>
+
+      <div class="card overflow-hidden">
+        {{if .orders}}
+        <table class="w-full sub-table">
+          <thead>
+            <tr>
+              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">#</th>
+              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Müşteri</th>
+              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Gelir Sayısı</th>
+              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Toplam Gelir</th>
+              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Tarih</th>
+              <th class="px-6 py-3.5 w-20"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .orders}}
+            <tr class="group">
+              <td class="px-6 py-4">
+                <span class="text-xs tabular-nums" style="color:#383838;">{{.ID}}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="font-semibold text-sm" style="color:#ececec;">{{.ClientName}}</span>
+              </td>
+              <td class="px-6 py-4">
+                {{if gt .IncomeCount 0}}
+                <span class="text-sm tabular-nums" style="color:#888;">{{.IncomeCount}} gelir</span>
+                {{else}}
+                <span class="text-xs" style="color:#383838;">—</span>
+                {{end}}
+              </td>
+              <td class="px-6 py-4">
+                {{if gt .IncomeTotal 0.0}}
+                <span class="text-sm font-bold tabular-nums" style="color:#22c55e;">{{printf "%.2f" .IncomeTotal}} ₺</span>
+                {{else}}
+                <span class="text-xs" style="color:#383838;">—</span>
+                {{end}}
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-sm tabular-nums" style="color:#606060;">{{.CreatedAt.Format "02.01.2006"}}</span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                  <a href="/orders/{{.ID}}" title="Görüntüle"
+                     style="padding:6px; border-radius:8px; border:none; cursor:pointer; background:transparent; color:#484848; transition:.15s; display:inline-flex;"
+                     onmouseover="this.style.color='#00d4ff'; this.style.background='rgba(0,212,255,0.1)';"
+                     onmouseout="this.style.color='#484848'; this.style.background='transparent';">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+        {{else}}
+        <div class="flex flex-col items-center justify-center py-16">
+          <p class="text-sm font-semibold mb-1" style="color:#606060;">Sipariş bulunamadı</p>
+          <p class="text-xs" style="color:#383838;">Bu tura henüz sipariş eklenmemiş</p>
+        </div>
+        {{end}}
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

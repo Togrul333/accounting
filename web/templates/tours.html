@@ -131,11 +131,17 @@
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onclick='openEdit({{json .}})' title="Düzenle" class="action-btn edit">
+                  <a href="/tours/{{.ID}}" title="Görüntüle" class="action-btn edit">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </a>
+                  <a href="/tours/{{.ID}}/edit" title="Düzenle" class="action-btn edit">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                     </svg>
-                  </button>
+                  </a>
                   <button onclick="deleteItem({{.ID}})" title="Sil" class="action-btn delete">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -170,10 +176,11 @@
     const rooms = {{json .rooms}};
   </script>
 
+  <!-- Create modal -->
   <div id="modal" class="modal-overlay" onclick="closeModal()">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between px-6 pt-6 pb-5" style="border-bottom:1px solid #242424;">
-        <h3 id="modalTitle" class="text-base font-bold" style="color:#ececec;"></h3>
+        <h3 class="text-base font-bold" style="color:#ececec;">Yeni Tur</h3>
         <button onclick="closeModal()"
                 style="padding:6px; border-radius:8px; border:none; cursor:pointer; background:transparent; color:#484848; transition:.15s;"
                 onmouseover="this.style.background='#1e1e1e'; this.style.color='#ececec';"
@@ -227,9 +234,7 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    let editingId = null;
-
-    function populateSelects(selCatId, selRoomId) {
+    function populateSelects() {
       const catEl  = document.getElementById('fCategory');
       const roomEl = document.getElementById('fRoom');
       catEl.innerHTML  = '<option value="">Seçin...</option>';
@@ -238,35 +243,21 @@
         const o = document.createElement('option');
         o.value = c.id;
         o.textContent = `${c.name} — ${c.price.toFixed(2)} ₺`;
-        if (c.id === selCatId) o.selected = true;
         catEl.appendChild(o);
       });
       (rooms || []).forEach(r => {
         const o = document.createElement('option');
         o.value = r.id;
         o.textContent = `${r.price.toFixed(2)} ₺ / ${r.beds_count} yatak`;
-        if (r.id === selRoomId) o.selected = true;
         roomEl.appendChild(o);
       });
     }
 
     function openCreate() {
-      editingId = null;
-      document.getElementById('modalTitle').textContent = 'Yeni Tur';
       document.getElementById('tourForm').reset();
-      populateSelects(null, null);
+      populateSelects();
       document.getElementById('modal').classList.add('open');
       setTimeout(() => document.getElementById('fCode').focus(), 50);
-    }
-
-    function openEdit(tour) {
-      editingId = tour.id;
-      document.getElementById('modalTitle').textContent = 'Turu Düzenle';
-      document.getElementById('fCode').value  = tour.code;
-      document.getElementById('fStart').value = tour.start_date.substring(0, 10);
-      document.getElementById('fEnd').value   = tour.end_date.substring(0, 10);
-      populateSelects(tour.tour_category_id, tour.room_id);
-      document.getElementById('modal').classList.add('open');
     }
 
     function closeModal() { document.getElementById('modal').classList.remove('open'); }
@@ -281,13 +272,11 @@
         tour_category_id: parseInt(document.getElementById('fCategory').value),
         room_id:          parseInt(document.getElementById('fRoom').value),
       };
-      const url    = editingId ? `/api/tours/${editingId}` : '/api/tours';
-      const method = editingId ? 'PUT' : 'POST';
       try {
-        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const res = await fetch('/api/tours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         if (res.ok) {
           closeModal();
-          showToast('✓ ' + (editingId ? 'Tur güncellendi' : 'Tur eklendi'), 'success');
+          showToast('✓ Tur eklendi', 'success');
           setTimeout(() => location.reload(), 700);
         } else {
           const err = await res.json();

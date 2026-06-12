@@ -41,12 +41,16 @@ func NewRouter(
 	r.GET("/expenses", pages.Expenses)
 	r.GET("/expense-categories", pages.ExpenseCategories)
 	r.GET("/tours", pages.Tours)
+	r.GET("/tours/:id", pages.TourShow)
+	r.GET("/tours/:id/edit", pages.TourEdit)
 	r.GET("/tour-categories", pages.TourCategories)
 	r.GET("/rooms", pages.Rooms)
 	r.GET("/clients", pages.Clients)
 	r.GET("/discounts", pages.Discounts)
 	r.GET("/discount-categories", pages.DiscountCategories)
 	r.GET("/orders", pages.Orders)
+	r.GET("/orders/:id", pages.OrderShow)
+	r.GET("/orders/:id/edit", pages.OrderEdit)
 
 	api := r.Group("/api")
 	{

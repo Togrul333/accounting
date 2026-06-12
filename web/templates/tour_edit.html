@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turu Düzenle — Hisar Tour</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .input-field {
+      width: 100%; padding: 11px 14px; border-radius: 10px;
+      border: 1px solid #2a2a2a; background: #1e1e1e;
+      color: #ececec; font-size: 14px; outline: none; transition: all .2s;
+    }
+    .input-field::placeholder { color: #383838; }
+    .input-field:focus { border-color: #00d4ff; box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
+    select.input-field option { background: #1e1e1e; color: #ececec; }
+    .toast { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 11px 18px; border-radius: 12px; font-size: 13px; font-weight: 500; display: none; }
+    .toast.show { display: flex; align-items: center; gap: 8px; }
+    .toast.success { background: rgba(0,212,255,0.1); color: #00d4ff; border: 1px solid rgba(0,212,255,0.2); }
+    .toast.error   { background: #2a1a1a; color: #ff5555; border: 1px solid rgba(255,85,85,0.2); }
+  </style>
+</head>
+<body style="background:#0d0d0d; min-height:100vh;">
+
+  {{template "sidebar" .}}
+  {{template "topbar" .}}
+
+  <div class="ml-64 min-h-screen flex flex-col">
+
+    <div class="px-8 h-16 flex items-center gap-4 flex-shrink-0"
+         style="background:#161616; border-bottom:1px solid #242424;">
+      <a href="/tours"
+         style="padding:6px 8px; border-radius:8px; border:1px solid #2a2a2a; color:#484848; display:inline-flex; align-items:center; transition:.15s;"
+         onmouseover="this.style.borderColor='#00d4ff'; this.style.color='#00d4ff';"
+         onmouseout="this.style.borderColor='#2a2a2a'; this.style.color='#484848';">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+      </a>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+             style="background:#1e1e1e; border:1px solid #2a2a2a;">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00d4ff" opacity=".7">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold leading-none" style="color:#ececec;">Turu Düzenle</h1>
+          <p class="text-xs mt-0.5" style="color:#484848;">{{.tour.Code}}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-8">
+      <div class="max-w-lg">
+        <form id="editForm" onsubmit="saveTour(event)" class="space-y-5"
+              style="background:#161616; border:1px solid #242424; border-radius:16px; padding:28px;">
+
+          <div>
+            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Tur Kodu <span style="color:#ff5555;">*</span></label>
+            <input id="fCode" type="text" required class="input-field" value="{{.tour.Code}}">
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Başlangıç Tarihi <span style="color:#ff5555;">*</span></label>
+              <input id="fStart" type="date" required class="input-field" value="{{.tour.StartDate.Format "2006-01-02"}}">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Bitiş Tarihi <span style="color:#ff5555;">*</span></label>
+              <input id="fEnd" type="date" required class="input-field" value="{{.tour.EndDate.Format "2006-01-02"}}">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Tur Kategorisi <span style="color:#ff5555;">*</span></label>
+            <select id="fCategory" required class="input-field">
+              <option value="">Seçin...</option>
+              {{range .categories}}
+              <option value="{{.ID}}" {{if eq .ID $.tour.TourCategoryID}}selected{{end}}>
+                {{.Name}} — {{printf "%.2f" .Price}} ₺
+              </option>
+              {{end}}
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Oda <span style="color:#ff5555;">*</span></label>
+            <select id="fRoom" required class="input-field">
+              <option value="">Seçin...</option>
+              {{range .rooms}}
+              <option value="{{.ID}}" {{if eq .ID $.tour.RoomID}}selected{{end}}>
+                {{printf "%.2f" .Price}} ₺ / {{.BedsCount}} yatak
+              </option>
+              {{end}}
+            </select>
+          </div>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button type="submit"
+                    style="padding:11px 28px; border-radius:10px; border:none; background:linear-gradient(135deg,#00d4ff,#7b2fff); color:#fff; font-size:14px; font-weight:700; cursor:pointer; transition:.15s;"
+                    onmouseover="this.style.filter='brightness(1.08)';"
+                    onmouseout="this.style.filter='none';">Kaydet</button>
+            <a href="/tours"
+               style="padding:11px 28px; border-radius:10px; border:1px solid #2a2a2a; color:#606060; font-size:14px; font-weight:600; cursor:pointer; background:#1e1e1e; text-decoration:none; transition:.15s;"
+               onmouseover="this.style.borderColor='#484848'; this.style.color='#ececec';"
+               onmouseout="this.style.borderColor='#2a2a2a'; this.style.color='#606060';">İptal</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const tourId = {{.tour.ID}};
+
+    async function saveTour(e) {
+      e.preventDefault();
+      const payload = {
+        code:             document.getElementById('fCode').value.trim(),
+        start_date:       document.getElementById('fStart').value,
+        end_date:         document.getElementById('fEnd').value,
+        tour_category_id: parseInt(document.getElementById('fCategory').value),
+        room_id:          parseInt(document.getElementById('fRoom').value),
+      };
+      try {
+        const res = await fetch(`/api/tours/${tourId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          showToast('✓ Tur güncellendi', 'success');
+          setTimeout(() => window.location.href = '/tours', 700);
+        } else {
+          const err = await res.json();
+          showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'error');
+        }
+      } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
+    }
+
+    function showToast(msg, type) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show ' + type;
+      setTimeout(() => el.classList.remove('show'), 2800);
+    }
+  </script>
+</body>
+</html>
