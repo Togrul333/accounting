@@ -28,6 +28,7 @@ type Income struct {
 	AccountName        string    `json:"account_name,omitempty" gorm:"<-:false"`
 	TourID             *int64    `json:"tour_id"`
 	TourCode           string    `json:"tour_code,omitempty" gorm:"<-:false"`
+	OrderID            *int64    `json:"order_id"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
 }
@@ -39,6 +40,7 @@ type CreateIncomeRequest struct {
 	IncomeCategoryID int64   `json:"income_category_id"`
 	AccountID        int64   `json:"account_id"`
 	TourID           *int64  `json:"tour_id"`
+	OrderID          *int64  `json:"order_id"`
 }
 
 type UpdateIncomeRequest struct {
@@ -48,4 +50,5 @@ type UpdateIncomeRequest struct {
 	IncomeCategoryID int64   `json:"income_category_id"`
 	AccountID        int64   `json:"account_id"`
 	TourID           *int64  `json:"tour_id"`
+	OrderID          *int64  `json:"order_id"`
 }

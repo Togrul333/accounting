@@ -10,82 +10,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { font-family: 'Inter', sans-serif; }
-    .input-field {
-      width: 100%; padding: 10px 14px; border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.15); background: rgba(0,0,0,0.1);
-      color: #0d1a12; font-size: 14px; outline: none; transition: all .2s;
-    }
-    .input-field::placeholder { color: rgba(0,0,0,0.3); }
-    .input-field:focus { border-color: #00d4ff; box-shadow: 0 0 0 3px rgba(0,212,255,0.12); }
-    select.input-field { cursor: pointer; }
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 8px 18px; border-radius: 10px; border: none;
-      background: linear-gradient(135deg, #00d4ff, #7b2fff);
-      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s;
-    }
-    .btn-primary:hover { filter: brightness(1.08); box-shadow: 0 0 24px rgba(0,212,255,0.2); }
     .card { background: rgb(99, 218, 160); border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; }
     .table-wrap { background: rgb(99, 218, 160); border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; overflow: hidden; }
     thead tr { background: rgba(0,0,0,0.07); border-bottom: 1px solid rgba(0,0,0,0.1); }
     tbody tr { border-bottom: 1px solid rgba(0,0,0,0.06); transition: background .1s; }
     tbody tr:hover { background: rgba(0,0,0,0.04); }
     tbody tr:last-child { border-bottom: none; }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(123,47,255,0.15); color: #7b2fff; border: 1px solid rgba(123,47,255,0.25); }
+    .badge      { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(123,47,255,0.15); color: #7b2fff; border: 1px solid rgba(123,47,255,0.25); }
     .badge-blue { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(0,212,255,0.15); color: #00a8cc; border: 1px solid rgba(0,212,255,0.25); }
-    .action-btn { padding: 6px; border-radius: 8px; border: none; cursor: pointer; background: transparent; color: rgba(0,0,0,0.3); transition: all .15s; }
-    .action-btn.edit:hover  { color: #00d4ff; background: rgba(0,212,255,0.12); }
-    .action-btn.delete:hover { color: #ff5555; background: rgba(255,85,85,0.1); }
-    .modal-overlay { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); }
-    .modal-overlay.open { display: flex; }
-    .modal-card { background: rgb(99, 218, 160); border: 1px solid rgba(0,0,0,0.08); border-radius: 20px; width: 100%; max-width: 448px; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
-    .toast { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 11px 18px; border-radius: 12px; font-size: 13px; font-weight: 500; display: none; }
-    .toast.show { display: flex; align-items: center; gap: 8px; }
-    .toast.success { background: rgba(0,212,255,0.15); color: #00d4ff; border: 1px solid rgba(0,212,255,0.25); }
-    .toast.error   { background: #2a1a1a; color: #ff5555; border: 1px solid rgba(255,85,85,0.2); }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: #0d0d0d; }
-    ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
-
-    .bulk-card {
-      background: rgba(0,0,0,0.12);
-      border: 1px solid rgba(0,0,0,0.18);
-      border-radius: 14px;
-      padding: 14px 16px 16px;
-    }
-    .row-label {
-      display: block; font-size: 10px; font-weight: 700;
-      letter-spacing: .07em; text-transform: uppercase;
-      color: rgba(0,0,0,0.5); margin-bottom: 5px;
-    }
-    .row-input {
-      width: 100%; padding: 9px 12px; border-radius: 9px;
-      border: 1px solid rgba(0,0,0,0.18);
-      background: rgba(0,0,0,0.1);
-      color: #0d1a12; font-size: 13px; outline: none;
-      transition: all .18s; font-family: 'Inter', sans-serif;
-    }
-    .row-input::placeholder { color: rgba(0,0,0,0.3); }
-    .row-input:focus {
-      border-color: #00d4ff;
-      box-shadow: 0 0 0 3px rgba(0,212,255,0.18);
-      background: rgba(0,0,0,0.06);
-    }
-    select.row-input { cursor: pointer; }
-    #bulkRows::-webkit-scrollbar { width: 4px; }
-    #bulkRows::-webkit-scrollbar-track { background: transparent; }
-    #bulkRows::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
   </style>
 </head>
 <body style="background:#0d0d0d; min-height:100vh;">
 
   {{template "sidebar" .}}
-{{template "topbar" .}}
+  {{template "topbar" .}}
 
   <div class="ml-64 min-h-screen flex flex-col">
 
-    <!-- Üst bar -->
-    <div class="px-8 h-16 flex items-center justify-between flex-shrink-0"
+    <div class="px-8 h-16 flex items-center flex-shrink-0"
          style="background:#161616; border-bottom:1px solid #242424;">
       <div class="flex items-center gap-3">
         <div class="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -96,20 +38,13 @@
         </div>
         <div>
           <h1 class="text-base font-bold leading-none" style="color:#ececec;">Gelirler</h1>
-          <p class="text-xs mt-0.5" style="color:#484848;">Gelirleri yönetin</p>
+          <p class="text-xs mt-0.5" style="color:#484848;">Tüm gelirler</p>
         </div>
       </div>
-      <button onclick="openCreate()" class="btn-primary">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Gelir Ekle
-      </button>
     </div>
 
     <div class="p-8 flex-1">
 
-      <!-- İstatistik kartları -->
       <div class="grid grid-cols-2 gap-5 mb-8 max-w-md">
         <div class="card p-5">
           <div class="flex items-center gap-3 mb-4">
@@ -118,7 +53,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
               </svg>
             </div>
-            <p class="text-xs font-semibold uppercase tracking-wider" style="color:#2a5035;">Toplam Gelir</p>
+            <p class="text-xs font-semibold uppercase tracking-wider" style="color:#2a5035;">Kayıt</p>
           </div>
           <p class="text-3xl font-extrabold tracking-tight" style="color:#0d1a12;">{{len .incomes}}</p>
         </div>
@@ -131,11 +66,10 @@
             </div>
             <p class="text-xs font-semibold uppercase tracking-wider" style="color:#2a5035;">Toplam Tutar</p>
           </div>
-          <p class="text-2xl font-extrabold tracking-tight" style="color:#7b2fff;">{{printf "%.2f" .total}}</p>
+          <p class="text-2xl font-extrabold tracking-tight" style="color:#7b2fff;">{{printf "%.2f" .total}} ₺</p>
         </div>
       </div>
 
-      <!-- Tablo -->
       <div class="table-wrap">
         {{if .incomes}}
         <table class="w-full">
@@ -147,12 +81,11 @@
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tur</th>
               <th class="text-right px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tutar</th>
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tarih</th>
-              <th class="px-6 py-3.5 w-20"></th>
             </tr>
           </thead>
           <tbody>
             {{range .incomes}}
-            <tr class="group">
+            <tr>
               <td class="px-6 py-4">
                 <span class="font-semibold text-sm" style="color:#0d1a12;">{{.Name}}</span>
               </td>
@@ -166,24 +99,10 @@
                 {{if .TourCode}}<span class="badge">{{.TourCode}}</span>{{else}}<span style="color:rgba(0,0,0,0.25);">—</span>{{end}}
               </td>
               <td class="px-6 py-4 text-right">
-                <span class="font-bold text-sm tabular-nums" style="color:#7b2fff;">{{printf "%.2f" .Amount}}</span>
+                <span class="font-bold text-sm tabular-nums" style="color:#7b2fff;">{{printf "%.2f" .Amount}} ₺</span>
               </td>
               <td class="px-6 py-4">
                 <span class="text-sm tabular-nums" style="color:#3a5a40;">{{.Date.Format "02.01.2006"}}</span>
-              </td>
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onclick='openEdit({{json .}})' title="Düzenle" class="action-btn edit">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                    </svg>
-                  </button>
-                  <button onclick="deleteIncome({{.ID}})" title="Sil" class="action-btn delete">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                  </button>
-                </div>
               </td>
             </tr>
             {{end}}
@@ -197,293 +116,13 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
             </svg>
           </div>
-          <p class="font-semibold mb-1" style="color:#2a5035;">Gelir bulunamadı</p>
-          <p class="text-sm mb-6" style="color:rgba(0,0,0,0.35);">İlk gelirinizi ekleyin</p>
-          <button onclick="openCreate()" class="btn-primary">+ Gelir Ekle</button>
+          <p class="font-semibold" style="color:#2a5035;">Henüz gelir yok</p>
+          <p class="text-sm mt-1" style="color:rgba(0,0,0,0.35);">Gelirler siparişlerden eklenir</p>
         </div>
         {{end}}
       </div>
     </div>
   </div>
 
-  <!-- Modal -->
-  <div id="modal" class="modal-overlay" onclick="closeModal()">
-    <div id="modalCard" class="modal-card" onclick="event.stopPropagation()">
-      <div class="flex items-center justify-between px-6 pt-6 pb-5" style="border-bottom:1px solid rgba(0,0,0,0.1);">
-        <h3 id="modalTitle" class="text-base font-bold" style="color:#0d1a12;"></h3>
-        <button onclick="closeModal()"
-                style="padding:6px; border-radius:8px; border:none; cursor:pointer; background:transparent; color:rgba(0,0,0,0.4); transition:.15s;"
-                onmouseover="this.style.background='rgba(0,0,0,0.1)'; this.style.color='#0d1a12';"
-                onmouseout="this.style.background='transparent'; this.style.color='rgba(0,0,0,0.4)';">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Bulk create view -->
-      <div id="bulkView">
-        <form id="bulkForm" onsubmit="saveBulk(event)">
-          <div id="bulkRows" style="max-height:60vh; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:10px;"></div>
-          <div style="padding:0 24px 20px; display:flex; flex-direction:column; gap:12px;">
-            <button type="button" onclick="addBulkRow()"
-                    style="width:100%; padding:9px; border-radius:10px; border:1px dashed rgba(0,212,255,0.4); color:#00a8cc; font-size:13px; font-weight:600; cursor:pointer; background:rgba(0,212,255,0.05); transition:.15s;"
-                    onmouseover="this.style.background='rgba(0,212,255,0.1)'; this.style.borderColor='rgba(0,212,255,0.7)';"
-                    onmouseout="this.style.background='rgba(0,212,255,0.05)'; this.style.borderColor='rgba(0,212,255,0.4)';">+ Satır Ekle</button>
-            <div class="flex gap-3">
-              <button type="button" onclick="closeModal()"
-                      style="flex:1; padding:11px; border-radius:10px; border:1px solid rgba(0,0,0,0.14); color:#2a5035; font-size:14px; font-weight:600; cursor:pointer; background:rgba(0,0,0,0.08); transition:.15s;"
-                      onmouseover="this.style.background='rgba(0,0,0,0.14)'; this.style.color='#0d1a12';"
-                      onmouseout="this.style.background='rgba(0,0,0,0.08)'; this.style.color='#2a5035';">İptal</button>
-              <button type="submit"
-                      style="flex:1; padding:11px; border-radius:10px; border:none; background:linear-gradient(135deg,#00d4ff,#7b2fff); color:#fff; font-size:14px; font-weight:700; cursor:pointer; transition:.15s;"
-                      onmouseover="this.style.filter='brightness(1.08)'; this.style.boxShadow='0 0 24px rgba(0,212,255,0.2)';"
-                      onmouseout="this.style.filter='none'; this.style.boxShadow='none';">Kaydet</button>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      <!-- Edit view -->
-      <div id="editView" style="display:none;">
-        <form id="incomeForm" onsubmit="saveIncome(event)" class="px-6 py-5 space-y-4">
-          <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#2a5035;">
-              Ad <span style="color:#ff5555;">*</span>
-            </label>
-            <input id="fName" type="text" required placeholder="Tur ödemesi" class="input-field">
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium mb-1.5" style="color:#2a5035;">
-                Tutar <span style="color:#ff5555;">*</span>
-              </label>
-              <input id="fAmount" type="number" step="0.01" min="0" required placeholder="0.00" class="input-field">
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1.5" style="color:#2a5035;">
-                Tarih <span style="color:#ff5555;">*</span>
-              </label>
-              <input id="fDate" type="date" required class="input-field">
-            </div>
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#2a5035;">
-              Kategori <span style="color:#ff5555;">*</span>
-            </label>
-            <select id="fCategory" required class="input-field">
-              <option value="">Kategori seçin...</option>
-              {{range .categories}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#2a5035;">
-              Hesap <span style="color:#ff5555;">*</span>
-            </label>
-            <select id="fAccount" required class="input-field">
-              <option value="">Hesap seçin...</option>
-              {{range .accounts}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#2a5035;">Tur</label>
-            <select id="fTour" class="input-field">
-              <option value="">Tur seçin (isteğe bağlı)...</option>
-              {{range .tours}}<option value="{{.ID}}">{{.Code}}</option>{{end}}
-            </select>
-          </div>
-          <div class="flex gap-3 pt-1">
-            <button type="button" onclick="closeModal()"
-                    style="flex:1; padding:11px; border-radius:10px; border:1px solid rgba(0,0,0,0.14); color:#2a5035; font-size:14px; font-weight:600; cursor:pointer; background:rgba(0,0,0,0.08); transition:.15s;"
-                    onmouseover="this.style.background='rgba(0,0,0,0.14)'; this.style.color='#0d1a12';"
-                    onmouseout="this.style.background='rgba(0,0,0,0.08)'; this.style.color='#2a5035';">İptal</button>
-            <button type="submit"
-                    style="flex:1; padding:11px; border-radius:10px; border:none; background:linear-gradient(135deg,#00d4ff,#7b2fff); color:#fff; font-size:14px; font-weight:700; cursor:pointer; transition:.15s;"
-                    onmouseover="this.style.filter='brightness(1.08)'; this.style.boxShadow='0 0 24px rgba(0,212,255,0.2)';"
-                    onmouseout="this.style.filter='none'; this.style.boxShadow='none';">Kaydet</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast" class="toast"></div>
-
-  <script>
-    let editingId = null;
-
-    function openCreate() {
-      editingId = null;
-      document.getElementById('modalTitle').textContent = 'Yeni Gelir';
-      document.getElementById('modalCard').style.maxWidth = '680px';
-      document.getElementById('bulkView').style.display = '';
-      document.getElementById('editView').style.display = 'none';
-      document.getElementById('bulkRows').innerHTML = '';
-      addBulkRow();
-      document.getElementById('modal').classList.add('open');
-    }
-
-    function openEdit(inc) {
-      editingId = inc.id;
-      document.getElementById('modalTitle').textContent = 'Geliri Düzenle';
-      document.getElementById('modalCard').style.maxWidth = '448px';
-      document.getElementById('bulkView').style.display = 'none';
-      document.getElementById('editView').style.display = '';
-      document.getElementById('fName').value     = inc.name;
-      document.getElementById('fAmount').value   = inc.amount;
-      document.getElementById('fDate').value     = inc.date.split('T')[0];
-      document.getElementById('fCategory').value = inc.income_category_id;
-      document.getElementById('fAccount').value  = inc.account_id;
-      document.getElementById('fTour').value     = inc.tour_id || '';
-      document.getElementById('modal').classList.add('open');
-    }
-
-    function closeModal() { document.getElementById('modal').classList.remove('open'); }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-    const today = new Date().toISOString().split('T')[0];
-
-    const categoryOptions = `<option value="">Kategori...</option>` +
-      [{{range .categories}}{id:{{.ID}},name:{{.Name | printf "%q"}}},{{end}}]
-      .map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-
-    const accountOptions = `<option value="">Hesap...</option>` +
-      [{{range .accounts}}{id:{{.ID}},name:{{.Name | printf "%q"}}},{{end}}]
-      .map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-
-    const tourOptions = `<option value="">Tur (isteğe bağlı)...</option>` +
-      [{{range .tours}}{id:{{.ID}},code:{{.Code | printf "%q"}}},{{end}}]
-      .map(t => `<option value="${t.id}">${t.code}</option>`).join('');
-
-    function addBulkRow() {
-      const container = document.getElementById('bulkRows');
-      const num = container.children.length + 1;
-      const card = document.createElement('div');
-      card.className = 'bulk-card';
-      card.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-          <span style="font-size:11px; font-weight:700; color:rgba(0,0,0,0.35); letter-spacing:.05em; text-transform:uppercase;">#${num}</span>
-          <button type="button" onclick="removeRow(this)"
-                  style="display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:7px; border:none; cursor:pointer; background:rgba(255,85,85,0.08); color:rgba(200,50,50,0.5); transition:.15s;"
-                  onmouseover="this.style.background='rgba(255,85,85,0.18)'; this.style.color='#e03333';"
-                  onmouseout="this.style.background='rgba(255,85,85,0.08)'; this.style.color='rgba(200,50,50,0.5)';">
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <div>
-            <label class="row-label">Ad</label>
-            <input type="text" placeholder="Tur ödemesi" class="row-input" required>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
-            <div>
-              <label class="row-label">Tutar</label>
-              <input type="number" step="0.01" min="0" placeholder="0.00" class="row-input" required>
-            </div>
-            <div>
-              <label class="row-label">Tarih</label>
-              <input type="date" class="row-input" value="${today}" required>
-            </div>
-            <div>
-              <label class="row-label">Kategori</label>
-              <select class="row-input" required>${categoryOptions}</select>
-            </div>
-          </div>
-          <div>
-            <label class="row-label">Hesap</label>
-            <select class="row-input" required>${accountOptions}</select>
-          </div>
-          <div>
-            <label class="row-label">Tur</label>
-            <select class="row-input row-tour">${tourOptions}</select>
-          </div>
-        </div>`;
-      container.appendChild(card);
-    }
-
-    function removeRow(btn) {
-      const rows = document.getElementById('bulkRows');
-      if (rows.children.length > 1) btn.closest('.bulk-card').remove();
-    }
-
-    async function saveBulk(e) {
-      e.preventDefault();
-      const cards = document.getElementById('bulkRows').querySelectorAll('.bulk-card');
-      const items = [];
-      for (const card of cards) {
-        const inputs  = card.querySelectorAll('input.row-input');
-        const selects = card.querySelectorAll('select.row-input:not(.row-tour)');
-        const tourSel = card.querySelector('select.row-tour');
-        const name    = inputs[0].value.trim();
-        const amount  = parseFloat(inputs[1].value);
-        const date    = inputs[2].value;
-        const catId   = parseInt(selects[0].value);
-        const accId   = parseInt(selects[1].value);
-        if (!name || isNaN(amount) || !date || !catId || !accId) continue;
-        const tourId  = tourSel && tourSel.value ? parseInt(tourSel.value) : null;
-        items.push({ name, amount, date, income_category_id: catId, account_id: accId, tour_id: tourId });
-      }
-      if (!items.length) { showToast('✕ En az bir kalem ekleyin', 'error'); return; }
-      try {
-        const res = await fetch('/api/incomes/bulk', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(items),
-        });
-        if (res.ok) {
-          closeModal();
-          showToast(`✓ ${items.length} gelir eklendi`, 'success');
-          setTimeout(() => location.reload(), 700);
-        } else {
-          const err = await res.json();
-          showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'error');
-        }
-      } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
-    }
-
-    async function saveIncome(e) {
-      e.preventDefault();
-      const tourVal = document.getElementById('fTour').value;
-      const payload = {
-        name:               document.getElementById('fName').value.trim(),
-        amount:             parseFloat(document.getElementById('fAmount').value),
-        date:               document.getElementById('fDate').value,
-        income_category_id: parseInt(document.getElementById('fCategory').value),
-        account_id:         parseInt(document.getElementById('fAccount').value),
-        tour_id:            tourVal ? parseInt(tourVal) : null,
-      };
-      try {
-        const res = await fetch(`/api/incomes/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        if (res.ok) {
-          closeModal();
-          showToast('✓ Gelir güncellendi', 'success');
-          setTimeout(() => location.reload(), 700);
-        } else {
-          const err = await res.json();
-          showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'error');
-        }
-      } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
-    }
-
-    async function deleteIncome(id) {
-      if (!confirm('Bu geliri silmek istediğinizden emin misiniz?')) return;
-      try {
-        const res = await fetch(`/api/incomes/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          showToast('✓ Gelir silindi', 'success');
-          setTimeout(() => location.reload(), 700);
-        } else { showToast('✕ Silme işlemi başarısız', 'error'); }
-      } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
-    }
-
-    function showToast(msg, type) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = 'toast show ' + type;
-      setTimeout(() => el.classList.remove('show'), 2800);
-    }
-  </script>
 </body>
 </html>

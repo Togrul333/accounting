@@ -31,10 +31,12 @@ const expenseSelectQuery = `
 	SELECT e.id, e.name, e.amount, e.date,
 	       e.expense_category_id, c.name AS expense_category_name,
 	       e.account_id, a.name AS account_name,
+	       e.tour_id, t.code AS tour_code,
 	       e.created_at, e.updated_at
 	FROM expenses e
 	JOIN expense_categories c ON c.id = e.expense_category_id
-	JOIN accounts a ON a.id = e.account_id`
+	JOIN accounts a ON a.id = e.account_id
+	LEFT JOIN tours t ON t.id = e.tour_id`
 
 func (r *expenseRepo) GetAll(ctx context.Context) ([]model.Expense, error) {
 	var expenses []model.Expense
@@ -77,6 +79,7 @@ func (r *expenseRepo) Create(ctx context.Context, req model.CreateExpenseRequest
 		Date:              date,
 		ExpenseCategoryID: req.ExpenseCategoryID,
 		AccountID:         req.AccountID,
+		TourID:            req.TourID,
 	}
 	if err := r.db.WithContext(ctx).Create(&exp).Error; err != nil {
 		return nil, err
@@ -98,6 +101,7 @@ func (r *expenseRepo) BulkCreate(ctx context.Context, reqs []model.CreateExpense
 				Date:              date,
 				ExpenseCategoryID: req.ExpenseCategoryID,
 				AccountID:         req.AccountID,
+				TourID:            req.TourID,
 			}
 			if err := tx.Create(&exp).Error; err != nil {
 				return err
@@ -132,6 +136,7 @@ func (r *expenseRepo) Update(ctx context.Context, id int64, req model.UpdateExpe
 		"date":                date,
 		"expense_category_id": req.ExpenseCategoryID,
 		"account_id":          req.AccountID,
+		"tour_id":             req.TourID,
 	})
 	if result.Error != nil {
 		return nil, result.Error

@@ -21,6 +21,7 @@ func NewRouter(
 	users *UserHandler,
 	discountCategories *DiscountCategoryHandler,
 	discounts *DiscountHandler,
+	orders *OrderHandler,
 	pages *PageHandler,
 	tmpl *template.Template,
 ) *gin.Engine {
@@ -45,6 +46,7 @@ func NewRouter(
 	r.GET("/clients", pages.Clients)
 	r.GET("/discounts", pages.Discounts)
 	r.GET("/discount-categories", pages.DiscountCategories)
+	r.GET("/orders", pages.Orders)
 
 	api := r.Group("/api")
 	{
@@ -120,6 +122,13 @@ func NewRouter(
 		api.GET("/discounts/:id", discounts.GetByID)
 		api.PUT("/discounts/:id", discounts.Update)
 		api.DELETE("/discounts/:id", discounts.Delete)
+
+		api.GET("/orders", orders.GetAll)
+		api.POST("/orders", orders.Create)
+		api.GET("/orders/:id", orders.GetByID)
+		api.PUT("/orders/:id", orders.Update)
+		api.DELETE("/orders/:id", orders.Delete)
+		api.POST("/orders/:id/incomes", orders.AddIncome)
 	}
 
 	return r

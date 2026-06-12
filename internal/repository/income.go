@@ -13,6 +13,7 @@ type IncomeRepository interface {
 	GetAll(ctx context.Context) ([]model.Income, error)
 	GetByID(ctx context.Context, id int64) (*model.Income, error)
 	GetByAccountID(ctx context.Context, accountID int64) ([]model.Income, error)
+	GetByOrderID(ctx context.Context, orderID int64) ([]model.Income, error)
 	Create(ctx context.Context, req model.CreateIncomeRequest) (*model.Income, error)
 	BulkCreate(ctx context.Context, reqs []model.CreateIncomeRequest) ([]model.Income, error)
 	Update(ctx context.Context, id int64, req model.UpdateIncomeRequest) (*model.Income, error)
@@ -32,6 +33,7 @@ const incomeSelectQuery = `
 	       i.income_category_id, c.name AS income_category_name,
 	       i.account_id, a.name AS account_name,
 	       i.tour_id, t.code AS tour_code,
+	       i.order_id,
 	       i.created_at, i.updated_at
 	FROM incomes i
 	JOIN income_categories c ON c.id = i.income_category_id
@@ -68,6 +70,15 @@ func (r *incomeRepo) GetByAccountID(ctx context.Context, accountID int64) ([]mod
 	return incomes, err
 }
 
+func (r *incomeRepo) GetByOrderID(ctx context.Context, orderID int64) ([]model.Income, error) {
+	var incomes []model.Income
+	err := r.db.WithContext(ctx).Raw(incomeSelectQuery+` WHERE i.order_id = ? ORDER BY i.date DESC, i.id DESC`, orderID).Scan(&incomes).Error
+	if incomes == nil {
+		incomes = []model.Income{}
+	}
+	return incomes, err
+}
+
 func (r *incomeRepo) Create(ctx context.Context, req model.CreateIncomeRequest) (*model.Income, error) {
 	date, err := time.Parse("2006-01-02", req.Date)
 	if err != nil {
@@ -80,6 +91,7 @@ func (r *incomeRepo) Create(ctx context.Context, req model.CreateIncomeRequest) 
 		IncomeCategoryID: req.IncomeCategoryID,
 		AccountID:        req.AccountID,
 		TourID:           req.TourID,
+		OrderID:          req.OrderID,
 	}
 	if err := r.db.WithContext(ctx).Create(&inc).Error; err != nil {
 		return nil, err
@@ -102,6 +114,7 @@ func (r *incomeRepo) BulkCreate(ctx context.Context, reqs []model.CreateIncomeRe
 				IncomeCategoryID: req.IncomeCategoryID,
 				AccountID:        req.AccountID,
 				TourID:           req.TourID,
+				OrderID:          req.OrderID,
 			}
 			if err := tx.Create(&inc).Error; err != nil {
 				return err
@@ -137,6 +150,7 @@ func (r *incomeRepo) Update(ctx context.Context, id int64, req model.UpdateIncom
 		"income_category_id": req.IncomeCategoryID,
 		"account_id":         req.AccountID,
 		"tour_id":            req.TourID,
+		"order_id":           req.OrderID,
 	})
 	if result.Error != nil {
 		return nil, result.Error

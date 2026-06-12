@@ -1,0 +1,2 @@
+ALTER TABLE expenses ADD COLUMN tour_id BIGINT DEFAULT NULL AFTER account_id;
+ALTER TABLE expenses ADD CONSTRAINT fk_expenses_tour FOREIGN KEY (tour_id) REFERENCES tours(id) ON DELETE SET NULL;

@@ -22,19 +22,20 @@ type dashboardTransaction struct {
 }
 
 type PageHandler struct {
-	accountSvc             *service.AccountService
-	incomeCategorySvc      *service.IncomeCategoryService
-	incomeSvc              *service.IncomeService
-	expenseCategorySvc     *service.ExpenseCategoryService
-	expenseSvc             *service.ExpenseService
-	tourCategorySvc        *service.TourCategoryService
-	roomSvc                *service.RoomService
-	tourSvc                *service.TourService
-	clientSvc              *service.ClientService
-	settingSvc             *service.SettingService
-	userSvc                *service.UserService
-	discountCategorySvc    *service.DiscountCategoryService
-	discountSvc            *service.DiscountService
+	accountSvc          *service.AccountService
+	incomeCategorySvc   *service.IncomeCategoryService
+	incomeSvc           *service.IncomeService
+	expenseCategorySvc  *service.ExpenseCategoryService
+	expenseSvc          *service.ExpenseService
+	tourCategorySvc     *service.TourCategoryService
+	roomSvc             *service.RoomService
+	tourSvc             *service.TourService
+	clientSvc           *service.ClientService
+	settingSvc          *service.SettingService
+	userSvc             *service.UserService
+	discountCategorySvc *service.DiscountCategoryService
+	discountSvc         *service.DiscountService
+	orderSvc            *service.OrderService
 }
 
 func NewPageHandler(
@@ -51,6 +52,7 @@ func NewPageHandler(
 	userSvc *service.UserService,
 	discountCategorySvc *service.DiscountCategoryService,
 	discountSvc *service.DiscountService,
+	orderSvc *service.OrderService,
 ) *PageHandler {
 	return &PageHandler{
 		accountSvc:          accountSvc,
@@ -66,6 +68,7 @@ func NewPageHandler(
 		userSvc:             userSvc,
 		discountCategorySvc: discountCategorySvc,
 		discountSvc:         discountSvc,
+		orderSvc:            orderSvc,
 	}
 }
 
@@ -445,6 +448,48 @@ func (h *PageHandler) Discounts(c *gin.Context) {
 	})
 }
 
+func (h *PageHandler) Orders(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	orders, err := h.orderSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("orders page error: %v", err)
+		orders = []model.Order{}
+	}
+	if orders == nil {
+		orders = []model.Order{}
+	}
+
+	clients, err := h.clientSvc.GetAll(ctx)
+	if err != nil {
+		clients = []model.Client{}
+	}
+
+	tours, err := h.tourSvc.GetAll(ctx)
+	if err != nil {
+		tours = []model.Tour{}
+	}
+
+	incomeCategories, err := h.incomeCategorySvc.GetAll(ctx)
+	if err != nil {
+		incomeCategories = []model.IncomeCategory{}
+	}
+
+	accounts, err := h.accountSvc.GetAll(ctx)
+	if err != nil {
+		accounts = []model.Account{}
+	}
+
+	c.HTML(http.StatusOK, "orders.html", gin.H{
+		"orders":           orders,
+		"clients":          clients,
+		"tours":            tours,
+		"incomeCategories": incomeCategories,
+		"accounts":         accounts,
+		"active":           "orders",
+	})
+}
+
 func (h *PageHandler) Expenses(c *gin.Context) {
 	expenses, err := h.expenseSvc.GetAll(c.Request.Context())
 	if err != nil {
@@ -465,6 +510,11 @@ func (h *PageHandler) Expenses(c *gin.Context) {
 		accounts = []model.Account{}
 	}
 
+	tours, err := h.tourSvc.GetAll(c.Request.Context())
+	if err != nil {
+		tours = []model.Tour{}
+	}
+
 	var total float64
 	for _, exp := range expenses {
 		total += exp.Amount
@@ -474,6 +524,7 @@ func (h *PageHandler) Expenses(c *gin.Context) {
 		"expenses":   expenses,
 		"categories": cats,
 		"accounts":   accounts,
+		"tours":      tours,
 		"total":      total,
 		"active":     "expenses",
 	})

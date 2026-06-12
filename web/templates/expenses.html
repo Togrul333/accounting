@@ -141,6 +141,7 @@
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Ad</th>
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Kategori</th>
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Hesap</th>
+              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tur</th>
               <th class="text-right px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tutar</th>
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tarih</th>
               <th class="px-6 py-3.5 w-20"></th>
@@ -152,6 +153,9 @@
               <td class="px-6 py-4"><span class="font-semibold text-sm" style="color:#0d1a12;">{{.Name}}</span></td>
               <td class="px-6 py-4"><span class="badge-red">{{.ExpenseCategoryName}}</span></td>
               <td class="px-6 py-4"><span class="badge-blue">{{.AccountName}}</span></td>
+              <td class="px-6 py-4">
+                {{if .TourCode}}<span class="badge-red">{{.TourCode}}</span>{{else}}<span style="color:rgba(0,0,0,0.25);">—</span>{{end}}
+              </td>
               <td class="px-6 py-4 text-right"><span class="font-bold text-sm tabular-nums" style="color:#c0392b;">{{printf "%.2f" .Amount}}</span></td>
               <td class="px-6 py-4"><span class="text-sm tabular-nums" style="color:#3a5a40;">{{.Date.Format "02.01.2006"}}</span></td>
               <td class="px-6 py-4">
@@ -267,6 +271,13 @@
               {{range .accounts}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
             </select>
           </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5" style="color:#2a5035;">Tur</label>
+            <select id="fTour" class="input-field">
+              <option value="">Tur seçin (isteğe bağlı)...</option>
+              {{range .tours}}<option value="{{.ID}}">{{.Code}}</option>{{end}}
+            </select>
+          </div>
           <div class="flex gap-3 pt-1">
             <button type="button" onclick="closeModal()"
                     style="flex:1; padding:11px; border-radius:10px; border:1px solid rgba(0,0,0,0.14); color:#2a5035; font-size:14px; font-weight:600; cursor:pointer; background:rgba(0,0,0,0.08); transition:.15s;"
@@ -309,6 +320,7 @@
       document.getElementById('fDate').value     = exp.date.split('T')[0];
       document.getElementById('fCategory').value = exp.expense_category_id;
       document.getElementById('fAccount').value  = exp.account_id;
+      document.getElementById('fTour').value     = exp.tour_id || '';
       document.getElementById('modal').classList.add('open');
     }
 
@@ -324,6 +336,10 @@
     const accountOptions = `<option value="">Hesap...</option>` +
       [{{range .accounts}}{id:{{.ID}},name:{{.Name | printf "%q"}}},{{end}}]
       .map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+
+    const tourOptions = `<option value="">Tur (isteğe bağlı)...</option>` +
+      [{{range .tours}}{id:{{.ID}},code:{{.Code | printf "%q"}}},{{end}}]
+      .map(t => `<option value="${t.id}">${t.code}</option>`).join('');
 
     function addBulkRow() {
       const container = document.getElementById('bulkRows');
@@ -365,6 +381,10 @@
             <label class="row-label">Hesap</label>
             <select class="row-input" required>${accountOptions}</select>
           </div>
+          <div>
+            <label class="row-label">Tur</label>
+            <select class="row-input row-tour">${tourOptions}</select>
+          </div>
         </div>`;
       container.appendChild(card);
     }
@@ -386,8 +406,10 @@
         const date    = inputs[2].value;
         const catId   = parseInt(selects[0].value);
         const accId   = parseInt(selects[1].value);
+        const tourSel = card.querySelector('select.row-tour');
         if (!name || isNaN(amount) || !date || !catId || !accId) continue;
-        items.push({ name, amount, date, expense_category_id: catId, account_id: accId });
+        const tourId  = tourSel && tourSel.value ? parseInt(tourSel.value) : null;
+        items.push({ name, amount, date, expense_category_id: catId, account_id: accId, tour_id: tourId });
       }
       if (!items.length) { showToast('✕ En az bir kalem ekleyin', 'error'); return; }
       try {
@@ -409,12 +431,14 @@
 
     async function saveExpense(e) {
       e.preventDefault();
+      const tourVal = document.getElementById('fTour').value;
       const payload = {
         name:                document.getElementById('fName').value.trim(),
         amount:              parseFloat(document.getElementById('fAmount').value),
         date:                document.getElementById('fDate').value,
         expense_category_id: parseInt(document.getElementById('fCategory').value),
         account_id:          parseInt(document.getElementById('fAccount').value),
+        tour_id:             tourVal ? parseInt(tourVal) : null,
       };
       try {
         const res = await fetch(`/api/expenses/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
