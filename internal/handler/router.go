@@ -2,6 +2,7 @@ package handler
 
 import (
 	"html/template"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +17,8 @@ func NewRouter(
 	rooms *RoomHandler,
 	tours *TourHandler,
 	clients *ClientHandler,
+	settings *SettingHandler,
+	users *UserHandler,
 	pages *PageHandler,
 	tmpl *template.Template,
 ) *gin.Engine {
@@ -25,6 +28,9 @@ func NewRouter(
 
 	r.GET("/", pages.Dashboard)
 	r.GET("/login", pages.Login)
+	r.GET("/profile", pages.Profile)
+	r.GET("/settings", pages.Settings)
+	r.POST("/logout", func(c *gin.Context) { c.Redirect(http.StatusFound, "/login") })
 	r.GET("/accounts", pages.Accounts)
 	r.GET("/accounts/:id/edit", pages.AccountEdit)
 	r.GET("/incomes", pages.Incomes)
@@ -93,6 +99,11 @@ func NewRouter(
 		api.GET("/clients/:id", clients.GetByID)
 		api.PUT("/clients/:id", clients.Update)
 		api.DELETE("/clients/:id", clients.Delete)
+
+		api.PUT("/settings/rates", settings.UpdateRates)
+
+		api.PUT("/profile", users.UpdateProfile)
+		api.PUT("/profile/password", users.UpdatePassword)
 	}
 
 	return r

@@ -31,6 +31,8 @@ type PageHandler struct {
 	roomSvc            *service.RoomService
 	tourSvc            *service.TourService
 	clientSvc          *service.ClientService
+	settingSvc         *service.SettingService
+	userSvc            *service.UserService
 }
 
 func NewPageHandler(
@@ -43,6 +45,8 @@ func NewPageHandler(
 	roomSvc *service.RoomService,
 	tourSvc *service.TourService,
 	clientSvc *service.ClientService,
+	settingSvc *service.SettingService,
+	userSvc *service.UserService,
 ) *PageHandler {
 	return &PageHandler{
 		accountSvc:         accountSvc,
@@ -54,11 +58,37 @@ func NewPageHandler(
 		roomSvc:            roomSvc,
 		tourSvc:            tourSvc,
 		clientSvc:          clientSvc,
+		settingSvc:         settingSvc,
+		userSvc:            userSvc,
 	}
 }
 
 func (h *PageHandler) Login(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.html", nil)
+}
+
+func (h *PageHandler) Profile(c *gin.Context) {
+	user, err := h.userSvc.GetByID(c.Request.Context(), 1)
+	if err != nil {
+		log.Printf("profile page error: %v", err)
+		c.Redirect(http.StatusFound, "/")
+		return
+	}
+	c.HTML(http.StatusOK, "profile.html", gin.H{
+		"active": "",
+		"user":   user,
+	})
+}
+
+func (h *PageHandler) Settings(c *gin.Context) {
+	rates, err := h.settingSvc.GetRates(c.Request.Context())
+	if err != nil {
+		rates = model.ExchangeRates{}
+	}
+	c.HTML(http.StatusOK, "settings.html", gin.H{
+		"active": "",
+		"rates":  rates,
+	})
 }
 
 func (h *PageHandler) Dashboard(c *gin.Context) {
