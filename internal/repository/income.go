@@ -31,10 +31,12 @@ const incomeSelectQuery = `
 	SELECT i.id, i.name, i.amount, i.date,
 	       i.income_category_id, c.name AS income_category_name,
 	       i.account_id, a.name AS account_name,
+	       i.tour_id, t.code AS tour_code,
 	       i.created_at, i.updated_at
 	FROM incomes i
 	JOIN income_categories c ON c.id = i.income_category_id
-	JOIN accounts a ON a.id = i.account_id`
+	JOIN accounts a ON a.id = i.account_id
+	LEFT JOIN tours t ON t.id = i.tour_id`
 
 func (r *incomeRepo) GetAll(ctx context.Context) ([]model.Income, error) {
 	var incomes []model.Income
@@ -77,6 +79,7 @@ func (r *incomeRepo) Create(ctx context.Context, req model.CreateIncomeRequest) 
 		Date:             date,
 		IncomeCategoryID: req.IncomeCategoryID,
 		AccountID:        req.AccountID,
+		TourID:           req.TourID,
 	}
 	if err := r.db.WithContext(ctx).Create(&inc).Error; err != nil {
 		return nil, err
@@ -98,6 +101,7 @@ func (r *incomeRepo) BulkCreate(ctx context.Context, reqs []model.CreateIncomeRe
 				Date:             date,
 				IncomeCategoryID: req.IncomeCategoryID,
 				AccountID:        req.AccountID,
+				TourID:           req.TourID,
 			}
 			if err := tx.Create(&inc).Error; err != nil {
 				return err
@@ -132,6 +136,7 @@ func (r *incomeRepo) Update(ctx context.Context, id int64, req model.UpdateIncom
 		"date":               date,
 		"income_category_id": req.IncomeCategoryID,
 		"account_id":         req.AccountID,
+		"tour_id":            req.TourID,
 	})
 	if result.Error != nil {
 		return nil, result.Error

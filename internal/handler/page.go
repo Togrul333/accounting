@@ -291,6 +291,14 @@ func (h *PageHandler) Incomes(c *gin.Context) {
 		accounts = []model.Account{}
 	}
 
+	tours, err := h.tourSvc.GetAll(c.Request.Context())
+	if err != nil {
+		tours = []model.Tour{}
+	}
+	if tours == nil {
+		tours = []model.Tour{}
+	}
+
 	var total float64
 	for _, inc := range incomes {
 		total += inc.Amount
@@ -300,6 +308,7 @@ func (h *PageHandler) Incomes(c *gin.Context) {
 		"incomes":    incomes,
 		"categories": cats,
 		"accounts":   accounts,
+		"tours":      tours,
 		"total":      total,
 		"active":     "incomes",
 	})
