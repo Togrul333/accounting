@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     * { font-family: 'Inter', sans-serif; }
 
@@ -53,6 +54,52 @@
     .toast.show { display: flex; align-items: center; gap: 8px; }
     .toast.success { background: rgba(0,212,255,0.15); color: #00d4ff; border: 1px solid rgba(0,212,255,0.25); }
     .toast.error   { background: rgba(255,85,85,0.15); color: #ff5555; border: 1px solid rgba(255,85,85,0.25); }
+
+    .btn-import {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 22px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #16a34a, #059669);
+      color: #fff; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: all .15s;
+    }
+    .btn-import:hover { filter: brightness(1.1); box-shadow: 0 0 20px rgba(22,163,74,0.25); }
+
+    /* Import Modal */
+    .import-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+      justify-content: center; align-items: flex-start; padding: 32px 16px; overflow-y: auto;
+    }
+    .import-modal-overlay.open { display: flex; }
+    .import-modal {
+      width: 100%; max-width: 1100px; border-radius: 20px; overflow: hidden;
+      background: #1a2e1f; border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+      flex-shrink: 0;
+    }
+    .import-modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px;
+      background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .import-modal-body { padding: 20px 24px; overflow-x: auto; }
+    .import-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .import-tbl thead tr { background: rgba(255,255,255,0.07); }
+    .import-tbl th {
+      padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,0.5);
+      white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .import-tbl td {
+      padding: 9px 12px; color: rgba(255,255,255,0.85);
+      border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: top;
+      max-width: 260px; word-break: break-word;
+    }
+    .import-tbl tbody tr:hover td { background: rgba(255,255,255,0.03); }
+    .import-tbl .debit  { color: #f87171; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .import-tbl .credit { color: #4ade80; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .import-tbl .ref    { color: rgba(255,255,255,0.45); font-size: 11px; font-family: 'Courier New', monospace; }
+    .import-tbl .desc   { color: rgba(255,255,255,0.65); white-space: pre-line; }
   </style>
 </head>
 <body style="background:#0d0d0d; min-height:100vh;">
@@ -153,7 +200,7 @@
                       placeholder="İsteğe bağlı not...">{{.account.Description}}</textarea>
           </div>
 
-          <div class="flex items-center gap-3 pt-2">
+          <div class="flex items-center gap-3 pt-2 flex-wrap">
             <button type="submit" class="btn-save">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -161,6 +208,15 @@
               Kaydet
             </button>
             <a href="/accounts" class="btn-cancel">İptal</a>
+            <button type="button" class="btn-import" onclick="document.getElementById('xlsxInput').click()">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+              Excel'den İçe Aktar
+            </button>
+            <input type="file" id="xlsxInput" accept=".xlsx,.xls"
+                   style="display:none" onchange="handleExcelImport(event)">
           </div>
         </form>
       </div>
@@ -274,6 +330,29 @@
 
   <div id="toast" class="toast"></div>
 
+  <!-- Excel Import Preview Modal -->
+  <div id="importModal" class="import-modal-overlay" onclick="closeImportModalOnOverlay(event)">
+    <div class="import-modal">
+      <div class="import-modal-head">
+        <div>
+          <p class="text-base font-bold" style="color:#fff;">Banka Ekstresi — Önizleme</p>
+          <p id="importMeta" class="text-xs mt-0.5" style="color:rgba(255,255,255,0.4);"></p>
+        </div>
+        <button onclick="document.getElementById('importModal').classList.remove('open')"
+                style="width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);
+                       background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);
+                       display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="import-modal-body">
+        <div id="importTableWrapper"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const accountId = {{.account.ID}};
 
@@ -306,6 +385,131 @@
       el.textContent = msg;
       el.className = 'toast show ' + type;
       setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    function closeImportModalOnOverlay(e) {
+      if (e.target === document.getElementById('importModal'))
+        document.getElementById('importModal').classList.remove('open');
+    }
+
+    async function handleExcelImport(event) {
+      const file = event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+
+      const accountNumber = document.getElementById('fAccountNumber').value.trim();
+
+      let wb;
+      try {
+        const buf = await file.arrayBuffer();
+        wb = XLSX.read(buf, { type: 'array' });
+      } catch {
+        showToast('✕ Excel dosyası okunamadı', 'error');
+        return;
+      }
+
+      const ws = wb.Sheets[wb.SheetNames[0]];
+
+      // Строка 32 (r=31), колонка D (c=3) — IBAN
+      const ibanCell = ws[XLSX.utils.encode_cell({ r: 31, c: 3 })];
+      const fileIban = ibanCell ? String(ibanCell.v).trim() : '';
+
+      if (fileIban !== accountNumber) {
+        showToast(`✕ Hesap No uyuşmuyor. Dosya: ${fileIban || '(boş)'}`, 'error');
+        return;
+      }
+
+      // Заголовки из строки 42 (r=41), данные с 43 (r=42)
+      const allRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const dataRows = allRows.slice(42).filter(r =>
+        r.some(cell => cell !== null && cell !== undefined && cell !== '')
+      );
+
+      const gelirler = dataRows.filter(r => (parseFloat(r[5]) || 0) > 0);
+      const giderler = dataRows.filter(r => (parseFloat(r[4]) || 0) > 0);
+
+      const totalCredit = gelirler.reduce((s, r) => s + (parseFloat(r[5]) || 0), 0);
+      const totalDebit  = giderler.reduce((s, r) => s + (parseFloat(r[4]) || 0), 0);
+
+      document.getElementById('importMeta').textContent =
+        `IBAN: ${fileIban} · ${gelirler.length} gelir · ${giderler.length} gider`;
+
+      function parseDate(raw) {
+        if (!raw) return '';
+        if (typeof raw === 'number') {
+          const d = XLSX.SSF.parse_date_code(raw);
+          return `${String(d.d).padStart(2,'0')}.${String(d.m).padStart(2,'0')}.${d.y}`;
+        }
+        return String(raw).trim();
+      }
+
+      function buildTable(rows, type) {
+        if (!rows.length) return '<p style="color:rgba(255,255,255,0.3);font-size:13px;padding:12px 0;">Məlumat yoxdur</p>';
+        const amtLabel = type === 'gelir' ? 'Kredit' : 'Debit';
+        const amtIdx   = type === 'gelir' ? 5 : 4;
+        const cls      = type === 'gelir' ? 'credit' : 'debit';
+        const sign     = type === 'gelir' ? '+' : '−';
+
+        let t = '<table class="import-tbl"><thead><tr>';
+        t += '<th>#</th><th>Tarih</th><th>Referans</th><th>Karşı Taraf</th>';
+        t += `<th>${amtLabel}</th><th>Açıklama</th><th>VÖEN</th>`;
+        t += '</tr></thead><tbody>';
+
+        rows.forEach((row, i) => {
+          const amt  = parseFloat(row[amtIdx]) || 0;
+          const desc = String(row[6] || '').trim();
+          const ref  = String(row[2] || '').trim();
+          const cp   = String(row[3] || '').trim();
+          const tax  = String(row[7] || '').trim();
+          t += `<tr>
+            <td style="color:rgba(255,255,255,0.3);font-size:11px;">${i + 1}</td>
+            <td style="white-space:nowrap;">${parseDate(row[1])}</td>
+            <td class="ref">${escHtml(ref)}</td>
+            <td style="max-width:220px;">${escHtml(cp)}</td>
+            <td class="${cls}">${sign}${amt.toFixed(2)}</td>
+            <td class="desc">${escHtml(desc)}</td>
+            <td class="ref">${escHtml(tax)}</td>
+          </tr>`;
+        });
+        t += '</tbody></table>';
+        return t;
+      }
+
+      function sectionHeader(label, count, total, color, dotColor) {
+        return `
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0;"></div>
+            <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color};">${label}</span>
+            <span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;
+                         background:${color}1a;color:${color};border:1px solid ${color}33;">${count}</span>
+            <span style="margin-left:auto;font-size:13px;font-weight:700;color:${color};font-variant-numeric:tabular-nums;">
+              ${total.toFixed(2)} ₼
+            </span>
+          </div>`;
+      }
+
+      let html = '';
+
+      html += '<div style="margin-bottom:28px;">';
+      html += sectionHeader('Gelirler (Kredit)', gelirler.length, totalCredit, '#4ade80', '#4ade80');
+      html += buildTable(gelirler, 'gelir');
+      html += '</div>';
+
+      html += '<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:24px;">';
+      html += sectionHeader('Giderler (Debit)', giderler.length, totalDebit, '#f87171', '#f87171');
+      html += buildTable(giderler, 'gider');
+      html += '</div>';
+
+      document.getElementById('importTableWrapper').innerHTML = html;
+      document.getElementById('importModal').classList.add('open');
+    }
+
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
   </script>
 
