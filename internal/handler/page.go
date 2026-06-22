@@ -501,6 +501,7 @@ func (h *PageHandler) TourShow(c *gin.Context) {
 		"orders":       tourOrders,
 		"incomeTotal":  incomeTotal,
 		"expenseTotal": expenseTotal,
+		"netTotal":     incomeTotal - expenseTotal,
 		"expenses":     tourExpenses,
 		"active":       "tours",
 	})

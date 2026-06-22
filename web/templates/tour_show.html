@@ -78,7 +78,7 @@
       </div>
 
       <!-- Detay kartları — Satır 2: Gelir & Gider -->
-      <div class="grid grid-cols-2 gap-4 mb-8">
+      <div class="grid grid-cols-3 gap-4 mb-8">
 
         <!-- Toplam Gelir -->
         <div class="card p-6">
@@ -149,6 +149,47 @@
             {{else}}
             <p class="text-xs" style="color:#383838;">Bu tura bağlı gider yok</p>
             {{end}}
+          </div>
+        </div>
+
+        <!-- Toplam Net Tutar -->
+        <div class="card p-6">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color:#484848;">Toplam Net Tutar</p>
+              {{if ge .netTotal 0.0}}
+              <p class="text-4xl font-extrabold tracking-tight tabular-nums" style="color:#a78bfa;">{{printf "%.2f" .netTotal}} ₺</p>
+              {{else}}
+              <p class="text-4xl font-extrabold tracking-tight tabular-nums" style="color:#f97316;">{{printf "%.2f" .netTotal}} ₺</p>
+              {{end}}
+            </div>
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:rgba(167,139,250,0.1); border:1px solid rgba(167,139,250,0.2);">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#a78bfa">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c-.99.143-1.99.317-3 .52m3-.52L2.25 15.697c-.122.499.106 1.028.589 1.202a5.989 5.989 0 002.031.352 5.989 5.989 0 002.031-.352c.483-.174.711-.703.59-1.202L5.25 4.971z" />
+              </svg>
+            </div>
+          </div>
+          <p class="text-xs mb-3" style="color:#484848;">Toplam Gelir − Toplam Gider</p>
+          <div style="border-top:1px solid #242424; padding-top:12px;">
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs" style="color:#606060;">Toplam Gelir</span>
+                <span class="text-xs font-bold tabular-nums" style="color:#22c55e;">+{{printf "%.2f" .incomeTotal}} ₺</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs" style="color:#606060;">Toplam Gider</span>
+                <span class="text-xs font-bold tabular-nums" style="color:#ef4444;">−{{printf "%.2f" .expenseTotal}} ₺</span>
+              </div>
+              <div class="flex items-center justify-between" style="border-top:1px solid #242424; padding-top:8px; margin-top:4px;">
+                <span class="text-xs font-semibold" style="color:#ececec;">Net</span>
+                {{if ge .netTotal 0.0}}
+                <span class="text-sm font-extrabold tabular-nums" style="color:#a78bfa;">{{printf "%.2f" .netTotal}} ₺</span>
+                {{else}}
+                <span class="text-sm font-extrabold tabular-nums" style="color:#f97316;">{{printf "%.2f" .netTotal}} ₺</span>
+                {{end}}
+              </div>
+            </div>
           </div>
         </div>
 
