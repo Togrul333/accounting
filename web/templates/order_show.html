@@ -74,8 +74,8 @@
 
     <div class="p-8 flex-1">
 
-      <!-- Info kartları -->
-      <div class="grid grid-cols-6 gap-4 mb-8">
+      <!-- Info kartları — Satır 1 -->
+      <div class="grid grid-cols-4 gap-4 mb-4">
         <div class="card p-5">
           <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Müşteri</p>
           <p class="text-sm font-bold" style="color:#ececec;">{{.order.ClientName}}</p>
@@ -88,6 +88,25 @@
           <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Oluşturma Tarihi</p>
           <p class="text-sm font-bold tabular-nums" style="color:#606060;">{{.order.CreatedAt.Format "02.01.2006"}}</p>
         </div>
+        <!-- Tur Fiyatı: Kategori + Oda -->
+        <div class="card p-5" style="border-color:#7b2fff33;">
+          <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Tur Fiyatı</p>
+          <p class="text-sm font-bold tabular-nums" style="color:#a78bfa;">{{printf "%.2f" .order.TourPrice}} ₺</p>
+          <div class="mt-2 flex flex-col gap-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs" style="color:#383838;">{{.order.TourCategoryName}}</span>
+              <span class="text-xs tabular-nums" style="color:#606060;">{{printf "%.2f" .order.TourCategoryPrice}} ₺</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs" style="color:#383838;">Oda</span>
+              <span class="text-xs tabular-nums" style="color:#606060;">{{printf "%.2f" .order.RoomPrice}} ₺</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info kartları — Satır 2: Finansal -->
+      <div class="grid grid-cols-3 gap-4 mb-8">
         <div class="card p-5">
           <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Toplam Gelir</p>
           <p class="text-sm font-bold tabular-nums" style="color:#22c55e;">{{printf "%.2f" .order.IncomeTotal}} ₺</p>

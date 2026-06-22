@@ -28,6 +28,9 @@ const orderListQuery = `
 	SELECT o.id, o.client_id,
 	       CONCAT(c.first_name, ' ', c.last_name) AS client_name,
 	       o.tour_id, t.code AS tour_code,
+	       tc.name AS tour_category_name,
+	       tc.price AS tour_category_price,
+	       r.price AS room_price,
 	       COALESCE(inc.income_count, 0)   AS income_count,
 	       COALESCE(inc.income_total, 0)   AS income_total,
 	       COALESCE(disc.discount_count, 0) AS discount_count,
@@ -36,6 +39,8 @@ const orderListQuery = `
 	FROM orders o
 	JOIN clients c ON c.id = o.client_id
 	JOIN tours t   ON t.id = o.tour_id
+	JOIN tour_categories tc ON tc.id = t.tour_category_id
+	JOIN rooms r ON r.id = t.room_id
 	LEFT JOIN (
 	    SELECT order_id, COUNT(*) AS income_count, SUM(amount) AS income_total
 	    FROM incomes GROUP BY order_id
@@ -49,10 +54,15 @@ const orderBaseQuery = `
 	SELECT o.id, o.client_id,
 	       CONCAT(c.first_name, ' ', c.last_name) AS client_name,
 	       o.tour_id, t.code AS tour_code,
+	       tc.name AS tour_category_name,
+	       tc.price AS tour_category_price,
+	       r.price AS room_price,
 	       o.created_at, o.updated_at
 	FROM orders o
 	JOIN clients c ON c.id = o.client_id
-	JOIN tours t   ON t.id = o.tour_id`
+	JOIN tours t   ON t.id = o.tour_id
+	JOIN tour_categories tc ON tc.id = t.tour_category_id
+	JOIN rooms r ON r.id = t.room_id`
 
 func (r *orderRepo) GetAll(ctx context.Context) ([]model.Order, error) {
 	var orders []model.Order

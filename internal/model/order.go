@@ -8,6 +8,10 @@ type Order struct {
 	ClientName  string    `json:"client_name,omitempty" gorm:"<-:false"`
 	TourID      int64     `json:"tour_id"`
 	TourCode    string    `json:"tour_code,omitempty" gorm:"<-:false"`
+	TourCategoryName  string  `json:"tour_category_name,omitempty" gorm:"<-:false"`
+	TourCategoryPrice float64 `json:"tour_category_price,omitempty" gorm:"<-:false"`
+	RoomPrice         float64 `json:"room_price,omitempty" gorm:"<-:false"`
+	TourPrice         float64 `json:"tour_price" gorm:"-"`
 	IncomeCount    int        `json:"income_count" gorm:"<-:false"`
 	IncomeTotal    float64    `json:"income_total" gorm:"<-:false"`
 	Incomes        []Income   `json:"incomes,omitempty" gorm:"-"`
@@ -20,6 +24,7 @@ type Order struct {
 }
 
 func (o *Order) ComputeNet() {
+	o.TourPrice = o.TourCategoryPrice + o.RoomPrice
 	o.NetTotal = o.IncomeTotal - o.DiscountTotal
 }
 
