@@ -97,6 +97,18 @@
         </div>
       </div>
 
+      <!-- Tur Filtresi -->
+      <div class="mb-4 flex items-center gap-3">
+        <label class="text-xs font-semibold uppercase tracking-wider flex-shrink-0" style="color:#484848;">Tura Göre Filtrele:</label>
+        <select id="tourFilter" onchange="filterByTour()" class="input-field" style="max-width:320px;">
+          <option value="">Tüm Turlar</option>
+          {{range .tours}}
+          <option value="{{.ID}}" data-start="{{.StartDate.Format "2006-01-02"}}">{{.Code}} ({{.StartDate.Format "02.01.2006"}} – {{.EndDate.Format "02.01.2006"}})</option>
+          {{end}}
+        </select>
+        <span id="filteredCount" class="text-xs" style="color:#484848;"></span>
+      </div>
+
       <div class="table-wrap">
         {{if .orders}}
         <table class="w-full">
@@ -114,7 +126,7 @@
           </thead>
           <tbody>
             {{range .orders}}
-            <tr class="group">
+            <tr class="group order-row" data-tour-id="{{.TourID}}">
               <td class="px-6 py-4">
                 <span class="text-xs tabular-nums" style="color:#383838;">{{.ID}}</span>
               </td>
@@ -330,6 +342,43 @@
     }
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCreate(); });
+
+    (function autoSelectNextTour() {
+      const sel = document.getElementById('tourFilter');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let bestOpt = null;
+      let bestDiff = Infinity;
+      sel.querySelectorAll('option[data-start]').forEach(opt => {
+        const start = new Date(opt.dataset.start);
+        const diff = start - today;
+        if (diff >= 0 && diff < bestDiff) {
+          bestDiff = diff;
+          bestOpt = opt;
+        }
+      });
+      if (bestOpt) {
+        sel.value = bestOpt.value;
+        filterByTour();
+      }
+    })();
+
+    function filterByTour() {
+      const tourId = document.getElementById('tourFilter').value;
+      const rows = document.querySelectorAll('.order-row');
+      let visible = 0;
+      rows.forEach(row => {
+        const match = !tourId || row.dataset.tourId === tourId;
+        row.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+      const countEl = document.getElementById('filteredCount');
+      if (tourId) {
+        countEl.textContent = visible + ' sipariş gösteriliyor';
+      } else {
+        countEl.textContent = '';
+      }
+    }
   </script>
 </body>
 </html>
