@@ -481,11 +481,28 @@ func (h *PageHandler) TourShow(c *gin.Context) {
 	if tourOrders == nil {
 		tourOrders = []model.Order{}
 	}
+	allExpenses, err := h.expenseSvc.GetAll(c.Request.Context())
+	if err != nil {
+		allExpenses = []model.Expense{}
+	}
+	var expenseTotal float64
+	var tourExpenses []model.Expense
+	for _, e := range allExpenses {
+		if e.TourID != nil && *e.TourID == id {
+			expenseTotal += e.Amount
+			tourExpenses = append(tourExpenses, e)
+		}
+	}
+	if tourExpenses == nil {
+		tourExpenses = []model.Expense{}
+	}
 	c.HTML(http.StatusOK, "tour_show.html", gin.H{
-		"tour":        tour,
-		"orders":      tourOrders,
-		"incomeTotal": incomeTotal,
-		"active":      "tours",
+		"tour":         tour,
+		"orders":       tourOrders,
+		"incomeTotal":  incomeTotal,
+		"expenseTotal": expenseTotal,
+		"expenses":     tourExpenses,
+		"active":       "tours",
 	})
 }
 
