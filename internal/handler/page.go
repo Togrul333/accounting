@@ -471,11 +471,12 @@ func (h *PageHandler) TourShow(c *gin.Context) {
 		allOrders = []model.Order{}
 	}
 	var tourOrders []model.Order
-	var incomeTotal float64
+	var incomeTotal, discountTotal float64
 	for _, o := range allOrders {
 		if o.TourID == id {
 			tourOrders = append(tourOrders, o)
 			incomeTotal += o.IncomeTotal
+			discountTotal += o.DiscountTotal
 		}
 	}
 	if tourOrders == nil {
@@ -497,13 +498,14 @@ func (h *PageHandler) TourShow(c *gin.Context) {
 		tourExpenses = []model.Expense{}
 	}
 	c.HTML(http.StatusOK, "tour_show.html", gin.H{
-		"tour":         tour,
-		"orders":       tourOrders,
-		"incomeTotal":  incomeTotal,
-		"expenseTotal": expenseTotal,
-		"netTotal":     incomeTotal - expenseTotal,
-		"expenses":     tourExpenses,
-		"active":       "tours",
+		"tour":          tour,
+		"orders":        tourOrders,
+		"incomeTotal":   incomeTotal,
+		"expenseTotal":  expenseTotal,
+		"discountTotal": discountTotal,
+		"netTotal":      incomeTotal - expenseTotal - discountTotal,
+		"expenses":      tourExpenses,
+		"active":        "tours",
 	})
 }
 

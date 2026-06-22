@@ -78,7 +78,7 @@
       </div>
 
       <!-- Detay kartları — Satır 2: Gelir & Gider -->
-      <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="grid grid-cols-4 gap-4 mb-8">
 
         <!-- Toplam Gelir -->
         <div class="card p-6">
@@ -152,6 +152,43 @@
           </div>
         </div>
 
+        <!-- Toplam İndirimler -->
+        <div class="card p-6">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color:#484848;">Toplam İndirimler</p>
+              <p class="text-4xl font-extrabold tracking-tight tabular-nums" style="color:#f59e0b;">{{printf "%.2f" .discountTotal}} ₺</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2);">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#f59e0b">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185zM9.75 9h.008v.008H9.75V9zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 4.5h.008v.008h-.008V13.5zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
+            </div>
+          </div>
+          <p class="text-xs mb-3" style="color:#484848;">Siparişlerin toplam indirimleri</p>
+          <div style="border-top:1px solid #242424; padding-top:12px;">
+            {{if .orders}}
+            <div class="flex flex-col gap-1.5">
+              {{range .orders}}
+              {{if gt .DiscountTotal 0.0}}
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:#f59e0b; opacity:.6;"></div>
+                  <span class="text-xs" style="color:#606060;">{{.ClientName}}</span>
+                  <span class="text-xs" style="color:#383838;">· {{.DiscountCount}} indirim</span>
+                </div>
+                <span class="text-xs font-bold tabular-nums" style="color:#f59e0b;">-{{printf "%.2f" .DiscountTotal}} ₺</span>
+              </div>
+              {{end}}
+              {{end}}
+            </div>
+            {{else}}
+            <p class="text-xs" style="color:#383838;">Henüz indirim yok</p>
+            {{end}}
+          </div>
+        </div>
+
         <!-- Toplam Net Tutar -->
         <div class="card p-6">
           <div class="flex items-start justify-between mb-4">
@@ -170,7 +207,7 @@
               </svg>
             </div>
           </div>
-          <p class="text-xs mb-3" style="color:#484848;">Toplam Gelir − Toplam Gider</p>
+          <p class="text-xs mb-3" style="color:#484848;">Toplam Gelir − Toplam Gider − Toplam İndirimler</p>
           <div style="border-top:1px solid #242424; padding-top:12px;">
             <div class="flex flex-col gap-2">
               <div class="flex items-center justify-between">
@@ -180,6 +217,10 @@
               <div class="flex items-center justify-between">
                 <span class="text-xs" style="color:#606060;">Toplam Gider</span>
                 <span class="text-xs font-bold tabular-nums" style="color:#ef4444;">−{{printf "%.2f" .expenseTotal}} ₺</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs" style="color:#606060;">Toplam İndirimler</span>
+                <span class="text-xs font-bold tabular-nums" style="color:#f59e0b;">−{{printf "%.2f" .discountTotal}} ₺</span>
               </div>
               <div class="flex items-center justify-between" style="border-top:1px solid #242424; padding-top:8px; margin-top:4px;">
                 <span class="text-xs font-semibold" style="color:#ececec;">Net</span>
