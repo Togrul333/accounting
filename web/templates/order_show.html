@@ -75,7 +75,7 @@
     <div class="p-8 flex-1">
 
       <!-- Info kartları -->
-      <div class="grid grid-cols-5 gap-4 mb-8">
+      <div class="grid grid-cols-6 gap-4 mb-8">
         <div class="card p-5">
           <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Müşteri</p>
           <p class="text-sm font-bold" style="color:#ececec;">{{.order.ClientName}}</p>
@@ -95,6 +95,13 @@
         <div class="card p-5">
           <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Toplam İndirim</p>
           <p class="text-sm font-bold tabular-nums" style="color:#f59e0b;">{{printf "%.2f" .order.DiscountTotal}} ₺</p>
+        </div>
+        <div class="card p-5" style="border-color:#00d4ff33;">
+          <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Net Tutar</p>
+          <p class="text-sm font-bold tabular-nums" style="color:#00d4ff;">{{printf "%.2f" .order.NetTotal}} ₺</p>
+          <p class="text-xs tabular-nums mt-1" style="color:#383838;">
+            {{printf "%.2f" .order.IncomeTotal}}{{if .order.DiscountTotal}} − {{printf "%.2f" .order.DiscountTotal}}{{end}}
+          </p>
         </div>
       </div>
 

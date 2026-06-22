@@ -107,6 +107,7 @@
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Tur</th>
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Gelir Sayısı</th>
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Toplam Gelir</th>
+              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Net Tutar</th>
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Tarih</th>
               <th class="px-6 py-3.5 w-20"></th>
             </tr>
@@ -133,6 +134,13 @@
               <td class="px-6 py-4">
                 {{if gt .IncomeTotal 0.0}}
                 <span class="text-sm font-bold tabular-nums" style="color:#22c55e;">{{printf "%.2f" .IncomeTotal}} ₺</span>
+                {{else}}
+                <span class="text-xs" style="color:#383838;">—</span>
+                {{end}}
+              </td>
+              <td class="px-6 py-4">
+                {{if gt .NetTotal 0.0}}
+                <span class="text-sm font-bold tabular-nums" style="color:#00d4ff;">{{printf "%.2f" .NetTotal}} ₺</span>
                 {{else}}
                 <span class="text-xs" style="color:#383838;">—</span>
                 {{end}}

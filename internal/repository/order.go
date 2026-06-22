@@ -28,14 +28,22 @@ const orderListQuery = `
 	SELECT o.id, o.client_id,
 	       CONCAT(c.first_name, ' ', c.last_name) AS client_name,
 	       o.tour_id, t.code AS tour_code,
-	       COUNT(i.id)              AS income_count,
-	       COALESCE(SUM(i.amount), 0) AS income_total,
+	       COALESCE(inc.income_count, 0)   AS income_count,
+	       COALESCE(inc.income_total, 0)   AS income_total,
+	       COALESCE(disc.discount_count, 0) AS discount_count,
+	       COALESCE(disc.discount_total, 0) AS discount_total,
 	       o.created_at, o.updated_at
 	FROM orders o
 	JOIN clients c ON c.id = o.client_id
 	JOIN tours t   ON t.id = o.tour_id
-	LEFT JOIN incomes i ON i.order_id = o.id
-	GROUP BY o.id, o.client_id, client_name, o.tour_id, t.code, o.created_at, o.updated_at`
+	LEFT JOIN (
+	    SELECT order_id, COUNT(*) AS income_count, SUM(amount) AS income_total
+	    FROM incomes GROUP BY order_id
+	) inc ON inc.order_id = o.id
+	LEFT JOIN (
+	    SELECT order_id, COUNT(*) AS discount_count, SUM(amount) AS discount_total
+	    FROM discounts GROUP BY order_id
+	) disc ON disc.order_id = o.id`
 
 const orderBaseQuery = `
 	SELECT o.id, o.client_id,

@@ -14,8 +14,13 @@ type Order struct {
 	DiscountCount  int        `json:"discount_count" gorm:"<-:false"`
 	DiscountTotal  float64    `json:"discount_total" gorm:"<-:false"`
 	Discounts      []Discount `json:"discounts,omitempty" gorm:"-"`
+	NetTotal       float64    `json:"net_total" gorm:"-"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (o *Order) ComputeNet() {
+	o.NetTotal = o.IncomeTotal - o.DiscountTotal
 }
 
 type CreateOrderRequest struct {

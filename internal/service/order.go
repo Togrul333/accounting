@@ -18,7 +18,14 @@ func NewOrderService(repo repository.OrderRepository, incomeRepo repository.Inco
 }
 
 func (s *OrderService) GetAll(ctx context.Context) ([]model.Order, error) {
-	return s.repo.GetAll(ctx)
+	orders, err := s.repo.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for i := range orders {
+		orders[i].ComputeNet()
+	}
+	return orders, nil
 }
 
 func (s *OrderService) GetByID(ctx context.Context, id int64) (*model.Order, error) {
@@ -44,6 +51,7 @@ func (s *OrderService) GetByID(ctx context.Context, id int64) (*model.Order, err
 	for _, d := range discounts {
 		order.DiscountTotal += d.Amount
 	}
+	order.ComputeNet()
 	return order, nil
 }
 
