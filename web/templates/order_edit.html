@@ -105,7 +105,7 @@
         </div>
 
         <!-- Gelirler bölümü -->
-        <div class="card p-7">
+        <div class="card p-7 mb-6">
           <div class="flex items-center justify-between mb-5">
             <div class="flex items-center gap-2">
               <div class="w-2 h-2 rounded-full" style="background:#22c55e;"></div>
@@ -184,6 +184,72 @@
                       style="flex:1; padding:9px; border-radius:9px; border:1px solid #2a2a2a; color:#606060; font-size:13px; font-weight:600; cursor:pointer; background:#1e1e1e;">İptal</button>
               <button type="button" onclick="submitAdd()"
                       style="flex:1; padding:9px; border-radius:9px; border:none; background:linear-gradient(135deg,#00d4ff,#7b2fff); color:#fff; font-size:13px; font-weight:700; cursor:pointer;">Ekle</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- İndirimler bölümü -->
+        <div class="card p-7">
+          <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full" style="background:#f59e0b;"></div>
+              <h2 class="text-sm font-bold uppercase tracking-wider" style="color:#606060;">İndirimler</h2>
+              <span id="discountBadge" class="text-xs px-2 py-0.5 rounded-full font-semibold"
+                    style="background:rgba(245,158,11,0.1); color:#f59e0b; border:1px solid rgba(245,158,11,0.2);">
+                {{len .order.Discounts}}
+              </span>
+            </div>
+            <button onclick="toggleAddDiscount()" class="btn-ghost">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              İndirim Ekle
+            </button>
+          </div>
+
+          <!-- Mevcut indirimler -->
+          <div id="discountList" class="space-y-2">
+            {{range .order.Discounts}}
+            <div class="income-row">
+              <div style="flex:1; min-width:0;">
+                <p style="color:#ececec; font-size:13px; font-weight:600;">{{.DiscountCategoryName}}</p>
+              </div>
+              <span style="color:#f59e0b; font-size:13px; font-weight:700; white-space:nowrap; tabular-nums;">-{{printf "%.2f" .Amount}} ₺</span>
+              <button onclick="deleteDiscount({{.ID}})"
+                      style="padding:5px; border-radius:7px; border:none; cursor:pointer; background:transparent; color:#484848; flex-shrink:0; transition:.15s;"
+                      onmouseover="this.style.color='#ff5555';" onmouseout="this.style.color='#484848';">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            </div>
+            {{else}}
+            <p id="discountEmptyMsg" style="color:#383838; font-size:13px; padding:4px 0;">Henüz indirim eklenmedi</p>
+            {{end}}
+          </div>
+
+          <!-- İndirim ekleme formu -->
+          <div id="addDiscountBlock" class="add-block space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Tutar <span style="color:#ff5555;">*</span></label>
+                <input id="diAmount" type="number" step="0.01" min="0" placeholder="0.00" class="input-field">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Kategori <span style="color:#ff5555;">*</span></label>
+                <select id="diCategory" class="input-field">
+                  <option value="">Kategori seçin</option>
+                  {{range .discountCategories}}
+                  <option value="{{.ID}}">{{.Name}}</option>
+                  {{end}}
+                </select>
+              </div>
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button type="button" onclick="cancelAddDiscount()"
+                      style="flex:1; padding:9px; border-radius:9px; border:1px solid #2a2a2a; color:#606060; font-size:13px; font-weight:600; cursor:pointer; background:#1e1e1e;">İptal</button>
+              <button type="button" onclick="submitAddDiscount()"
+                      style="flex:1; padding:9px; border-radius:9px; border:none; background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; font-size:13px; font-weight:700; cursor:pointer;">Ekle</button>
             </div>
           </div>
         </div>
@@ -269,6 +335,79 @@
           await reloadIncomes();
         } else { showToast('✕ Silme başarısız', 'error'); }
       } catch { showToast('✕ Sunucu hatası', 'error'); }
+    }
+
+    // ── İndirim ──
+    function toggleAddDiscount() {
+      const block = document.getElementById('addDiscountBlock');
+      block.classList.toggle('open');
+    }
+    function cancelAddDiscount() {
+      document.getElementById('addDiscountBlock').classList.remove('open');
+      document.getElementById('diAmount').value = '';
+    }
+
+    async function submitAddDiscount() {
+      const amount = parseFloat(document.getElementById('diAmount').value);
+      const cat    = parseInt(document.getElementById('diCategory').value);
+      if (!amount || !cat) { showToast('✕ Tüm alanları doldurun', 'error'); return; }
+
+      try {
+        const res = await fetch(`/api/orders/${orderId}/discounts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, discount_category_id: cat }),
+        });
+        if (res.ok) {
+          showToast('✓ İndirim eklendi', 'success');
+          cancelAddDiscount();
+          await reloadDiscounts();
+        } else {
+          const err = await res.json();
+          showToast('✕ ' + (err.error || 'Hata'), 'error');
+        }
+      } catch { showToast('✕ Sunucu hatası', 'error'); }
+    }
+
+    async function deleteDiscount(discountId) {
+      if (!confirm('Bu indirimi silmek istediğinizden emin misiniz?')) return;
+      try {
+        const res = await fetch(`/api/discounts/${discountId}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('✓ İndirim silindi', 'success');
+          await reloadDiscounts();
+        } else { showToast('✕ Silme başarısız', 'error'); }
+      } catch { showToast('✕ Sunucu hatası', 'error'); }
+    }
+
+    async function reloadDiscounts() {
+      try {
+        const res = await fetch(`/api/orders/${orderId}`);
+        const order = await res.json();
+        const discounts = order.discounts || [];
+        const list = document.getElementById('discountList');
+        const badge = document.getElementById('discountBadge');
+        badge.textContent = discounts.length;
+
+        if (discounts.length === 0) {
+          list.innerHTML = '<p style="color:#383838; font-size:13px; padding:4px 0;">Henüz indirim eklenmedi</p>';
+          return;
+        }
+        list.innerHTML = discounts.map(d => `
+          <div class="income-row">
+            <div style="flex:1; min-width:0;">
+              <p style="color:#ececec; font-size:13px; font-weight:600;">${d.discount_category_name || ''}</p>
+            </div>
+            <span style="color:#f59e0b; font-size:13px; font-weight:700; white-space:nowrap;">-${parseFloat(d.amount).toFixed(2)} ₺</span>
+            <button onclick="deleteDiscount(${d.id})"
+                    style="padding:5px; border-radius:7px; border:none; cursor:pointer; background:transparent; color:#484848; flex-shrink:0; transition:.15s;"
+                    onmouseover="this.style.color='#ff5555';" onmouseout="this.style.color='#484848';">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+            </button>
+          </div>`).join('');
+      } catch { showToast('✕ İndirimler yüklenemedi', 'error'); }
     }
 
     async function reloadIncomes() {

@@ -133,6 +133,7 @@ func NewRouter(
 		api.PUT("/orders/:id", orders.Update)
 		api.DELETE("/orders/:id", orders.Delete)
 		api.POST("/orders/:id/incomes", orders.AddIncome)
+		api.POST("/orders/:id/discounts", orders.AddDiscount)
 	}
 
 	return r

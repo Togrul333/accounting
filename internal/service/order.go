@@ -8,12 +8,13 @@ import (
 )
 
 type OrderService struct {
-	repo       repository.OrderRepository
-	incomeRepo repository.IncomeRepository
+	repo         repository.OrderRepository
+	incomeRepo   repository.IncomeRepository
+	discountRepo repository.DiscountRepository
 }
 
-func NewOrderService(repo repository.OrderRepository, incomeRepo repository.IncomeRepository) *OrderService {
-	return &OrderService{repo: repo, incomeRepo: incomeRepo}
+func NewOrderService(repo repository.OrderRepository, incomeRepo repository.IncomeRepository, discountRepo repository.DiscountRepository) *OrderService {
+	return &OrderService{repo: repo, incomeRepo: incomeRepo, discountRepo: discountRepo}
 }
 
 func (s *OrderService) GetAll(ctx context.Context) ([]model.Order, error) {
@@ -30,6 +31,19 @@ func (s *OrderService) GetByID(ctx context.Context, id int64) (*model.Order, err
 		incomes = []model.Income{}
 	}
 	order.Incomes = incomes
+	order.IncomeCount = len(incomes)
+	for _, inc := range incomes {
+		order.IncomeTotal += inc.Amount
+	}
+	discounts, err := s.discountRepo.GetByOrderID(ctx, id)
+	if err != nil {
+		discounts = []model.Discount{}
+	}
+	order.Discounts = discounts
+	order.DiscountCount = len(discounts)
+	for _, d := range discounts {
+		order.DiscountTotal += d.Amount
+	}
 	return order, nil
 }
 
@@ -50,6 +64,11 @@ func (s *OrderService) Create(ctx context.Context, req model.CreateOrderRequest)
 func (s *OrderService) AddIncome(ctx context.Context, orderID int64, req model.CreateIncomeRequest) (*model.Income, error) {
 	req.OrderID = &orderID
 	return s.incomeRepo.Create(ctx, req)
+}
+
+func (s *OrderService) AddDiscount(ctx context.Context, orderID int64, req model.CreateDiscountRequest) (*model.Discount, error) {
+	req.OrderID = &orderID
+	return s.discountRepo.Create(ctx, req)
 }
 
 func (s *OrderService) Update(ctx context.Context, id int64, req model.UpdateOrderRequest) (*model.Order, error) {

@@ -80,6 +80,25 @@ func (h *OrderHandler) AddIncome(c *gin.Context) {
 	c.JSON(http.StatusCreated, income)
 }
 
+func (h *OrderHandler) AddDiscount(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	var req model.CreateDiscountRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+	discount, err := h.svc.AddDiscount(c.Request.Context(), id, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, discount)
+}
+
 func (h *OrderHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {

@@ -537,11 +537,16 @@ func (h *PageHandler) OrderShow(c *gin.Context) {
 	if err != nil {
 		accounts = []model.Account{}
 	}
+	discountCategories, err := h.discountCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		discountCategories = []model.DiscountCategory{}
+	}
 	c.HTML(http.StatusOK, "order_show.html", gin.H{
-		"order":            order,
-		"incomeCategories": incomeCategories,
-		"accounts":         accounts,
-		"active":           "orders",
+		"order":              order,
+		"incomeCategories":   incomeCategories,
+		"accounts":           accounts,
+		"discountCategories": discountCategories,
+		"active":             "orders",
 	})
 }
 
@@ -573,13 +578,18 @@ func (h *PageHandler) OrderEdit(c *gin.Context) {
 	if err != nil {
 		accounts = []model.Account{}
 	}
+	discountCategories, err := h.discountCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		discountCategories = []model.DiscountCategory{}
+	}
 	c.HTML(http.StatusOK, "order_edit.html", gin.H{
-		"order":            order,
-		"clients":          clients,
-		"tours":            tours,
-		"incomeCategories": incomeCategories,
-		"accounts":         accounts,
-		"active":           "orders",
+		"order":              order,
+		"clients":            clients,
+		"tours":              tours,
+		"incomeCategories":   incomeCategories,
+		"accounts":           accounts,
+		"discountCategories": discountCategories,
+		"active":             "orders",
 	})
 }
 

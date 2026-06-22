@@ -11,6 +11,7 @@ import (
 type DiscountRepository interface {
 	GetAll(ctx context.Context) ([]model.Discount, error)
 	GetByID(ctx context.Context, id int64) (*model.Discount, error)
+	GetByOrderID(ctx context.Context, orderID int64) ([]model.Discount, error)
 	Create(ctx context.Context, req model.CreateDiscountRequest) (*model.Discount, error)
 	Update(ctx context.Context, id int64, req model.UpdateDiscountRequest) (*model.Discount, error)
 	Delete(ctx context.Context, id int64) error
@@ -39,6 +40,15 @@ const discountSelectQuery = `
 func (r *discountRepo) GetAll(ctx context.Context) ([]model.Discount, error) {
 	var discounts []model.Discount
 	err := r.db.WithContext(ctx).Raw(discountSelectQuery + ` ORDER BY d.id DESC`).Scan(&discounts).Error
+	if discounts == nil {
+		discounts = []model.Discount{}
+	}
+	return discounts, err
+}
+
+func (r *discountRepo) GetByOrderID(ctx context.Context, orderID int64) ([]model.Discount, error) {
+	var discounts []model.Discount
+	err := r.db.WithContext(ctx).Raw(discountSelectQuery+` WHERE d.order_id = ? ORDER BY d.id DESC`, orderID).Scan(&discounts).Error
 	if discounts == nil {
 		discounts = []model.Discount{}
 	}
