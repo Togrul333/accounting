@@ -26,3 +26,21 @@ type UpdateAccountRequest struct {
 	Currency      string `json:"currency"`
 	Description   string `json:"description"`
 }
+
+type StatementRow struct {
+	Date   string  `json:"date"`
+	Ref    string  `json:"ref"`
+	CP     string  `json:"cp"`
+	Debit  float64 `json:"debit"`
+	Credit float64 `json:"credit"`
+	Desc   string  `json:"desc"`
+	Tax    string  `json:"tax"`
+}
+
+type StatementPreview struct {
+	IBAN        string         `json:"iban"`
+	Gelirler    []StatementRow `json:"gelirler"`
+	Giderler    []StatementRow `json:"giderler"`
+	TotalCredit float64        `json:"total_credit"`
+	TotalDebit  float64        `json:"total_debit"`
+}

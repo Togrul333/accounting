@@ -59,6 +59,7 @@ func NewRouter(
 		api.GET("/accounts/:id", accounts.GetByID)
 		api.PUT("/accounts/:id", accounts.Update)
 		api.DELETE("/accounts/:id", accounts.Delete)
+		api.POST("/accounts/:id/statement-preview", accounts.ParseStatement)
 
 		api.GET("/income-categories", incomeCategories.GetAll)
 		api.POST("/income-categories", incomeCategories.Create)

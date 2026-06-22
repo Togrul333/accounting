@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     * { font-family: 'Inter', sans-serif; }
 
@@ -387,6 +386,16 @@
       setTimeout(() => el.classList.remove('show'), 2800);
     }
 
+    const COL_DEFS = [
+      { key: 'date',   az: 'Əməliyyatın tarixi',         tr: 'Tarih' },
+      { key: 'ref',    az: 'Əməliyyatın referensi',      tr: 'Referans' },
+      { key: 'cp',     az: 'Əks hesab üzrə məlumatlar', tr: 'Karşı Taraf' },
+      { key: 'debit',  az: 'Debit məbləğ',               tr: 'Gider Tutarı' },
+      { key: 'credit', az: 'Kredit məbləğ',              tr: 'Gelir Tutarı' },
+      { key: 'desc',   az: 'Ödənişin təyinatı',          tr: 'Açıklama' },
+      { key: 'tax',    az: 'Qarşı tərəfin VÖEN-i',      tr: 'Vergi No' },
+    ];
+
     function closeImportModalOnOverlay(e) {
       if (e.target === document.getElementById('importModal'))
         document.getElementById('importModal').classList.remove('open');
@@ -397,107 +406,69 @@
       event.target.value = '';
       if (!file) return;
 
-      const accountNumber = document.getElementById('fAccountNumber').value.trim();
+      const form = new FormData();
+      form.append('file', file);
 
-      let wb;
+      let data;
       try {
-        const buf = await file.arrayBuffer();
-        wb = XLSX.read(buf, { type: 'array' });
+        const res = await fetch(`/api/accounts/${accountId}/statement-preview`, {
+          method: 'POST', body: form,
+        });
+        data = await res.json();
+        if (!res.ok) { showToast('✕ ' + (data.error || 'Xəta baş verdi'), 'error'); return; }
       } catch {
-        showToast('✕ Excel dosyası okunamadı', 'error');
+        showToast('✕ Sunucu bağlantı hatası', 'error');
         return;
       }
-
-      const ws = wb.Sheets[wb.SheetNames[0]];
-
-      // Строка 32 (r=31), колонка D (c=3) — IBAN
-      const ibanCell = ws[XLSX.utils.encode_cell({ r: 31, c: 3 })];
-      const fileIban = ibanCell ? String(ibanCell.v).trim() : '';
-
-      if (fileIban !== accountNumber) {
-        showToast(`✕ Hesap No uyuşmuyor. Dosya: ${fileIban || '(boş)'}`, 'error');
-        return;
-      }
-
-      // Заголовки из строки 42 (r=41), данные с 43 (r=42)
-      const allRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-      const dataRows = allRows.slice(42).filter(r =>
-        r.some(cell => cell !== null && cell !== undefined && cell !== '')
-      );
-
-      const gelirler = dataRows.filter(r => (parseFloat(r[5]) || 0) > 0);
-      const giderler = dataRows.filter(r => (parseFloat(r[4]) || 0) > 0);
-
-      const totalCredit = gelirler.reduce((s, r) => s + (parseFloat(r[5]) || 0), 0);
-      const totalDebit  = giderler.reduce((s, r) => s + (parseFloat(r[4]) || 0), 0);
 
       document.getElementById('importMeta').textContent =
-        `IBAN: ${fileIban} · ${gelirler.length} gelir · ${giderler.length} gider`;
+        `IBAN: ${data.iban} · ${data.gelirler.length} gelir · ${data.giderler.length} gider`;
 
-      function parseDate(raw) {
-        if (!raw) return '';
-        if (typeof raw === 'number') {
-          const d = XLSX.SSF.parse_date_code(raw);
-          return `${String(d.d).padStart(2,'0')}.${String(d.m).padStart(2,'0')}.${d.y}`;
-        }
-        return String(raw).trim();
-      }
-
-      function buildTable(rows, type) {
+      function buildTable(rows) {
         if (!rows.length) return '<p style="color:rgba(255,255,255,0.3);font-size:13px;padding:12px 0;">Məlumat yoxdur</p>';
-        const amtLabel = type === 'gelir' ? 'Kredit' : 'Debit';
-        const amtIdx   = type === 'gelir' ? 5 : 4;
-        const cls      = type === 'gelir' ? 'credit' : 'debit';
-        const sign     = type === 'gelir' ? '+' : '−';
-
-        let t = '<table class="import-tbl"><thead><tr>';
-        t += '<th>#</th><th>Tarih</th><th>Referans</th><th>Karşı Taraf</th>';
-        t += `<th>${amtLabel}</th><th>Açıklama</th><th>VÖEN</th>`;
+        let t = '<table class="import-tbl"><thead><tr><th>#</th>';
+        COL_DEFS.forEach(c => {
+          t += `<th><span style="display:block;">${c.az}</span>
+            <span style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:500;text-transform:none;letter-spacing:0;">(${c.tr})</span></th>`;
+        });
         t += '</tr></thead><tbody>';
-
         rows.forEach((row, i) => {
-          const amt  = parseFloat(row[amtIdx]) || 0;
-          const desc = String(row[6] || '').trim();
-          const ref  = String(row[2] || '').trim();
-          const cp   = String(row[3] || '').trim();
-          const tax  = String(row[7] || '').trim();
-          t += `<tr>
-            <td style="color:rgba(255,255,255,0.3);font-size:11px;">${i + 1}</td>
-            <td style="white-space:nowrap;">${parseDate(row[1])}</td>
-            <td class="ref">${escHtml(ref)}</td>
-            <td style="max-width:220px;">${escHtml(cp)}</td>
-            <td class="${cls}">${sign}${amt.toFixed(2)}</td>
-            <td class="desc">${escHtml(desc)}</td>
-            <td class="ref">${escHtml(tax)}</td>
-          </tr>`;
+          t += `<tr><td style="color:rgba(255,255,255,0.3);font-size:11px;">${i + 1}</td>`;
+          COL_DEFS.forEach(c => {
+            let cell = '';
+            if      (c.key === 'date')   cell = `<span style="white-space:nowrap;">${escHtml(row.date)}</span>`;
+            else if (c.key === 'ref')    cell = `<span class="ref">${escHtml(row.ref)}</span>`;
+            else if (c.key === 'cp')     cell = escHtml(row.cp);
+            else if (c.key === 'debit')  cell = row.debit  > 0 ? `<span class="debit">−${row.debit.toFixed(2)}</span>`  : `<span style="color:rgba(255,255,255,0.2);">—</span>`;
+            else if (c.key === 'credit') cell = row.credit > 0 ? `<span class="credit">+${row.credit.toFixed(2)}</span>` : `<span style="color:rgba(255,255,255,0.2);">—</span>`;
+            else if (c.key === 'desc')   cell = `<span class="desc">${escHtml(row.desc)}</span>`;
+            else if (c.key === 'tax')    cell = `<span class="ref">${escHtml(row.tax)}</span>`;
+            t += `<td>${cell}</td>`;
+          });
+          t += '</tr>';
         });
         t += '</tbody></table>';
         return t;
       }
 
-      function sectionHeader(label, count, total, color, dotColor) {
-        return `
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-            <div style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0;"></div>
-            <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color};">${label}</span>
-            <span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;
-                         background:${color}1a;color:${color};border:1px solid ${color}33;">${count}</span>
-            <span style="margin-left:auto;font-size:13px;font-weight:700;color:${color};font-variant-numeric:tabular-nums;">
-              ${total.toFixed(2)} ₼
-            </span>
-          </div>`;
+      function sectionHeader(label, count, total, color) {
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+          <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color};">${label}</span>
+          <span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;
+                       background:${color}1a;color:${color};border:1px solid ${color}33;">${count}</span>
+          <span style="margin-left:auto;font-size:13px;font-weight:700;color:${color};font-variant-numeric:tabular-nums;">
+            ${total.toFixed(2)} ₼
+          </span></div>`;
       }
 
-      let html = '';
-
-      html += '<div style="margin-bottom:28px;">';
-      html += sectionHeader('Gelirler (Kredit)', gelirler.length, totalCredit, '#4ade80', '#4ade80');
-      html += buildTable(gelirler, 'gelir');
+      let html = '<div style="margin-bottom:28px;">';
+      html += sectionHeader('Gelirler (Kredit)', data.gelirler.length, data.total_credit, '#4ade80');
+      html += buildTable(data.gelirler);
       html += '</div>';
-
       html += '<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:24px;">';
-      html += sectionHeader('Giderler (Debit)', giderler.length, totalDebit, '#f87171', '#f87171');
-      html += buildTable(giderler, 'gider');
+      html += sectionHeader('Giderler (Debit)', data.giderler.length, data.total_debit, '#f87171');
+      html += buildTable(data.giderler);
       html += '</div>';
 
       document.getElementById('importTableWrapper').innerHTML = html;
