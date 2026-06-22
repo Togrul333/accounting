@@ -29,6 +29,17 @@
     }
     .pg-btn.active { background: rgba(0,0,0,0.18); font-weight: 700; color: #0d1a12; }
     .pg-btn:disabled { opacity: .35; cursor: default; }
+    .detail-modal { position:fixed; inset:0; z-index:60; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); }
+    .detail-modal.open { display:flex; }
+    .detail-card { background:#161616; border:1px solid #242424; border-radius:20px; width:100%; max-width:520px; box-shadow:0 30px 80px rgba(0,0,0,0.5); }
+    .detail-row { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #1e1e1e; }
+    .detail-row:last-child { border-bottom:none; }
+    .detail-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#484848; min-width:140px; flex-shrink:0; padding-top:1px; }
+    .detail-value { font-size:13px; color:#ececec; word-break:break-all; }
+    .detail-value.mono { font-family:monospace; color:#00d4ff; }
+    .detail-value.amount { font-weight:700; color:#22c55e; }
+    .detail-value.muted { color:#606060; }
+    .tbl tbody tr.clickable-row { cursor:pointer; }
   </style>
 </head>
 <body style="background:#0d0d0d; min-height:100vh;">
@@ -103,6 +114,19 @@
         <div id="pager" class="px-5 py-3 flex flex-wrap items-center gap-2" style="border-top:1px solid rgba(0,0,0,0.08);display:none!important;"></div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detailModal" class="detail-modal" onclick="closeDetail()">
+    <div class="detail-card" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 pt-5 pb-4" style="border-bottom:1px solid #242424;">
+        <h3 class="text-sm font-bold" style="color:#ececec;">Gelir Detayı</h3>
+        <button onclick="closeDetail()" style="padding:5px;border-radius:7px;border:none;cursor:pointer;background:transparent;color:#484848;" onmouseover="this.style.color='#ececec';" onmouseout="this.style.color='#484848';">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="detailBody" class="px-6 py-4"></div>
     </div>
   </div>
 
@@ -182,7 +206,7 @@
         </tr></thead><tbody>`;
 
       slice.forEach(r => {
-        t += `<tr>
+        t += `<tr class="clickable-row" onclick='openDetail(${JSON.stringify(r)})'>
           <td class="px-5 py-3"><span class="text-sm font-medium" style="color:#0d1a12;">${escH(r.name)}</span></td>
           <td class="px-5 py-3">
             <span class="text-xs px-2.5 py-1 rounded-full font-semibold"
@@ -252,6 +276,38 @@
     }
 
     applyFilters();
+
+    function openDetail(r) {
+      function row(label, value, cls) {
+        if (!value && value !== 0) return '';
+        return `<div class="detail-row">
+          <span class="detail-label">${label}</span>
+          <span class="detail-value ${cls||''}">${escH(String(value))}</span>
+        </div>`;
+      }
+      let html = '';
+      html += row('ID', r.id, 'mono');
+      html += row('Ad', r.name);
+      html += row('Tutar', '+' + Number(r.amount).toFixed(2) + ' ₺', 'amount');
+      html += row('Tarih', fmtDate(r.date));
+      html += row('Kategori', r.income_category_name);
+      html += row('Hesap', r.account_name);
+      if (r.tour_code) html += row('Tur', r.tour_code, 'mono');
+      if (r.order_id)  html += row('Sipariş ID', r.order_id, 'mono');
+      if (r.bank_ref)         html += row('Banka Ref', r.bank_ref, 'mono');
+      if (r.counterparty)     html += row('Karşı Taraf', r.counterparty);
+      if (r.counterparty_tax_id) html += row('Vergi No', r.counterparty_tax_id, 'mono');
+      html += row('Oluşturulma', fmtDate(r.created_at), 'muted');
+      html += row('Güncelleme', fmtDate(r.updated_at), 'muted');
+      document.getElementById('detailBody').innerHTML = html;
+      document.getElementById('detailModal').classList.add('open');
+    }
+
+    function closeDetail() {
+      document.getElementById('detailModal').classList.remove('open');
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
   </script>
 
 </body>
