@@ -36,6 +36,8 @@ func NewRouter(
 	r.POST("/logout", func(c *gin.Context) { c.Redirect(http.StatusFound, "/login") })
 	r.GET("/accounts", pages.Accounts)
 	r.GET("/accounts/:id/edit", pages.AccountEdit)
+	r.GET("/accounts/:id/incomes", pages.AccountIncomes)
+	r.GET("/accounts/:id/expenses", pages.AccountExpenses)
 	r.GET("/incomes", pages.Incomes)
 	r.GET("/income-categories", pages.IncomeCategories)
 	r.GET("/expenses", pages.Expenses)
@@ -60,6 +62,7 @@ func NewRouter(
 		api.PUT("/accounts/:id", accounts.Update)
 		api.DELETE("/accounts/:id", accounts.Delete)
 		api.POST("/accounts/:id/statement-preview", accounts.ParseStatement)
+		api.POST("/accounts/:id/statement-import", accounts.ImportStatement)
 
 		api.GET("/income-categories", incomeCategories.GetAll)
 		api.POST("/income-categories", incomeCategories.Create)

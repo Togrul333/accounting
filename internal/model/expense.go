@@ -28,6 +28,9 @@ type Expense struct {
 	AccountName         string    `json:"account_name,omitempty" gorm:"<-:false"`
 	TourID              *int64    `json:"tour_id"`
 	TourCode            string    `json:"tour_code,omitempty" gorm:"<-:false"`
+	BankRef             string    `json:"bank_ref,omitempty"`
+	Counterparty        string    `json:"counterparty,omitempty"`
+	CounterpartyTaxID   string    `json:"counterparty_tax_id,omitempty"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 }
@@ -39,6 +42,9 @@ type CreateExpenseRequest struct {
 	ExpenseCategoryID int64   `json:"expense_category_id"`
 	AccountID         int64   `json:"account_id"`
 	TourID            *int64  `json:"tour_id"`
+	BankRef           string  `json:"bank_ref"`
+	Counterparty      string  `json:"counterparty"`
+	CounterpartyTaxID string  `json:"counterparty_tax_id"`
 }
 
 type UpdateExpenseRequest struct {

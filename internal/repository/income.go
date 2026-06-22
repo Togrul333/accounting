@@ -34,6 +34,7 @@ const incomeSelectQuery = `
 	       i.account_id, a.name AS account_name,
 	       i.tour_id, t.code AS tour_code,
 	       i.order_id,
+	       i.bank_ref, i.counterparty, i.counterparty_tax_id,
 	       i.created_at, i.updated_at
 	FROM incomes i
 	JOIN income_categories c ON c.id = i.income_category_id
@@ -85,13 +86,16 @@ func (r *incomeRepo) Create(ctx context.Context, req model.CreateIncomeRequest) 
 		return nil, err
 	}
 	inc := model.Income{
-		Name:             req.Name,
-		Amount:           req.Amount,
-		Date:             date,
-		IncomeCategoryID: req.IncomeCategoryID,
-		AccountID:        req.AccountID,
-		TourID:           req.TourID,
-		OrderID:          req.OrderID,
+		Name:              req.Name,
+		Amount:            req.Amount,
+		Date:              date,
+		IncomeCategoryID:  req.IncomeCategoryID,
+		AccountID:         req.AccountID,
+		TourID:            req.TourID,
+		OrderID:           req.OrderID,
+		BankRef:           req.BankRef,
+		Counterparty:      req.Counterparty,
+		CounterpartyTaxID: req.CounterpartyTaxID,
 	}
 	if err := r.db.WithContext(ctx).Create(&inc).Error; err != nil {
 		return nil, err
@@ -108,13 +112,16 @@ func (r *incomeRepo) BulkCreate(ctx context.Context, reqs []model.CreateIncomeRe
 				return err
 			}
 			inc := model.Income{
-				Name:             req.Name,
-				Amount:           req.Amount,
-				Date:             date,
-				IncomeCategoryID: req.IncomeCategoryID,
-				AccountID:        req.AccountID,
-				TourID:           req.TourID,
-				OrderID:          req.OrderID,
+				Name:              req.Name,
+				Amount:            req.Amount,
+				Date:              date,
+				IncomeCategoryID:  req.IncomeCategoryID,
+				AccountID:         req.AccountID,
+				TourID:            req.TourID,
+				OrderID:           req.OrderID,
+				BankRef:           req.BankRef,
+				Counterparty:      req.Counterparty,
+				CounterpartyTaxID: req.CounterpartyTaxID,
 			}
 			if err := tx.Create(&inc).Error; err != nil {
 				return err

@@ -29,18 +29,24 @@ type Income struct {
 	TourID             *int64    `json:"tour_id"`
 	TourCode           string    `json:"tour_code,omitempty" gorm:"<-:false"`
 	OrderID            *int64    `json:"order_id"`
+	BankRef            string    `json:"bank_ref,omitempty"`
+	Counterparty       string    `json:"counterparty,omitempty"`
+	CounterpartyTaxID  string    `json:"counterparty_tax_id,omitempty"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
 }
 
 type CreateIncomeRequest struct {
-	Name             string  `json:"name"`
-	Amount           float64 `json:"amount"`
-	Date             string  `json:"date"`
-	IncomeCategoryID int64   `json:"income_category_id"`
-	AccountID        int64   `json:"account_id"`
-	TourID           *int64  `json:"tour_id"`
-	OrderID          *int64  `json:"order_id"`
+	Name              string  `json:"name"`
+	Amount            float64 `json:"amount"`
+	Date              string  `json:"date"`
+	IncomeCategoryID  int64   `json:"income_category_id"`
+	AccountID         int64   `json:"account_id"`
+	TourID            *int64  `json:"tour_id"`
+	OrderID           *int64  `json:"order_id"`
+	BankRef           string  `json:"bank_ref"`
+	Counterparty      string  `json:"counterparty"`
+	CounterpartyTaxID string  `json:"counterparty_tax_id"`
 }
 
 type UpdateIncomeRequest struct {

@@ -46,7 +46,7 @@
     .sub-table tbody tr:last-child { border-bottom: none; }
 
     .toast {
-      position: fixed; top: 20px; right: 20px; z-index: 100;
+      position: fixed; top: 20px; right: 20px; z-index: 400;
       padding: 11px 18px; border-radius: 12px;
       font-size: 13px; font-weight: 500; display: none;
     }
@@ -140,7 +140,7 @@
     <div class="p-8 flex-1">
 
       <!-- Bakiye stat + form -->
-      <div class="max-w-lg mb-10">
+      <div class="mb-10">
 
         <!-- Bakiye kartı -->
         <div class="mb-6 px-5 py-4 rounded-2xl flex items-center gap-5"
@@ -221,108 +221,165 @@
       </div>
 
       <!-- Gelirler tablosu -->
-      <div class="mb-8" style="max-width:860px;">
+      <div class="mb-8">
         <div class="flex items-center gap-2 mb-3">
           <div class="w-2 h-2 rounded-full" style="background:#00d4ff;"></div>
           <h2 class="text-sm font-bold uppercase tracking-wider" style="color:#2a5035;">Gelirler</h2>
-          <span class="text-xs px-2 py-0.5 rounded-full font-semibold"
+          <span id="incomeCount" class="text-xs px-2 py-0.5 rounded-full font-semibold"
                 style="background:rgba(0,212,255,0.15); color:#00d4ff; border:1px solid rgba(0,212,255,0.25);">
             {{len .incomes}}
           </span>
+          <a href="/accounts/{{.account.ID}}/incomes" style="margin-left:auto;font-size:12px;font-weight:600;color:#0d6e3a;text-decoration:none;display:inline-flex;align-items:center;gap:4px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'">
+            Tümünü Gör
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+          </a>
         </div>
-
         <div style="background:rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.1); border-radius:14px; overflow:hidden;">
-          {{if .incomes}}
-          <table class="w-full sub-table">
-            <thead>
-              <tr>
-                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Ad</th>
-                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Kategori</th>
-                <th class="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tutar</th>
-                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tarih</th>
-              </tr>
-            </thead>
-            <tbody>
-              {{range .incomes}}
-              <tr>
-                <td class="px-5 py-3">
-                  <span class="text-sm font-medium" style="color:#0d1a12;">{{.Name}}</span>
-                </td>
-                <td class="px-5 py-3">
-                  <span class="text-xs px-2.5 py-1 rounded-full font-semibold"
-                        style="background:rgba(0,212,255,0.15); color:#00c0e0; border:1px solid rgba(0,212,255,0.25);">
-                    {{.IncomeCategoryName}}
-                  </span>
-                </td>
-                <td class="px-5 py-3 text-right">
-                  <span class="font-bold text-sm tabular-nums" style="color:#0d6e3a;">+{{printf "%.2f" .Amount}}</span>
-                </td>
-                <td class="px-5 py-3">
-                  <span class="text-xs" style="color:#3a5a40;">{{.Date.Format "02.01.2006"}}</span>
-                </td>
-              </tr>
-              {{end}}
-            </tbody>
-          </table>
-          {{else}}
-          <div class="flex items-center justify-center py-10">
-            <p class="text-sm" style="color:rgba(0,0,0,0.35);">Bu hesaba ait gelir yok</p>
-          </div>
-          {{end}}
+          <div id="incomeTableWrap"></div>
+          <div id="incomePager" class="px-5 py-3" style="border-top:1px solid rgba(0,0,0,0.08);display:none;"></div>
         </div>
       </div>
 
       <!-- Giderler tablosu -->
-      <div style="max-width:860px;">
+      <div>
         <div class="flex items-center gap-2 mb-3">
           <div class="w-2 h-2 rounded-full" style="background:#ff5555;"></div>
           <h2 class="text-sm font-bold uppercase tracking-wider" style="color:#2a5035;">Giderler</h2>
-          <span class="text-xs px-2 py-0.5 rounded-full font-semibold"
+          <span id="expenseCount" class="text-xs px-2 py-0.5 rounded-full font-semibold"
                 style="background:rgba(255,85,85,0.15); color:#ff5555; border:1px solid rgba(255,85,85,0.25);">
             {{len .expenses}}
           </span>
+          <a href="/accounts/{{.account.ID}}/expenses" style="margin-left:auto;font-size:12px;font-weight:600;color:#c0392b;text-decoration:none;display:inline-flex;align-items:center;gap:4px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'">
+            Tümünü Gör
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+          </a>
         </div>
-
         <div style="background:rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.1); border-radius:14px; overflow:hidden;">
-          {{if .expenses}}
-          <table class="w-full sub-table">
-            <thead>
-              <tr>
-                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Ad</th>
-                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Kategori</th>
-                <th class="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tutar</th>
-                <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tarih</th>
-              </tr>
-            </thead>
-            <tbody>
-              {{range .expenses}}
-              <tr>
-                <td class="px-5 py-3">
-                  <span class="text-sm font-medium" style="color:#0d1a12;">{{.Name}}</span>
-                </td>
-                <td class="px-5 py-3">
-                  <span class="text-xs px-2.5 py-1 rounded-full font-semibold"
-                        style="background:rgba(255,85,85,0.15); color:#ff5555; border:1px solid rgba(255,85,85,0.25);">
-                    {{.ExpenseCategoryName}}
-                  </span>
-                </td>
-                <td class="px-5 py-3 text-right">
-                  <span class="font-bold text-sm tabular-nums" style="color:#c0392b;">−{{printf "%.2f" .Amount}}</span>
-                </td>
-                <td class="px-5 py-3">
-                  <span class="text-xs" style="color:#3a5a40;">{{.Date.Format "02.01.2006"}}</span>
-                </td>
-              </tr>
-              {{end}}
-            </tbody>
-          </table>
-          {{else}}
-          <div class="flex items-center justify-center py-10">
-            <p class="text-sm" style="color:rgba(0,0,0,0.35);">Bu hesaba ait gider yok</p>
-          </div>
-          {{end}}
+          <div id="expenseTableWrap"></div>
+          <div id="expensePager" class="px-5 py-3" style="border-top:1px solid rgba(0,0,0,0.08);display:none;"></div>
         </div>
       </div>
+
+      <script>
+        const INCOMES  = {{json .incomes}};
+        const EXPENSES = {{json .expenses}};
+        const PER_PAGE = 10;
+
+        function fmtDate(s) {
+          if (!s) return '';
+          const d = new Date(s);
+          return isNaN(d) ? s : `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+        }
+
+        function renderTable(data, page, type) {
+          if (!data || !data.length) {
+            return '<div class="flex items-center justify-center py-10"><p class="text-sm" style="color:rgba(0,0,0,0.35);">Bu hesaba ait ' + (type==='income'?'gelir':'gider') + ' yok</p></div>';
+          }
+          const start = (page - 1) * PER_PAGE;
+          const slice = data.slice(start, start + PER_PAGE);
+          const color     = type === 'income' ? '#00c0e0' : '#ff5555';
+          const bgColor   = type === 'income' ? 'rgba(0,212,255,0.15)' : 'rgba(255,85,85,0.15)';
+          const borderCol = type === 'income' ? 'rgba(0,212,255,0.25)' : 'rgba(255,85,85,0.25)';
+          const amtColor  = type === 'income' ? '#0d6e3a' : '#c0392b';
+          const sign      = type === 'income' ? '+' : '−';
+          const catField  = type === 'income' ? 'income_category_name' : 'expense_category_name';
+
+          let t = `<table class="w-full sub-table"><thead><tr>
+            <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Ad</th>
+            <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Kategori</th>
+            <th class="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tutar</th>
+            <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tarih</th>
+          </tr></thead><tbody>`;
+
+          slice.forEach(row => {
+            t += `<tr>
+              <td class="px-5 py-3"><span class="text-sm font-medium" style="color:#0d1a12;">${escH(row.name)}</span></td>
+              <td class="px-5 py-3"><span class="text-xs px-2.5 py-1 rounded-full font-semibold"
+                style="background:${bgColor};color:${color};border:1px solid ${borderCol};">${escH(row[catField]||'')}</span></td>
+              <td class="px-5 py-3 text-right"><span class="font-bold text-sm tabular-nums" style="color:${amtColor};">${sign}${Number(row.amount).toFixed(2)}</span></td>
+              <td class="px-5 py-3"><span class="text-xs" style="color:#3a5a40;">${fmtDate(row.date)}</span></td>
+            </tr>`;
+          });
+          t += '</tbody></table>';
+          return t;
+        }
+
+        function renderPager(data, page, setPage, pagerId) {
+          const total = Math.ceil(data.length / PER_PAGE);
+          if (total <= 1) { document.getElementById(pagerId).style.display = 'none'; return; }
+
+          const el = document.getElementById(pagerId);
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.gap = '6px';
+          el.style.flexWrap = 'wrap';
+
+          const btnStyle = (active) => `padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,0.15);
+            background:${active ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.06)'};
+            color:${active ? '#0d1a12' : '#3a5a40'};font-size:12px;font-weight:${active ? '700' : '500'};
+            cursor:pointer;min-width:30px;text-align:center;`;
+
+          let html = '';
+          // Кнопка «‹»
+          html += `<button onclick="${setPage}(${page-1})" ${page===1?'disabled':''} style="${btnStyle(false)}opacity:${page===1?0.35:1};">‹</button>`;
+
+          // Страницы — показываем не больше 7 кнопок
+          const range = buildPageRange(page, total);
+          range.forEach(p => {
+            if (p === '…') {
+              html += `<span style="color:rgba(0,0,0,0.35);font-size:12px;padding:0 2px;">…</span>`;
+            } else {
+              html += `<button onclick="${setPage}(${p})" style="${btnStyle(p===page)}">${p}</button>`;
+            }
+          });
+
+          // Кнопка «›»
+          html += `<button onclick="${setPage}(${page+1})" ${page===total?'disabled':''} style="${btnStyle(false)}opacity:${page===total?0.35:1};">›</button>`;
+          html += `<span style="margin-left:auto;font-size:11px;color:rgba(0,0,0,0.4);">${data.length} kayıt · ${page}/${total}</span>`;
+          el.innerHTML = html;
+        }
+
+        function buildPageRange(cur, total) {
+          if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+          const pages = new Set([1, total, cur]);
+          for (let i = cur-1; i <= cur+1; i++) if (i > 0 && i <= total) pages.add(i);
+          const sorted = [...pages].sort((a,b) => a-b);
+          const result = [];
+          let prev = 0;
+          for (const p of sorted) {
+            if (p - prev > 1) result.push('…');
+            result.push(p);
+            prev = p;
+          }
+          return result;
+        }
+
+        function escH(s) {
+          return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        // Состояние пагинации
+        let incomePage = 1, expensePage = 1;
+
+        function setIncomePage(p) {
+          const total = Math.ceil((INCOMES||[]).length / PER_PAGE);
+          if (p < 1 || p > total) return;
+          incomePage = p;
+          document.getElementById('incomeTableWrap').innerHTML = renderTable(INCOMES, incomePage, 'income');
+          renderPager(INCOMES, incomePage, 'setIncomePage', 'incomePager');
+        }
+
+        function setExpensePage(p) {
+          const total = Math.ceil((EXPENSES||[]).length / PER_PAGE);
+          if (p < 1 || p > total) return;
+          expensePage = p;
+          document.getElementById('expenseTableWrap').innerHTML = renderTable(EXPENSES, expensePage, 'expense');
+          renderPager(EXPENSES, expensePage, 'setExpensePage', 'expensePager');
+        }
+
+        setIncomePage(1);
+        setExpensePage(1);
+      </script>
 
     </div>
   </div>
@@ -346,6 +403,52 @@
           </svg>
         </button>
       </div>
+
+      <!-- Выбор категорий + кнопка импорта -->
+      <div style="padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.08);
+                  display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px;">
+          <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.05em;">
+            Gelir Kategorisi
+          </label>
+          <select id="importIncomeCat"
+                  style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);
+                         background:rgba(255,255,255,0.07);color:#fff;font-size:13px;outline:none;cursor:pointer;">
+            <option value="">— seçin —</option>
+            {{range .incomeCats}}
+            <option value="{{.ID}}">{{.Name}}</option>
+            {{end}}
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px;">
+          <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.05em;">
+            Gider Kategorisi
+          </label>
+          <select id="importExpenseCat"
+                  style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);
+                         background:rgba(255,255,255,0.07);color:#fff;font-size:13px;outline:none;cursor:pointer;">
+            <option value="">— seçin —</option>
+            {{range .expenseCats}}
+            <option value="{{.ID}}">{{.Name}}</option>
+            {{end}}
+          </select>
+        </div>
+        <div style="padding-top:18px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;">
+          <div id="importError" style="display:none;font-size:12px;color:#f87171;font-weight:500;"></div>
+          <button id="importBtn" type="button" onclick="doImport()"
+                  style="padding:9px 22px;border-radius:10px;border:none;
+                         background:linear-gradient(135deg,#16a34a,#059669);
+                         color:#fff;font-size:13px;font-weight:700;cursor:pointer;
+                         display:inline-flex;align-items:center;gap:7px;white-space:nowrap;">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3" />
+            </svg>
+            İmport Et
+          </button>
+        </div>
+      </div>
+
       <div class="import-modal-body">
         <div id="importTableWrapper"></div>
       </div>
@@ -386,6 +489,8 @@
       setTimeout(() => el.classList.remove('show'), 2800);
     }
 
+    let _lastFile = null; // сохраняем файл для последующего импорта
+
     const COL_DEFS = [
       { key: 'date',   az: 'Əməliyyatın tarixi',         tr: 'Tarih' },
       { key: 'ref',    az: 'Əməliyyatın referensi',      tr: 'Referans' },
@@ -405,6 +510,7 @@
       const file = event.target.files[0];
       event.target.value = '';
       if (!file) return;
+      _lastFile = file;
 
       const form = new FormData();
       form.append('file', file);
@@ -473,6 +579,46 @@
 
       document.getElementById('importTableWrapper').innerHTML = html;
       document.getElementById('importModal').classList.add('open');
+    }
+
+    function setImportError(msg) {
+      const el = document.getElementById('importError');
+      if (msg) { el.textContent = '✕ ' + msg; el.style.display = 'block'; }
+      else      { el.style.display = 'none'; }
+    }
+
+    async function doImport() {
+      setImportError('');
+      const incomeCatId  = document.getElementById('importIncomeCat').value;
+      const expenseCatId = document.getElementById('importExpenseCat').value;
+      if (!incomeCatId)  { setImportError('Gelir kategorisini seçin'); return; }
+      if (!expenseCatId) { setImportError('Gider kategorisini seçin'); return; }
+      if (!_lastFile)    { setImportError('Fayl tapılmadı, yenidən seçin'); return; }
+
+      const btn = document.getElementById('importBtn');
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      btn.textContent = 'Gözləyin...';
+
+      const form = new FormData();
+      form.append('file', _lastFile);
+      form.append('income_category_id',  incomeCatId);
+      form.append('expense_category_id', expenseCatId);
+
+      try {
+        const res  = await fetch(`/api/accounts/${accountId}/statement-import`, { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) { setImportError(data.error || 'Xəta baş verdi'); return; }
+        document.getElementById('importModal').classList.remove('open');
+        showToast(`✓ ${data.imported_incomes} gelir, ${data.imported_expenses} gider əlavə edildi`, 'success');
+        setTimeout(() => location.reload(), 1200);
+      } catch (err) {
+        setImportError('Sunucu bağlantı hatası');
+      } finally {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.textContent = 'İmport Et';
+      }
     }
 
     function escHtml(s) {

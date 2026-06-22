@@ -87,7 +87,7 @@ func main() {
 	orderRepo := repository.NewOrderRepository(db)
 	orderSvc := service.NewOrderService(orderRepo, incomeRepo, discountRepo)
 
-	accountHandler := handler.NewAccountHandler(accountSvc)
+	accountHandler := handler.NewAccountHandler(accountSvc, incomeSvc, expenseSvc)
 	incomeCategoryHandler := handler.NewIncomeCategoryHandler(incomeCategorySvc)
 	incomeHandler := handler.NewIncomeHandler(incomeSvc)
 	expenseCategoryHandler := handler.NewExpenseCategoryHandler(expenseCategorySvc)

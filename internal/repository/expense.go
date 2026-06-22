@@ -32,6 +32,7 @@ const expenseSelectQuery = `
 	       e.expense_category_id, c.name AS expense_category_name,
 	       e.account_id, a.name AS account_name,
 	       e.tour_id, t.code AS tour_code,
+	       e.bank_ref, e.counterparty, e.counterparty_tax_id,
 	       e.created_at, e.updated_at
 	FROM expenses e
 	JOIN expense_categories c ON c.id = e.expense_category_id
@@ -80,6 +81,9 @@ func (r *expenseRepo) Create(ctx context.Context, req model.CreateExpenseRequest
 		ExpenseCategoryID: req.ExpenseCategoryID,
 		AccountID:         req.AccountID,
 		TourID:            req.TourID,
+		BankRef:           req.BankRef,
+		Counterparty:      req.Counterparty,
+		CounterpartyTaxID: req.CounterpartyTaxID,
 	}
 	if err := r.db.WithContext(ctx).Create(&exp).Error; err != nil {
 		return nil, err
@@ -102,6 +106,9 @@ func (r *expenseRepo) BulkCreate(ctx context.Context, reqs []model.CreateExpense
 				ExpenseCategoryID: req.ExpenseCategoryID,
 				AccountID:         req.AccountID,
 				TourID:            req.TourID,
+				BankRef:           req.BankRef,
+				Counterparty:      req.Counterparty,
+				CounterpartyTaxID: req.CounterpartyTaxID,
 			}
 			if err := tx.Create(&exp).Error; err != nil {
 				return err

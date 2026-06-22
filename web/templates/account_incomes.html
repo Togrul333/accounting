@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gelirler — {{.account.Name}} — Hisar Tour</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .tbl thead tr { background: rgba(0,0,0,0.08); border-bottom: 1px solid rgba(0,0,0,0.12); }
+    .tbl tbody tr { border-bottom: 1px solid rgba(0,0,0,0.07); transition: background .1s; }
+    .tbl tbody tr:hover { background: rgba(0,0,0,0.04); }
+    .tbl tbody tr:last-child { border-bottom: none; }
+    .filter-input {
+      padding: 8px 12px; border-radius: 9px; border: 1px solid rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.08); color: #0d1a12; font-size: 13px; outline: none;
+      transition: all .15s;
+    }
+    .filter-input:focus { border-color: #00d4ff; box-shadow: 0 0 0 3px rgba(0,212,255,0.12); }
+    .filter-input::placeholder { color: rgba(0,0,0,0.3); }
+    select.filter-input { cursor: pointer; }
+    .pg-btn {
+      padding: 5px 10px; border-radius: 7px; border: 1px solid rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.06); color: #3a5a40; font-size: 12px; font-weight: 500;
+      cursor: pointer; min-width: 30px; text-align: center;
+    }
+    .pg-btn.active { background: rgba(0,0,0,0.18); font-weight: 700; color: #0d1a12; }
+    .pg-btn:disabled { opacity: .35; cursor: default; }
+  </style>
+</head>
+<body style="background:#0d0d0d; min-height:100vh;">
+
+  {{template "sidebar" .}}
+  {{template "topbar" .}}
+
+  <div class="ml-64 min-h-screen flex flex-col" style="background: rgb(99, 218, 160);">
+
+    <!-- Üst bar -->
+    <div class="px-8 h-16 flex items-center gap-4 flex-shrink-0"
+         style="background:rgba(0,0,0,0.08); border-bottom:1px solid rgba(0,0,0,0.1);">
+      <a href="/accounts/{{.account.ID}}/edit"
+         style="padding:6px 8px; border-radius:8px; border:1px solid rgba(0,0,0,0.14);
+                color:rgba(0,0,0,0.45); display:inline-flex; align-items:center; transition:.15s;"
+         onmouseover="this.style.background='rgba(0,0,0,0.1)'; this.style.color='#0d1a12';"
+         onmouseout="this.style.background='transparent'; this.style.color='rgba(0,0,0,0.45)';">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+      </a>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+             style="background:rgba(0,212,255,0.15); border:1px solid rgba(0,212,255,0.25);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00d4ff">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold leading-none" style="color:#0d1a12;">Gelirler</h1>
+          <p class="text-xs mt-0.5" style="color:#2a5035;">{{.account.Name}}</p>
+        </div>
+      </div>
+      <span id="visibleCount" class="ml-3 text-xs px-2 py-0.5 rounded-full font-semibold"
+            style="background:rgba(0,212,255,0.15); color:#00d4ff; border:1px solid rgba(0,212,255,0.25);">
+        {{len .incomes}}
+      </span>
+    </div>
+
+    <div class="p-8 flex-1">
+
+      <!-- Filtreler -->
+      <div class="flex flex-wrap items-center gap-3 mb-6 p-4 rounded-2xl" style="background:rgba(0,0,0,0.07); border:1px solid rgba(0,0,0,0.1);">
+        <input id="fSearch" type="text" class="filter-input" placeholder="Ad ile ara..." oninput="applyFilters()" style="min-width:200px;">
+        <select id="fCat" class="filter-input" onchange="applyFilters()">
+          <option value="">Tüm kategoriler</option>
+          {{range .cats}}
+          <option value="{{.Name}}">{{.Name}}</option>
+          {{end}}
+        </select>
+        <input id="fFrom" type="date" class="filter-input" onchange="applyFilters()" title="Başlangıç tarihi">
+        <input id="fTo"   type="date" class="filter-input" onchange="applyFilters()" title="Bitiş tarihi">
+        <select id="fSort" class="filter-input" onchange="applyFilters()">
+          <option value="date-desc">Tarih ↓</option>
+          <option value="date-asc">Tarih ↑</option>
+          <option value="amount-desc">Tutar ↓</option>
+          <option value="amount-asc">Tutar ↑</option>
+          <option value="name-asc">Ad A→Z</option>
+          <option value="name-desc">Ad Z→A</option>
+        </select>
+        <button type="button" onclick="resetFilters()"
+                style="padding:8px 14px;border-radius:9px;border:1px solid rgba(0,0,0,0.15);
+                       background:rgba(0,0,0,0.08);color:#3a5a40;font-size:13px;cursor:pointer;">
+          Temizle
+        </button>
+        <span id="resultInfo" class="text-xs ml-auto" style="color:rgba(0,0,0,0.4);"></span>
+      </div>
+
+      <!-- Tablo -->
+      <div style="background:rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.1); border-radius:14px; overflow:hidden;">
+        <div id="tableWrap"></div>
+        <div id="pager" class="px-5 py-3 flex flex-wrap items-center gap-2" style="border-top:1px solid rgba(0,0,0,0.08);display:none!important;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const ALL_ROWS = {{json .incomes}};
+    const PER_PAGE = 25;
+    let filtered = [];
+    let currentPage = 1;
+
+    function fmtDate(s) {
+      if (!s) return '';
+      const d = new Date(s);
+      if (isNaN(d)) return s;
+      return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+    }
+
+    function isoDate(s) {
+      if (!s) return '';
+      const d = new Date(s);
+      return isNaN(d) ? '' : d.toISOString().slice(0,10);
+    }
+
+    function applyFilters() {
+      const search = document.getElementById('fSearch').value.trim().toLowerCase();
+      const cat    = document.getElementById('fCat').value;
+      const from   = document.getElementById('fFrom').value;
+      const to     = document.getElementById('fTo').value;
+      const sort   = document.getElementById('fSort').value;
+
+      filtered = ALL_ROWS.filter(r => {
+        if (search && !r.name.toLowerCase().includes(search)) return false;
+        if (cat && r.income_category_name !== cat) return false;
+        const d = isoDate(r.date);
+        if (from && d < from) return false;
+        if (to   && d > to)   return false;
+        return true;
+      });
+
+      filtered.sort((a, b) => {
+        switch (sort) {
+          case 'date-desc':   return new Date(b.date) - new Date(a.date);
+          case 'date-asc':    return new Date(a.date) - new Date(b.date);
+          case 'amount-desc': return b.amount - a.amount;
+          case 'amount-asc':  return a.amount - b.amount;
+          case 'name-asc':    return a.name.localeCompare(b.name);
+          case 'name-desc':   return b.name.localeCompare(a.name);
+        }
+      });
+
+      document.getElementById('visibleCount').textContent = filtered.length;
+      document.getElementById('resultInfo').textContent =
+        filtered.length !== ALL_ROWS.length
+          ? `${ALL_ROWS.length} kayıttan ${filtered.length} sonuç`
+          : `${ALL_ROWS.length} kayıt`;
+
+      currentPage = 1;
+      render();
+    }
+
+    function render() {
+      const start = (currentPage - 1) * PER_PAGE;
+      const slice = filtered.slice(start, start + PER_PAGE);
+
+      if (!filtered.length) {
+        document.getElementById('tableWrap').innerHTML =
+          '<div class="flex items-center justify-center py-14"><p class="text-sm" style="color:rgba(0,0,0,0.35);">Kayıt bulunamadı</p></div>';
+        document.getElementById('pager').style.setProperty('display','none','important');
+        return;
+      }
+
+      let t = `<table class="w-full tbl">
+        <thead><tr>
+          <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Ad</th>
+          <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Kategori</th>
+          <th class="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tutar</th>
+          <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tarih</th>
+        </tr></thead><tbody>`;
+
+      slice.forEach(r => {
+        t += `<tr>
+          <td class="px-5 py-3"><span class="text-sm font-medium" style="color:#0d1a12;">${escH(r.name)}</span></td>
+          <td class="px-5 py-3">
+            <span class="text-xs px-2.5 py-1 rounded-full font-semibold"
+                  style="background:rgba(0,212,255,0.15);color:#00c0e0;border:1px solid rgba(0,212,255,0.25);">
+              ${escH(r.income_category_name||'')}
+            </span>
+          </td>
+          <td class="px-5 py-3 text-right">
+            <span class="font-bold text-sm tabular-nums" style="color:#0d6e3a;">+${Number(r.amount).toFixed(2)}</span>
+          </td>
+          <td class="px-5 py-3"><span class="text-xs" style="color:#3a5a40;">${fmtDate(r.date)}</span></td>
+        </tr>`;
+      });
+      t += '</tbody></table>';
+      document.getElementById('tableWrap').innerHTML = t;
+      renderPager();
+    }
+
+    function renderPager() {
+      const total = Math.ceil(filtered.length / PER_PAGE);
+      const el = document.getElementById('pager');
+      if (total <= 1) { el.style.setProperty('display','none','important'); return; }
+
+      el.style.removeProperty('display');
+      el.style.display = 'flex';
+
+      const range = buildRange(currentPage, total);
+      let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+      range.forEach(p => {
+        if (p === '…') html += `<span style="color:rgba(0,0,0,0.35);font-size:12px;padding:0 2px;">…</span>`;
+        else html += `<button class="pg-btn${p===currentPage?' active':''}" onclick="goPage(${p})">${p}</button>`;
+      });
+      html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>›</button>`;
+      html += `<span style="margin-left:auto;font-size:11px;color:rgba(0,0,0,0.4);">${filtered.length} kayıt · ${currentPage}/${total} sayfa</span>`;
+      el.innerHTML = html;
+    }
+
+    function goPage(p) {
+      const total = Math.ceil(filtered.length / PER_PAGE);
+      if (p < 1 || p > total) return;
+      currentPage = p;
+      render();
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function buildRange(cur, total) {
+      if (total <= 7) return Array.from({length:total},(_,i)=>i+1);
+      const s = new Set([1,total,cur]);
+      for (let i=cur-1;i<=cur+1;i++) if(i>0&&i<=total) s.add(i);
+      const sorted=[...s].sort((a,b)=>a-b);
+      const r=[];let prev=0;
+      for(const p of sorted){if(p-prev>1)r.push('…');r.push(p);prev=p;}
+      return r;
+    }
+
+    function resetFilters() {
+      document.getElementById('fSearch').value = '';
+      document.getElementById('fCat').value = '';
+      document.getElementById('fFrom').value = '';
+      document.getElementById('fTo').value = '';
+      document.getElementById('fSort').value = 'date-desc';
+      applyFilters();
+    }
+
+    function escH(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    applyFilters();
+  </script>
+
+</body>
+</html>

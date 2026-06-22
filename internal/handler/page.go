@@ -251,10 +251,68 @@ func (h *PageHandler) AccountEdit(c *gin.Context) {
 	if expenses == nil {
 		expenses = []model.Expense{}
 	}
+	incomeCats, err := h.incomeCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		incomeCats = nil
+	}
+	expenseCats, err := h.expenseCategorySvc.GetAll(c.Request.Context())
+	if err != nil {
+		expenseCats = nil
+	}
 	c.HTML(http.StatusOK, "account_edit.html", gin.H{
+		"account":      account,
+		"incomes":      incomes,
+		"expenses":     expenses,
+		"incomeCats":   incomeCats,
+		"expenseCats":  expenseCats,
+		"active":       "accounts",
+	})
+}
+
+func (h *PageHandler) AccountIncomes(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/accounts")
+		return
+	}
+	account, err := h.accountSvc.GetByID(c.Request.Context(), id)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/accounts")
+		return
+	}
+	incomes, _ := h.incomeSvc.GetByAccountID(c.Request.Context(), id)
+	if incomes == nil {
+		incomes = []model.Income{}
+	}
+	cats, _ := h.incomeCategorySvc.GetAll(c.Request.Context())
+	c.HTML(http.StatusOK, "account_incomes.html", gin.H{
+		"account": account,
+		"incomes": incomes,
+		"cats":    cats,
+		"active":  "accounts",
+	})
+}
+
+func (h *PageHandler) AccountExpenses(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/accounts")
+		return
+	}
+	account, err := h.accountSvc.GetByID(c.Request.Context(), id)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/accounts")
+		return
+	}
+	expenses, _ := h.expenseSvc.GetByAccountID(c.Request.Context(), id)
+	if expenses == nil {
+		expenses = []model.Expense{}
+	}
+	cats, _ := h.expenseCategorySvc.GetAll(c.Request.Context())
+	c.HTML(http.StatusOK, "account_expenses.html", gin.H{
 		"account":  account,
-		"incomes":  incomes,
 		"expenses": expenses,
+		"cats":     cats,
 		"active":   "accounts",
 	})
 }
