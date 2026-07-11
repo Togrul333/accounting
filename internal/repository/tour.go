@@ -28,7 +28,7 @@ func NewTourRepository(db *gorm.DB) TourRepository {
 const tourSelectQuery = `
 	SELECT t.id, t.code, t.start_date, t.end_date,
 	       t.tour_category_id, tc.name AS tour_category_name, tc.price AS tour_category_price,
-	       t.room_id, r.price AS room_price, r.beds_count AS room_beds_count,
+	       t.room_id, r.code AS room_code, r.price AS room_price, r.beds_count AS room_beds_count,
 	       t.created_at, t.updated_at
 	FROM tours t
 	JOIN tour_categories tc ON tc.id = t.tour_category_id

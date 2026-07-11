@@ -11,13 +11,15 @@ import (
 )
 
 type SheetsImportHandler struct {
-	sheets  *googlesheets.Client
-	linkSvc *service.SheetLinkService
-	tourSvc *service.TourService
+	sheets    *googlesheets.Client
+	linkSvc   *service.SheetLinkService
+	tourSvc   *service.TourService
+	clientSvc *service.ClientService
+	orderSvc  *service.OrderService
 }
 
-func NewSheetsImportHandler(sheets *googlesheets.Client, linkSvc *service.SheetLinkService, tourSvc *service.TourService) *SheetsImportHandler {
-	return &SheetsImportHandler{sheets: sheets, linkSvc: linkSvc, tourSvc: tourSvc}
+func NewSheetsImportHandler(sheets *googlesheets.Client, linkSvc *service.SheetLinkService, tourSvc *service.TourService, clientSvc *service.ClientService, orderSvc *service.OrderService) *SheetsImportHandler {
+	return &SheetsImportHandler{sheets: sheets, linkSvc: linkSvc, tourSvc: tourSvc, clientSvc: clientSvc, orderSvc: orderSvc}
 }
 
 // Links əvvəllər uğurla açılmış Google Sheets linklərini qaytarır (son istifadə tarixinə görə).

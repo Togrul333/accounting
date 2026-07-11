@@ -50,6 +50,7 @@ type Tour struct {
 	TourCategoryName  string    `json:"tour_category_name,omitempty" gorm:"<-:false"`
 	TourCategoryPrice float64   `json:"tour_category_price,omitempty" gorm:"<-:false"`
 	RoomID            int64     `json:"room_id"`
+	RoomCode          string    `json:"room_code,omitempty" gorm:"<-:false"`
 	RoomPrice         float64   `json:"room_price,omitempty" gorm:"<-:false"`
 	RoomBedsCount     int       `json:"room_beds_count,omitempty" gorm:"<-:false"`
 	CreatedAt         time.Time `json:"created_at"`

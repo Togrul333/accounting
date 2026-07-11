@@ -145,6 +145,7 @@ func NewRouter(
 		api.POST("/sheets-import/tabs", sheetsImport.Tabs)
 		api.POST("/sheets-import/preview", sheetsImport.Preview)
 		api.POST("/sheets-import/turlar-candidates", sheetsImport.TurlarCandidates)
+		api.POST("/sheets-import/passenger-candidates", sheetsImport.PassengerCandidates)
 	}
 
 	return r

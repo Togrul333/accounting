@@ -130,6 +130,28 @@
         <div id="turlarList" class="space-y-2 max-w-3xl"></div>
       </div>
 
+      <div id="passengerSection" style="display:none;">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:rgba(123,47,255,0.12); border:1px solid rgba(123,47,255,0.2);">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#7b2fff">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-lg font-bold leading-none" style="color:#ececec;">Sərnişinlər — <span id="passengerTourCode"></span></p>
+              <p id="passengerSubtitle" class="text-xs mt-1" style="color:#484848;"></p>
+            </div>
+          </div>
+          <button id="passengerAllBtn" onclick="createAllPassengers()" class="btn-primary">
+            <span id="passengerAllBtnLabel">Hamısını Yarat</span>
+          </button>
+        </div>
+        <div id="passengerProgressLog" class="mb-4 max-w-4xl" style="display:none; max-height:220px; overflow-y:auto; background:#111111; border:1px solid #242424; border-radius:12px; padding:12px 16px; font-size:12px; font-family:monospace;"></div>
+        <div id="passengerList" class="space-y-2 max-w-4xl"></div>
+      </div>
+
       <div id="emptyState" class="flex flex-col items-center justify-center py-24">
         <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
              style="background:#1e1e1e; border:1px solid #2a2a2a;">
@@ -145,9 +167,68 @@
 
   <div id="toast" class="toast"></div>
 
+  <div id="modalOverlay" style="display:none; position:fixed; inset:0; z-index:200; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);">
+    <div style="background:#161616; border:1px solid #242424; border-radius:20px; width:100%; max-width:420px; box-shadow:0 30px 80px rgba(0,0,0,0.5);">
+      <div style="padding:20px 24px 16px; border-bottom:1px solid #242424;">
+        <p id="modalTitle" style="color:#ececec; font-weight:700; font-size:16px;"></p>
+        <p id="modalSubtitle" style="color:#606060; font-size:12px; margin-top:4px;"></p>
+      </div>
+      <div id="modalBody" style="padding:20px 24px; display:flex; flex-direction:column; gap:12px;"></div>
+      <div style="display:flex; gap:12px; padding:0 24px 20px;">
+        <button id="modalCancelBtn" type="button"
+                style="flex:1; padding:11px; border-radius:10px; border:1px solid #2a2a2a; color:#606060; font-size:14px; font-weight:600; cursor:pointer; background:#1e1e1e;">İptal</button>
+        <button id="modalConfirmBtn" type="button" class="btn-primary" style="flex:1; justify-content:center;">Təsdiqlə</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let currentSpreadsheetId = null;
     let activeTabGID = null;
+    let tourCodes = new Set();
+
+    function openModal({ title, subtitle, fields }) {
+      return new Promise(resolve => {
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalSubtitle').textContent = subtitle || '';
+        const body = document.getElementById('modalBody');
+        body.innerHTML = '';
+
+        (fields || []).forEach(f => {
+          const wrap = document.createElement('div');
+          if (f.type === 'info') {
+            wrap.innerHTML = `<p style="color:#888888; font-size:13px;">${f.label}: <span style="color:#ececec;">${f.value ?? '—'}</span></p>`;
+          } else {
+            wrap.innerHTML = `<label style="display:block; color:#888888; font-size:13px; margin-bottom:4px;">${f.label}</label>
+              <input id="modalField_${f.key}" class="input-field" type="${f.type || 'text'}" value="${f.value ?? ''}">`;
+          }
+          body.appendChild(wrap);
+        });
+
+        const overlay = document.getElementById('modalOverlay');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        const cancelBtn = document.getElementById('modalCancelBtn');
+        overlay.style.display = 'flex';
+
+        function cleanup(result) {
+          overlay.style.display = 'none';
+          confirmBtn.onclick = null;
+          cancelBtn.onclick = null;
+          resolve(result);
+        }
+
+        confirmBtn.onclick = () => {
+          const result = {};
+          (fields || []).forEach(f => {
+            if (f.type === 'info') return;
+            const el = document.getElementById(`modalField_${f.key}`);
+            result[f.key] = f.type === 'number' ? parseFloat(el.value) : el.value;
+          });
+          cleanup(result);
+        };
+        cancelBtn.onclick = () => cleanup(null);
+      });
+    }
 
     async function loadSavedLinks() {
       try {
@@ -242,9 +323,19 @@
       document.getElementById('sheetMeta').innerHTML = '<span class="spinner"></span> Yükleniyor...';
       document.getElementById('resultSection').style.display = 'none';
       document.getElementById('turlarSection').style.display = 'none';
+      document.getElementById('passengerSection').style.display = 'none';
 
-      if (title.trim().toLowerCase() === 'turlar') {
+      const trimmedTitle = title.trim();
+
+      if (trimmedTitle.toLowerCase() === 'turlar') {
         await loadTurlarView(gid);
+        document.getElementById('sheetMeta').textContent = '';
+        return;
+      }
+
+      await loadLookups();
+      if (tourCodes.has(normKey(trimmedTitle))) {
+        await loadPassengerView(gid, trimmedTitle);
         document.getElementById('sheetMeta').textContent = '';
         return;
       }
@@ -282,16 +373,19 @@
 
     async function loadLookups() {
       try {
-        const [roomsRes, catsRes] = await Promise.all([
+        const [roomsRes, catsRes, toursRes] = await Promise.all([
           fetch('/api/rooms'),
           fetch('/api/tour-categories'),
+          fetch('/api/tours'),
         ]);
         const rooms = await roomsRes.json();
         const cats = await catsRes.json();
+        const tours = await toursRes.json();
         roomsByCode = {};
         (rooms || []).forEach(r => { if (r.code) roomsByCode[normKey(r.code)] = r; });
         categoriesByName = {};
         (cats || []).forEach(c => { categoriesByName[normKey(c.name)] = c; });
+        tourCodes = new Set((tours || []).map(t => normKey(t.code)));
       } catch {}
     }
 
@@ -346,12 +440,20 @@
     async function resolveRoomId(item) {
       const key = normKey(item.room_code);
       if (roomsByCode[key]) return roomsByCode[key].id;
-      const ok = confirm(`Otaq tipi "${item.room_code}" tapılmadı.\n${item.price} qiymətlə yeni otaq yaradılsın?`);
-      if (!ok) return null;
+      const result = await openModal({
+        title: 'Yeni otaq yaradılsın?',
+        subtitle: `Otaq tipi "${item.room_code}" bazada tapılmadı`,
+        fields: [
+          { key: 'code', label: 'Kod', type: 'text', value: item.room_code },
+          { key: 'price', label: 'Qiymət', type: 'number', value: item.price },
+          { key: 'beds_count', label: 'Yataq sayı', type: 'number', value: guessBedsCount(item.room_code) },
+        ],
+      });
+      if (!result) return null;
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: item.room_code, price: item.price, beds_count: guessBedsCount(item.room_code) }),
+        body: JSON.stringify(result),
       });
       if (!res.ok) return null;
       const room = await res.json();
@@ -362,12 +464,19 @@
     async function resolveCategoryId(item) {
       const key = normKey(item.category_name);
       if (categoriesByName[key]) return categoriesByName[key].id;
-      const ok = confirm(`Kateqoriya "${item.category_name}" tapılmadı.\n${item.price} qiymətlə yeni kateqoriya yaradılsın?`);
-      if (!ok) return null;
+      const result = await openModal({
+        title: 'Yeni kateqoriya yaradılsın?',
+        subtitle: `Kateqoriya "${item.category_name}" bazada tapılmadı`,
+        fields: [
+          { key: 'name', label: 'Ad', type: 'text', value: item.category_name },
+          { key: 'price', label: 'Qiymət', type: 'number', value: item.price },
+        ],
+      });
+      if (!result) return null;
       const res = await fetch('/api/tour-categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: item.category_name, price: item.price }),
+        body: JSON.stringify(result),
       });
       if (!res.ok) return null;
       const cat = await res.json();
@@ -417,6 +526,171 @@
 
       btn.disabled = false;
       label.textContent = 'Tümünü İçe Aktar';
+    }
+
+    let passengerCandidates = [];
+
+    async function loadPassengerView(gid, tourCode) {
+      try {
+        const res = await fetch('/api/sheets-import/passenger-candidates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spreadsheet_id: currentSpreadsheetId, gid }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast('✕ ' + (data.error || 'Xəta baş verdi'), 'error'); return; }
+
+        passengerCandidates = data.passengers || [];
+        document.getElementById('passengerTourCode').textContent = tourCode;
+        document.getElementById('passengerSubtitle').textContent = `${passengerCandidates.length} sərnişin`;
+        renderPassengerList();
+        document.getElementById('passengerSection').style.display = 'block';
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('passengerSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        showToast('✕ Sunucu bağlantı hatası', 'error');
+      }
+    }
+
+    function renderPassengerList() {
+      const list = document.getElementById('passengerList');
+      list.innerHTML = '';
+      passengerCandidates.forEach((p, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between px-4 py-3 rounded-xl';
+        row.style.cssText = 'background:#161616; border:1px solid #242424;';
+
+        let badge, actionHtml = '';
+        if (!p.tour_match) {
+          badge = `<span title="Əvvəlcə Turlar-ı import edin" style="color:#606060; background:rgba(255,255,255,0.05); border:1px solid #2a2a2a; font-size:11px; padding:2px 8px; border-radius:999px;">Tur tapılmadı</span>`;
+        } else if (p.has_order) {
+          badge = `<span style="color:#00d4ff; background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.2); font-size:11px; padding:2px 8px; border-radius:999px;">Sifariş var</span>`;
+        } else {
+          badge = p.client_match
+            ? `<span style="color:#7b2fff; background:rgba(123,47,255,0.1); border:1px solid rgba(123,47,255,0.2); font-size:11px; padding:2px 8px; border-radius:999px;">Müştəri tapıldı</span>`
+            : `<span style="color:#f97316; background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.2); font-size:11px; padding:2px 8px; border-radius:999px;">Yeni müştəri</span>`;
+          actionHtml = `<button data-idx="${idx}" class="passenger-action-btn btn-primary" style="padding:6px 14px; font-size:12px;">${p.client_match ? 'Sifariş Yarat' : 'Müştəri + Sifariş'}</button>`;
+        }
+
+        const cancelledTag = p.cancelled ? ` <span style="color:#ff5555; font-size:11px;">(İPTAL)</span>` : '';
+        row.innerHTML = `
+          <div>
+            <p style="color:#ececec; font-size:14px; font-weight:600;">${p.first_name} ${p.last_name}${cancelledTag}</p>
+            <p style="color:#484848; font-size:12px; margin-top:2px;">${p.birth_year || '—'} · ${p.room_code || '—'} / ${p.category_name || '—'} · ${p.phone || ''}</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">${badge}${actionHtml}</div>`;
+
+        const btn = row.querySelector('.passenger-action-btn');
+        if (btn) btn.onclick = (e) => handlePassengerAction(idx, e.currentTarget);
+        list.appendChild(row);
+      });
+    }
+
+    // Bir sərnişini emal edir. Müştəri yoxdursa və Ad/Soyad/Doğum ili tamdırsa — sual vermədən avtomatik
+    // yaradır; yalnız vacib məlumat çatışmadıqda popup açır. Sifariş həmişə sual vermədən yaradılır.
+    // Nəticəni { status: 'ok'|'skip'|'cancel'|'error', msg } kimi qaytarır ki, həm tək düymə, həm də
+    // "Hamısını Yarat" ardıcıl loop-u eyni funksiyadan istifadə edə bilsin.
+    async function processPassenger(idx) {
+      const p = passengerCandidates[idx];
+      const who = `${p.first_name} ${p.last_name}`;
+
+      if (!p.tour_match) return { status: 'skip', msg: `${who} — tur tapılmadı, ötürüldü` };
+      if (p.has_order) return { status: 'skip', msg: `${who} — artıq sifariş var` };
+
+      let clientId = p.client_match ? p.client_match.id : null;
+
+      if (!clientId) {
+        let clientPayload = { first_name: p.first_name, last_name: p.last_name, birth_year: p.birth_year, phone: p.phone, email: '' };
+
+        const missingImportant = !p.first_name || !p.last_name || !p.birth_year;
+        if (missingImportant) {
+          const result = await openModal({
+            title: 'Vacib məlumat çatışmır',
+            subtitle: `"${who}" üçün Ad/Soyad/Doğum ili tam deyil — tamamlayın`,
+            fields: [
+              { key: 'first_name', label: 'Ad', type: 'text', value: p.first_name },
+              { key: 'last_name', label: 'Soyad', type: 'text', value: p.last_name },
+              { key: 'birth_year', label: 'Doğum ili', type: 'number', value: p.birth_year },
+              { key: 'phone', label: 'Telefon', type: 'text', value: p.phone },
+              { key: 'passport', label: 'Passport (məlumat üçün)', type: 'info', value: p.passport_no },
+              { key: 'email', label: 'Email', type: 'text', value: '' },
+            ],
+          });
+          if (!result) return { status: 'cancel', msg: `${who} — müştəri yaradılmadı (imtina)` };
+          clientPayload = result;
+        }
+
+        const res = await fetch('/api/clients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(clientPayload),
+        });
+        if (!res.ok) return { status: 'error', msg: `${who} — müştəri yaradıla bilmədi` };
+        const client = await res.json();
+        clientId = client.id;
+        p.client_match = { id: client.id, first_name: client.first_name, last_name: client.last_name };
+      }
+
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: clientId, tour_id: p.tour_match, incomes: [] }),
+      });
+      if (!res.ok) return { status: 'error', msg: `${who} — sifariş yaradıla bilmədi` };
+
+      p.has_order = true;
+      return { status: 'ok', msg: `${who} — sifariş yaradıldı` };
+    }
+
+    async function handlePassengerAction(idx, btn) {
+      btn.disabled = true;
+      const originalLabel = btn.textContent;
+      btn.textContent = 'Yüklənir...';
+
+      const result = await processPassenger(idx);
+      showToast((result.status === 'ok' ? '✓ ' : '✕ ') + result.msg, result.status === 'ok' ? 'success' : 'error');
+
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+      renderPassengerList();
+    }
+
+    function logPassengerProgress(entry) {
+      const log = document.getElementById('passengerProgressLog');
+      log.style.display = 'block';
+      const icon = { ok: '✓', skip: '⊘', cancel: '⊘', error: '✕' }[entry.status] || '·';
+      const color = { ok: '#00d4ff', skip: '#606060', cancel: '#606060', error: '#ff5555' }[entry.status] || '#888888';
+      const line = document.createElement('div');
+      line.style.color = color;
+      line.textContent = `${icon} ${entry.msg}`;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function createAllPassengers() {
+      const btn = document.getElementById('passengerAllBtn');
+      const label = document.getElementById('passengerAllBtnLabel');
+      const log = document.getElementById('passengerProgressLog');
+      log.innerHTML = '';
+      log.style.display = 'block';
+      btn.disabled = true;
+
+      const total = passengerCandidates.length;
+      let created = 0, skipped = 0, errors = 0;
+
+      for (let i = 0; i < total; i++) {
+        label.innerHTML = `<span class="spinner"></span> ${i + 1}/${total}`;
+        const result = await processPassenger(i);
+        logPassengerProgress(result);
+        if (result.status === 'ok') created++;
+        else if (result.status === 'error') errors++;
+        else skipped++;
+        renderPassengerList();
+      }
+
+      btn.disabled = false;
+      label.textContent = 'Hamısını Yarat';
+      showToast(`✓ ${created} sifariş yaradıldı, ${skipped} ötürüldü, ${errors} xəta`, errors ? 'error' : 'success');
     }
 
     function openSheet(title, headers, rows) {
