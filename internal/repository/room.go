@@ -40,7 +40,7 @@ func (r *roomRepo) GetByID(ctx context.Context, id int64) (*model.Room, error) {
 }
 
 func (r *roomRepo) Create(ctx context.Context, req model.CreateRoomRequest) (*model.Room, error) {
-	rm := model.Room{Price: req.Price, BedsCount: req.BedsCount}
+	rm := model.Room{Code: req.Code, Price: req.Price, BedsCount: req.BedsCount}
 	if err := r.db.WithContext(ctx).Create(&rm).Error; err != nil {
 		return nil, err
 	}
@@ -49,6 +49,7 @@ func (r *roomRepo) Create(ctx context.Context, req model.CreateRoomRequest) (*mo
 
 func (r *roomRepo) Update(ctx context.Context, id int64, req model.UpdateRoomRequest) (*model.Room, error) {
 	result := r.db.WithContext(ctx).Model(&model.Room{}).Where("id = ?", id).Updates(map[string]any{
+		"code":       req.Code,
 		"price":      req.Price,
 		"beds_count": req.BedsCount,
 	})

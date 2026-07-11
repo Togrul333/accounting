@@ -76,6 +76,12 @@ func (h *PageHandler) Login(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.html", nil)
 }
 
+func (h *PageHandler) SheetsImport(c *gin.Context) {
+	c.HTML(http.StatusOK, "sheets_import.html", gin.H{
+		"active": "sheets-import",
+	})
+}
+
 func (h *PageHandler) Profile(c *gin.Context) {
 	user, err := h.userSvc.GetByID(c.Request.Context(), 1)
 	if err != nil {

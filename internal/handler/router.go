@@ -23,6 +23,7 @@ func NewRouter(
 	discounts *DiscountHandler,
 	orders *OrderHandler,
 	pages *PageHandler,
+	sheetsImport *SheetsImportHandler,
 	tmpl *template.Template,
 ) *gin.Engine {
 	r := gin.Default()
@@ -53,6 +54,7 @@ func NewRouter(
 	r.GET("/orders", pages.Orders)
 	r.GET("/orders/:id", pages.OrderShow)
 	r.GET("/orders/:id/edit", pages.OrderEdit)
+	r.GET("/sheets-import", pages.SheetsImport)
 
 	api := r.Group("/api")
 	{
@@ -138,6 +140,11 @@ func NewRouter(
 		api.DELETE("/orders/:id", orders.Delete)
 		api.POST("/orders/:id/incomes", orders.AddIncome)
 		api.POST("/orders/:id/discounts", orders.AddDiscount)
+
+		api.GET("/sheets-import/links", sheetsImport.Links)
+		api.POST("/sheets-import/tabs", sheetsImport.Tabs)
+		api.POST("/sheets-import/preview", sheetsImport.Preview)
+		api.POST("/sheets-import/turlar-candidates", sheetsImport.TurlarCandidates)
 	}
 
 	return r

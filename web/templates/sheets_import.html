@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Sheets — Hisar Tour</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .input-field {
+      width: 100%; padding: 10px 14px; border-radius: 10px;
+      border: 1px solid #2a2a2a; background: #1e1e1e;
+      color: #ececec; font-size: 14px; outline: none; transition: all .2s;
+    }
+    .input-field::placeholder { color: #383838; }
+    .input-field:focus { border-color: #00d4ff; box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #00d4ff, #7b2fff);
+      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s;
+    }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+    .table-wrap { background: #161616; border: 1px solid #242424; border-radius: 16px; overflow: auto; }
+    thead tr { background: rgba(0,212,255,0.04); border-bottom: 1px solid #242424; }
+    tbody tr { border-bottom: 1px solid #1e1e1e; transition: background .1s; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody tr:last-child { border-bottom: none; }
+    .toast { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 11px 18px; border-radius: 12px; font-size: 13px; font-weight: 500; display: none; }
+    .toast.show { display: flex; align-items: center; gap: 8px; }
+    .toast.success { background: rgba(0,212,255,0.1); color: #00d4ff; border: 1px solid rgba(0,212,255,0.2); }
+    .toast.error   { background: #2a1a1a; color: #ff5555; border: 1px solid rgba(255,85,85,0.2); }
+    .spinner { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body style="background:#0d0d0d; min-height:100vh;">
+
+  {{template "sidebar" .}}
+{{template "topbar" .}}
+
+  <div class="ml-64 min-h-screen flex flex-col">
+
+    <div class="px-8 h-16 flex items-center justify-between flex-shrink-0"
+         style="background:#161616; border-bottom:1px solid #242424;">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+             style="background:#1e1e1e; border:1px solid #2a2a2a;">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00d4ff" opacity=".7">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold leading-none" style="color:#ececec;">Google Sheets</h1>
+          <p class="text-xs mt-0.5" style="color:#484848;">Google Sheets üzerinden veri çekin</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-8 flex-1">
+
+      <div class="mb-8 max-w-2xl" style="background:#161616; border:1px solid #242424; border-radius:16px;">
+        <div class="p-5 space-y-3">
+          <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Google Sheets bağlantısı</label>
+          <div class="flex gap-3">
+            <input id="sheetUrl" type="text" placeholder="https://docs.google.com/spreadsheets/d/..." class="input-field">
+            <button id="tabsBtn" onclick="fetchTabs()" class="btn-primary" style="white-space:nowrap;">
+              <span id="tabsBtnLabel">Sekmeleri Getir</span>
+            </button>
+          </div>
+
+          <div id="tabsList" class="space-y-1" style="display:none;"></div>
+
+          <p id="sheetMeta" class="text-xs" style="color:#484848;"></p>
+        </div>
+      </div>
+
+      <div id="savedLinksWrap" class="mb-8 max-w-2xl" style="display:none; background:#161616; border:1px solid #242424; border-radius:16px;">
+        <div class="p-5 space-y-2">
+          <p class="text-xs font-semibold uppercase tracking-wider" style="color:#484848;">Kayıtlı bağlantılar</p>
+          <div id="savedLinksList" class="space-y-1"></div>
+        </div>
+      </div>
+
+      <div id="resultSection" style="display:none;">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+               style="background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.18);">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00d4ff">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+          </div>
+          <div>
+            <p id="resultTitle" class="text-lg font-bold leading-none" style="color:#ececec;"></p>
+            <p id="resultSubtitle" class="text-xs mt-1" style="color:#484848;"></p>
+          </div>
+        </div>
+        <div id="resultWrap" class="table-wrap max-w-full">
+          <table class="w-full text-sm">
+            <thead>
+              <tr id="tableHead"></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="turlarSection" style="display:none;">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.18);">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00d4ff">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-lg font-bold leading-none" style="color:#ececec;">Turlar</p>
+              <p id="turlarSubtitle" class="text-xs mt-1" style="color:#484848;"></p>
+            </div>
+          </div>
+          <button id="importAllBtn" onclick="importAllTours()" class="btn-primary">
+            <span id="importAllBtnLabel">Tümünü İçe Aktar</span>
+          </button>
+        </div>
+        <div id="turlarList" class="space-y-2 max-w-3xl"></div>
+      </div>
+
+      <div id="emptyState" class="flex flex-col items-center justify-center py-24">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+             style="background:#1e1e1e; border:1px solid #2a2a2a;">
+          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke-width="1.3" stroke="#383838">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
+          </svg>
+        </div>
+        <p class="font-semibold mb-1" style="color:#606060;">Henüz veri çekilmedi</p>
+        <p class="text-sm" style="color:#383838;">Yukarıya Google Sheets bağlantısını yapıştırıp "Sekmeleri Getir" butonuna basın, sonra bir sekme seçin</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let currentSpreadsheetId = null;
+    let activeTabGID = null;
+
+    async function loadSavedLinks() {
+      try {
+        const res = await fetch('/api/sheets-import/links');
+        const data = await res.json();
+        const links = data.links || [];
+        const wrap = document.getElementById('savedLinksWrap');
+        const list = document.getElementById('savedLinksList');
+        list.innerHTML = '';
+        if (!links.length) { wrap.style.display = 'none'; return; }
+
+        links.forEach(link => {
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = 'w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-150';
+          item.style.cssText = 'background:#1e1e1e; border:1px solid #2a2a2a; color:#ececec; font-size:13px; cursor:pointer;';
+          item.innerHTML = `<span class="truncate">${link.url}</span>`;
+          item.onclick = () => {
+            document.getElementById('sheetUrl').value = link.url;
+            fetchTabs();
+          };
+          list.appendChild(item);
+        });
+        wrap.style.display = 'block';
+      } catch {}
+    }
+
+    async function fetchTabs() {
+      const url = document.getElementById('sheetUrl').value.trim();
+      if (!url) { showToast('✕ Link daxil edin', 'error'); return; }
+
+      const btn = document.getElementById('tabsBtn');
+      const label = document.getElementById('tabsBtnLabel');
+      btn.disabled = true;
+      label.innerHTML = '<span class="spinner"></span>';
+
+      try {
+        const res = await fetch('/api/sheets-import/tabs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast('✕ ' + (data.error || 'Xəta baş verdi'), 'error'); return; }
+
+        currentSpreadsheetId = data.spreadsheet_id;
+        activeTabGID = null;
+        renderTabsList(data.tabs || []);
+        document.getElementById('tabsList').style.display = 'block';
+        showToast(`✓ ${(data.tabs || []).length} sekme bulundu`, 'success');
+        loadSavedLinks();
+      } catch {
+        showToast('✕ Sunucu bağlantı hatası', 'error');
+      } finally {
+        btn.disabled = false;
+        label.textContent = 'Sekmeleri Getir';
+      }
+    }
+
+    loadSavedLinks();
+
+    function renderTabsList(tabs) {
+      const list = document.getElementById('tabsList');
+      list.innerHTML = '';
+      tabs.forEach(tab => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.dataset.gid = tab.gid;
+        item.className = 'w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-150';
+        item.style.cssText = 'background:#1e1e1e; border:1px solid #2a2a2a; color:#ececec; font-size:13px; cursor:pointer;';
+        item.innerHTML = `<span>${tab.title}</span><span style="color:#383838; font-size:11px;">gid=${tab.gid}</span>`;
+        item.onclick = () => selectTab(tab.gid, tab.title, item);
+        list.appendChild(item);
+      });
+    }
+
+    function markActiveTab(el) {
+      document.querySelectorAll('#tabsList button').forEach(b => {
+        b.style.background = '#1e1e1e';
+        b.style.borderColor = '#2a2a2a';
+        b.style.color = '#ececec';
+      });
+      el.style.background = 'rgba(0,212,255,0.1)';
+      el.style.borderColor = '#00d4ff';
+      el.style.color = '#00d4ff';
+    }
+
+    async function selectTab(gid, title, el) {
+      if (!currentSpreadsheetId) return;
+      activeTabGID = gid;
+      markActiveTab(el);
+      document.getElementById('sheetMeta').innerHTML = '<span class="spinner"></span> Yükleniyor...';
+      document.getElementById('resultSection').style.display = 'none';
+      document.getElementById('turlarSection').style.display = 'none';
+
+      if (title.trim().toLowerCase() === 'turlar') {
+        await loadTurlarView(gid);
+        document.getElementById('sheetMeta').textContent = '';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/sheets-import/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spreadsheet_id: currentSpreadsheetId, gid }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast('✕ ' + (data.error || 'Xəta baş verdi'), 'error'); document.getElementById('sheetMeta').textContent = ''; return; }
+
+        document.getElementById('sheetMeta').textContent = '';
+        openSheet(data.sheet_title, data.headers || [], data.rows || []);
+      } catch {
+        showToast('✕ Sunucu bağlantı hatası', 'error');
+        document.getElementById('sheetMeta').textContent = '';
+      }
+    }
+
+    let turlarTours = [];
+    let roomsByCode = {};
+    let categoriesByName = {};
+
+    function normKey(s) { return (s || '').trim().toLowerCase(); }
+
+    function guessBedsCount(code) {
+      const c = (code || '').toUpperCase();
+      if (c.includes('QDR')) return 4;
+      if (c.includes('TRP')) return 3;
+      if (c.includes('SNG')) return 1;
+      return 2;
+    }
+
+    async function loadLookups() {
+      try {
+        const [roomsRes, catsRes] = await Promise.all([
+          fetch('/api/rooms'),
+          fetch('/api/tour-categories'),
+        ]);
+        const rooms = await roomsRes.json();
+        const cats = await catsRes.json();
+        roomsByCode = {};
+        (rooms || []).forEach(r => { if (r.code) roomsByCode[normKey(r.code)] = r; });
+        categoriesByName = {};
+        (cats || []).forEach(c => { categoriesByName[normKey(c.name)] = c; });
+      } catch {}
+    }
+
+    async function loadTurlarView(gid) {
+      await loadLookups();
+      try {
+        const res = await fetch('/api/sheets-import/turlar-candidates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spreadsheet_id: currentSpreadsheetId, gid }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast('✕ ' + (data.error || 'Xəta baş verdi'), 'error'); return; }
+
+        turlarTours = data.tours || [];
+        renderTurlarList();
+        document.getElementById('turlarSubtitle').textContent = `${turlarTours.length} tur tapıldı`;
+        document.getElementById('turlarSection').style.display = 'block';
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('turlarSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        showToast('✕ Sunucu bağlantı hatası', 'error');
+      }
+    }
+
+    function renderTurlarList() {
+      const list = document.getElementById('turlarList');
+      list.innerHTML = '';
+      turlarTours.forEach((tour, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between px-4 py-3 rounded-xl';
+        row.style.cssText = 'background:#161616; border:1px solid #242424;';
+        const badge = tour.exists
+          ? `<span style="color:#00d4ff; background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.2); font-size:11px; padding:2px 8px; border-radius:999px;">Mövcuddur</span>`
+          : `<span style="color:#f97316; background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.2); font-size:11px; padding:2px 8px; border-radius:999px;">Yeni</span>`;
+        row.innerHTML = `
+          <div>
+            <p style="color:#ececec; font-size:14px; font-weight:600;">${tour.code}</p>
+            <p style="color:#484848; font-size:12px; margin-top:2px;">${tour.start_date} — ${tour.end_date} · ${tour.items.length} qeyd</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            ${badge}
+            <button data-idx="${idx}" class="tour-import-btn btn-primary" style="padding:6px 14px; font-size:12px;" ${tour.exists ? 'disabled' : ''}>
+              İçe Aktar
+            </button>
+          </div>`;
+        row.querySelector('.tour-import-btn').onclick = (e) => importTour(idx, e.currentTarget);
+        list.appendChild(row);
+      });
+    }
+
+    async function resolveRoomId(item) {
+      const key = normKey(item.room_code);
+      if (roomsByCode[key]) return roomsByCode[key].id;
+      const ok = confirm(`Otaq tipi "${item.room_code}" tapılmadı.\n${item.price} qiymətlə yeni otaq yaradılsın?`);
+      if (!ok) return null;
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: item.room_code, price: item.price, beds_count: guessBedsCount(item.room_code) }),
+      });
+      if (!res.ok) return null;
+      const room = await res.json();
+      roomsByCode[key] = room;
+      return room.id;
+    }
+
+    async function resolveCategoryId(item) {
+      const key = normKey(item.category_name);
+      if (categoriesByName[key]) return categoriesByName[key].id;
+      const ok = confirm(`Kateqoriya "${item.category_name}" tapılmadı.\n${item.price} qiymətlə yeni kateqoriya yaradılsın?`);
+      if (!ok) return null;
+      const res = await fetch('/api/tour-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: item.category_name, price: item.price }),
+      });
+      if (!res.ok) return null;
+      const cat = await res.json();
+      categoriesByName[key] = cat;
+      return cat.id;
+    }
+
+    async function importTour(idx, btn) {
+      const tour = turlarTours[idx];
+      if (btn) { btn.disabled = true; btn.textContent = 'Yüklənir...'; }
+
+      let created = 0;
+      for (const item of tour.items) {
+        const roomId = await resolveRoomId(item);
+        const categoryId = await resolveCategoryId(item);
+        if (!roomId || !categoryId) continue;
+
+        const res = await fetch('/api/tours', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: tour.code,
+            start_date: tour.start_date,
+            end_date: tour.end_date,
+            tour_category_id: categoryId,
+            room_id: roomId,
+          }),
+        });
+        if (res.ok) created++;
+      }
+
+      tour.exists = true;
+      renderTurlarList();
+      showToast(created > 0 ? `✓ ${tour.code} — ${created} qeyd əlavə edildi` : `✕ ${tour.code} üçün heç nə əlavə edilmədi`, created > 0 ? 'success' : 'error');
+    }
+
+    async function importAllTours() {
+      const btn = document.getElementById('importAllBtn');
+      const label = document.getElementById('importAllBtnLabel');
+      btn.disabled = true;
+      label.textContent = 'İçe aktarılır...';
+
+      for (let i = 0; i < turlarTours.length; i++) {
+        if (turlarTours[i].exists) continue;
+        await importTour(i, null);
+      }
+
+      btn.disabled = false;
+      label.textContent = 'Tümünü İçe Aktar';
+    }
+
+    function openSheet(title, headers, rows) {
+      document.getElementById('resultTitle').textContent = title;
+      document.getElementById('resultSubtitle').textContent = `${rows.length} sətr — ${headers.length} sütun`;
+      renderTable(headers, rows);
+      document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderTable(headers, rows) {
+      const head = document.getElementById('tableHead');
+      const body = document.getElementById('tableBody');
+      head.innerHTML = '';
+      body.innerHTML = '';
+
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.className = 'text-left px-4 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap';
+        th.style.color = '#484848';
+        th.textContent = h;
+        head.appendChild(th);
+      });
+
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        headers.forEach((_, i) => {
+          const td = document.createElement('td');
+          td.className = 'px-4 py-3 whitespace-nowrap';
+          td.style.color = '#ececec';
+          td.textContent = row[i] ?? '';
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+
+      document.getElementById('resultSection').style.display = 'block';
+      document.getElementById('emptyState').style.display = rows.length ? 'none' : 'flex';
+    }
+
+    function showToast(msg, type) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show ' + type;
+      setTimeout(() => el.classList.remove('show'), 2800);
+    }
+  </script>
+</body>
+</html>

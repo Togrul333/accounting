@@ -22,6 +22,7 @@ type UpdateTourCategoryRequest struct {
 
 type Room struct {
 	ID        int64     `json:"id" gorm:"primaryKey"`
+	Code      string    `json:"code,omitempty"`
 	Price     float64   `json:"price"`
 	BedsCount int       `json:"beds_count"`
 	CreatedAt time.Time `json:"created_at"`
@@ -29,11 +30,13 @@ type Room struct {
 }
 
 type CreateRoomRequest struct {
+	Code      string  `json:"code"`
 	Price     float64 `json:"price"`
 	BedsCount int     `json:"beds_count"`
 }
 
 type UpdateRoomRequest struct {
+	Code      string  `json:"code"`
 	Price     float64 `json:"price"`
 	BedsCount int     `json:"beds_count"`
 }

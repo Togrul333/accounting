@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -12,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"accounting/internal/googlesheets"
 	"accounting/internal/handler"
 	"accounting/internal/repository"
 	"accounting/internal/service"
@@ -87,6 +89,14 @@ func main() {
 	orderRepo := repository.NewOrderRepository(db)
 	orderSvc := service.NewOrderService(orderRepo, incomeRepo, discountRepo)
 
+	sheetsClient, err := googlesheets.NewClient(context.Background(), googlesheets.CredentialsPath())
+	if err != nil {
+		log.Printf("Google Sheets qoşulmadı: %v", err)
+	}
+
+	sheetLinkRepo := repository.NewSheetLinkRepository(db)
+	sheetLinkSvc := service.NewSheetLinkService(sheetLinkRepo)
+
 	accountHandler := handler.NewAccountHandler(accountSvc, incomeSvc, expenseSvc)
 	incomeCategoryHandler := handler.NewIncomeCategoryHandler(incomeCategorySvc)
 	incomeHandler := handler.NewIncomeHandler(incomeSvc)
@@ -102,7 +112,8 @@ func main() {
 	discountHandler := handler.NewDiscountHandler(discountSvc)
 	orderHandler := handler.NewOrderHandler(orderSvc)
 	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, tourSvc, clientSvc, settingSvc, userSvc, discountCategorySvc, discountSvc, orderSvc)
+	sheetsImportHandler := handler.NewSheetsImportHandler(sheetsClient, sheetLinkSvc, tourSvc)
 
-	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, pageHandler, tmpl)
+	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, pageHandler, sheetsImportHandler, tmpl)
 	router.Run(":" + os.Getenv("PORT"))
 }

@@ -113,6 +113,15 @@ DB_USER=root DB_PASSWORD=secret DB_NAME=accounting go run ./cmd/api
 | `DB_PASSWORD` | _(пусто)_     | MySQL пароль      |
 | `DB_NAME`     | `accounting`  | Название БД       |
 | `PORT`        | `8080`        | Порт HTTP сервера |
+| `GOOGLE_CREDENTIALS_PATH` | `./credentials.json` | Путь к JSON-ключу сервисного аккаунта Google (для импорта из Google Sheets) |
+
+## Импорт из Google Sheets
+
+Service Account для чтения таблиц: `sheets-import@liquid-journal-454008-b1.iam.gserviceaccount.com`
+
+Чтобы дать доступ к новой таблице — открыть её в Google Sheets → **Share** → добавить этот email с правами **Viewer**.
+
+JSON-ключ сервисного аккаунта лежит в `credentials.json` в корне проекта (в `.gitignore`, не коммитится). Если нужно перевыпустить ключ — Google Cloud Console → проект `liquid-journal-454008-b1` → APIs & Services → Credentials → Service Accounts → `sheets-import` → Keys → Add Key.
 
 ## API — Банковские счета
 
