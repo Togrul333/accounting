@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ type passengerMatch struct {
 type passengerCandidate struct {
 	FirstName    string          `json:"first_name"`
 	LastName     string          `json:"last_name"`
+	BirthDate    string          `json:"birth_date"`
 	BirthYear    int             `json:"birth_year"`
 	Phone        string          `json:"phone"`
 	PassportNo   string          `json:"passport_no"`
@@ -64,7 +66,8 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 	}
 	clientByKey := make(map[string]passengerMatch, len(clients))
 	for _, cl := range clients {
-		clientByKey[clientKey(cl.FirstName, cl.LastName, cl.BirthYear)] = passengerMatch{ID: cl.ID, FirstName: cl.FirstName, LastName: cl.LastName}
+		_, birthYear := parseBirthDate(cl.BirthDate)
+		clientByKey[clientKey(cl.FirstName, cl.LastName, birthYear)] = passengerMatch{ID: cl.ID, FirstName: cl.FirstName, LastName: cl.LastName}
 	}
 
 	tours, err := h.tourSvc.GetAll(ctx)
@@ -95,10 +98,11 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 			continue
 		}
 
-		birthYear := parseYear(cellAt(row, cols.birth))
+		birthDate, birthYear := parseBirthDate(cellAt(row, cols.birth))
 		cand := passengerCandidate{
 			FirstName:    firstName,
 			LastName:     lastName,
+			BirthDate:    birthDate,
 			BirthYear:    birthYear,
 			Phone:        cellAt(row, cols.phone),
 			PassportNo:   cellAt(row, cols.passport),
@@ -189,16 +193,20 @@ func orderKey(clientID, tourID int64) string {
 	return strconv.FormatInt(clientID, 10) + "|" + strconv.FormatInt(tourID, 10)
 }
 
-// parseYear doğum tarixi mətnindən (müxtəlif formatlarda) il-i çıxarır.
-func parseYear(s string) int {
+// parseBirthDate doğum tarixi mətnindən (müxtəlif formatlarda) ISO tarix (yyyy-mm-dd) və il çıxarır.
+// Yalnız il yazılıbsa (məs. "1995"), 1 yanvar kimi qəbul edilir.
+func parseBirthDate(s string) (string, int) {
 	s = strings.TrimSpace(s)
 	if s == "" {
-		return 0
+		return "", 0
 	}
-	for _, layout := range []string{"2006-01-02", "02.01.2006", "2006-1-2", "02/01/2006"} {
+	for _, layout := range []string{"2006-01-02", "02.01.2006", "2006-1-2", "02/01/2006", "2.1.2006"} {
 		if t, err := time.Parse(layout, s); err == nil {
-			return t.Year()
+			return t.Format("2006-01-02"), t.Year()
 		}
 	}
-	return 0
+	if y, err := strconv.Atoi(s); err == nil && y >= 1900 && y <= 2100 {
+		return fmt.Sprintf("%04d-01-01", y), y
+	}
+	return "", 0
 }

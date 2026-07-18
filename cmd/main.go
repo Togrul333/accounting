@@ -44,6 +44,12 @@ func main() {
 			return template.JS(b), err
 		},
 		"now": time.Now,
+		"ddmmyyyy": func(s string) string {
+			if len(s) < 10 {
+				return s
+			}
+			return s[8:10] + "." + s[5:7] + "." + s[0:4]
+		},
 	}).ParseGlob("web/templates/*.html")
 	if err != nil {
 		log.Fatalf("şablon hatası: %v", err)

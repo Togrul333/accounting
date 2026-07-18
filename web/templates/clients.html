@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     * { font-family: 'Inter', sans-serif; }
     .input-field {
@@ -39,6 +40,21 @@
     .toast.show { display: flex; align-items: center; gap: 8px; }
     .toast.success { background: rgba(0,212,255,0.1); color: #00d4ff; border: 1px solid rgba(0,212,255,0.2); }
     .toast.error   { background: #2a1a1a; color: #ff5555; border: 1px solid rgba(255,85,85,0.2); }
+    .doc-upload-box {
+      border: 1.5px dashed #2a2a2a; border-radius: 12px; padding: 14px;
+      display: flex; align-items: center; gap: 12px; background: #1a1a1a; transition: all .15s;
+    }
+    .doc-upload-box:hover { border-color: #00d4ff; }
+    .doc-thumb { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; border: 1px solid #2a2a2a; flex-shrink: 0; }
+    .doc-btn {
+      padding: 7px 14px; border-radius: 8px; border: 1px solid #2a2a2a; background: #1e1e1e;
+      color: #ececec; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s;
+    }
+    .doc-btn:hover { border-color: #00d4ff; color: #00d4ff; }
+    .doc-status { font-size: 12px; color: #606060; }
+    .doc-status.scanning { color: #00d4ff; }
+    .doc-status.done { color: #4ade80; }
+    .doc-status.error { color: #ff5555; }
   </style>
 </head>
 <body style="background:#0d0d0d; min-height:100vh;">
@@ -95,7 +111,7 @@
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Ad Soyad</th>
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">E-posta</th>
               <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Telefon</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Doğum Yılı</th>
+              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Doğum Tarihi</th>
               <th class="px-6 py-3.5 w-20"></th>
             </tr>
           </thead>
@@ -115,7 +131,7 @@
                 <span class="text-sm tabular-nums" style="color:#888888;">{{.Phone}}</span>
               </td>
               <td class="px-6 py-4">
-                <span class="text-sm tabular-nums" style="color:#888888;">{{.BirthYear}}</span>
+                <span class="text-sm tabular-nums" style="color:#888888;">{{ddmmyyyy .BirthDate}}</span>
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
@@ -166,6 +182,17 @@
         </button>
       </div>
       <form id="clientForm" onsubmit="saveItem(event)" class="px-6 py-5 space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Kimlik Vəsiqəsi</label>
+          <div class="doc-upload-box">
+            <img id="docThumb" class="doc-thumb" style="display:none;">
+            <div class="flex-1 min-w-0">
+              <button type="button" class="doc-btn" onclick="document.getElementById('docFile').click()">Fotoğraf Yükle</button>
+              <p id="docStatus" class="doc-status mt-1.5">Kimlik fotoğrafı yükleyin, bilgiler otomatik doldurulsun</p>
+            </div>
+            <input id="docFile" type="file" accept="image/*" style="display:none;" onchange="handleDocumentUpload(event)">
+          </div>
+        </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Ad <span style="color:#ff5555;">*</span></label>
@@ -177,8 +204,8 @@
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1.5" style="color:#888888;">E-posta <span style="color:#ff5555;">*</span></label>
-          <input id="fEmail" type="email" required placeholder="ahmet@mail.com" class="input-field">
+          <label class="block text-sm font-medium mb-1.5" style="color:#888888;">E-posta</label>
+          <input id="fEmail" type="email" placeholder="ahmet@mail.com" class="input-field">
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -186,8 +213,18 @@
             <input id="fPhone" type="text" placeholder="+90 555 000 00 00" class="input-field">
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Doğum Yılı <span style="color:#ff5555;">*</span></label>
-            <input id="fBirth" type="number" required min="1900" max="2025" placeholder="1990" class="input-field">
+            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Doğum Tarihi <span style="color:#ff5555;">*</span></label>
+            <input id="fBirth" type="text" required placeholder="08.01.1998" pattern="\d{2}\.\d{2}\.\d{4}" title="GG.AA.YYYY" class="input-field">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">FIN</label>
+            <input id="fFin" type="text" placeholder="5V8CKYF" class="input-field">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Vəsiqə No</label>
+            <input id="fCardNo" type="text" placeholder="AA0250651" class="input-field">
           </div>
         </div>
         <div class="flex gap-3 pt-1">
@@ -208,11 +245,36 @@
 
   <script>
     let editingId = null;
+    let pendingDocumentFile = null;
+
+    function ddmmyyyyToIso(s) {
+      const m = (s || '').trim().match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
+      if (!m) return '';
+      const [, d, mo, y] = m;
+      return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    function isoToDdmmyyyy(s) {
+      const m = (s || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (!m) return '';
+      const [, y, mo, d] = m;
+      return `${d}.${mo}.${y}`;
+    }
+
+    function resetDocumentBox() {
+      pendingDocumentFile = null;
+      document.getElementById('docFile').value = '';
+      document.getElementById('docThumb').style.display = 'none';
+      document.getElementById('docThumb').src = '';
+      const status = document.getElementById('docStatus');
+      status.textContent = 'Kimlik fotoğrafı yükleyin, bilgiler otomatik doldurulsun';
+      status.className = 'doc-status mt-1.5';
+    }
 
     function openCreate() {
       editingId = null;
       document.getElementById('modalTitle').textContent = 'Yeni Müşteri';
       document.getElementById('clientForm').reset();
+      resetDocumentBox();
       document.getElementById('modal').classList.add('open');
       setTimeout(() => document.getElementById('fFirst').focus(), 50);
     }
@@ -224,27 +286,289 @@
       document.getElementById('fLast').value  = c.last_name;
       document.getElementById('fEmail').value = c.email;
       document.getElementById('fPhone').value = c.phone;
-      document.getElementById('fBirth').value = c.birth_year;
+      document.getElementById('fBirth').value = isoToDdmmyyyy(c.birth_date);
+      document.getElementById('fFin').value = c.fin_code || '';
+      document.getElementById('fCardNo').value = c.id_card_number || '';
+      resetDocumentBox();
+      if (c.document_photo) {
+        const thumb = document.getElementById('docThumb');
+        thumb.src = c.document_photo;
+        thumb.style.display = 'block';
+        document.getElementById('docStatus').textContent = 'Kayıtlı kimlik fotoğrafı — değiştirmek için yükleyin';
+      }
       document.getElementById('modal').classList.add('open');
     }
 
     function closeModal() { document.getElementById('modal').classList.remove('open'); }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+    function loadImageFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    function rotateImageToCanvas(img, angleDeg) {
+      const rotatedW = angleDeg % 180 === 0 ? img.width : img.height;
+      const rotatedH = angleDeg % 180 === 0 ? img.height : img.width;
+      // Telefon fotoğrafları genelde küçük çözünürlükte oluyor; OCR doğruluğu düşük
+      // çözünürlükte belirgin şekilde düşüyor, bu yüzden gerekirse yukarı ölçekleniyor
+      const scale = Math.max(1, 1600 / Math.min(rotatedW, rotatedH));
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = rotatedW * scale;
+      canvas.height = rotatedH * scale;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(angleDeg * Math.PI / 180);
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      return canvas;
+    }
+
+    function scoreFields(fields) {
+      return (fields.firstName ? 1 : 0) + (fields.lastName ? 1 : 0) + (fields.finCode ? 1 : 0) +
+             (fields.cardNumber ? 1 : 0) + (fields.birthDate ? 1 : 0);
+    }
+
+    async function handleDocumentUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      pendingDocumentFile = file;
+
+      const thumb = document.getElementById('docThumb');
+      thumb.src = URL.createObjectURL(file);
+      thumb.style.display = 'block';
+
+      const status = document.getElementById('docStatus');
+      status.className = 'doc-status mt-1.5 scanning';
+
+      let worker = null;
+      try {
+        const img = await loadImageFromFile(file);
+        // Fotoğraf hangi yönde çekilmiş olursa olsun okuyabilmek için birkaç döndürme deneniyor.
+        // Worker tek sefer oluşturulup döndürmeler arasında yeniden kullanılıyor (her denemede
+        // yeniden başlatmak hem yavaş hem gereksizdi). PSM 6 (tek düzgün metin bloğu) kimlik
+        // kartı gibi sabit düzenli belgelerde varsayılan moddan daha güvenilir sonuç veriyor.
+        worker = await Tesseract.createWorker('aze+eng');
+        await worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK });
+
+        const angles = [0, 90, 270, 180];
+        const attempts = [];
+
+        for (const angle of angles) {
+          status.textContent = `Kimlik okunuyor (${angle}°)...`;
+          const canvas = rotateImageToCanvas(img, angle);
+          const { data } = await worker.recognize(canvas);
+          const attempt = parseIdCardText(data.text || '');
+          attempt._score = scoreFields(attempt);
+          attempts.push(attempt);
+          if (attempt._score >= 4) break;
+        }
+
+        // Alanları döndürmeler arasında birleştiriyoruz, ama "ilk bulunan kazanır" değil —
+        // her alan en yüksek toplam skora sahip denemeden alınıyor. Yanlış açıdaki (ör. ters
+        // dönmüş) OCR çıktısı kısa alanlarda (FIN, vəsiqə no) tesadüfen geçerli görünen gürültü
+        // üretebiliyor; bunu doğru açının değerinin önüne geçirmemek için skor önceliği şart
+        attempts.sort((a, b) => b._score - a._score);
+        const fields = { firstName: '', lastName: '', finCode: '', cardNumber: '', birthDate: '' };
+        for (const key of Object.keys(fields)) {
+          const attempt = attempts.find(a => a[key]);
+          if (attempt) fields[key] = attempt[key];
+        }
+
+        let filled = [];
+        if (fields.firstName) { document.getElementById('fFirst').value = fields.firstName; filled.push('ad'); }
+        if (fields.lastName)  { document.getElementById('fLast').value  = fields.lastName;  filled.push('soyad'); }
+        if (fields.finCode)   { document.getElementById('fFin').value   = fields.finCode;   filled.push('FIN'); }
+        if (fields.cardNumber){ document.getElementById('fCardNo').value = fields.cardNumber; filled.push('vəsiqə no'); }
+        if (fields.birthDate) { document.getElementById('fBirth').value = fields.birthDate; filled.push('doğum tarixi'); }
+
+        status.className = 'doc-status mt-1.5 done';
+        status.textContent = filled.length
+          ? `✓ Otomatik dolduruldu (${filled.join(', ')}) — kontrol edin`
+          : 'Bilgiler otomatik okunamadı, lütfen manuel girin';
+      } catch (err) {
+        status.className = 'doc-status mt-1.5 error';
+        status.textContent = 'Kimlik okunamadı, lütfen manuel girin';
+      } finally {
+        if (worker) await worker.terminate();
+      }
+    }
+
+    function parseIdCardText(rawText) {
+      const text = (rawText || '').toUpperCase();
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const result = { firstName: '', lastName: '', finCode: '', cardNumber: '', birthDate: '' };
+
+      // OCR bəzən Ə/İ/Ğ/Ş/Ç/Ö/Ü hərflərini fərqli formalarda oxuyur (məs. VƏSİQ yerinə
+      // VESIQ və ya tərsinə); açar sözləri tanımaq üçün müqayisədən əvvəl bu hərflər
+      // ASCII qarşılığına endirilir — anlar sözün özündə isə orijinal hərflər saxlanılır
+      function foldAz(s) {
+        return s.replace(/Ə/g, 'E').replace(/İ/g, 'I').replace(/Ğ/g, 'G')
+          .replace(/Ş/g, 'S').replace(/Ç/g, 'C').replace(/Ö/g, 'O').replace(/Ü/g, 'U');
+      }
+
+      // Etiketin (ör. "FƏRDİ İDENTİFİKASİYA NÖMRƏSİ/PERSONAL NO") hemen yanında veya
+      // sonraki birkaç satırda geçen değeri arar — metnin herhangi bir yerinde geçen ilk
+      // adayı almaktan daha güvenilir, çünkü kartın başka yerlerindeki gürültü metinleriyle
+      // (imza, seri numarası vb.) karışma riski düşük
+      function findNearLabel(labelRegex, valueRegex) {
+        for (let i = 0; i < lines.length; i++) {
+          if (labelRegex.test(foldAz(lines[i]))) {
+            for (let j = i; j < Math.min(i + 3, lines.length); j++) {
+              const m = lines[j].match(valueRegex);
+              if (m) return m;
+            }
+          }
+        }
+        return null;
+      }
+
+      const cardLabelMatch = findNearLabel(/VESIQ.*NOMR|CARD NO/, /\b([A-Z]{2}\d{7})\b/);
+      if (cardLabelMatch) {
+        result.cardNumber = cardLabelMatch[1];
+      } else {
+        const cardNoMatch = text.match(/\b([A-Z]{2}\d{7})\b/);
+        if (cardNoMatch) result.cardNumber = cardNoMatch[1];
+      }
+
+      const finLabelMatch = findNearLabel(/FERDI|PERSONAL/, /\b([A-Z0-9]{7})\b/);
+      if (finLabelMatch && finLabelMatch[1] !== result.cardNumber) result.finCode = finLabelMatch[1];
+      if (!result.finCode) {
+        const finCandidates = text.match(/\b[A-Z0-9]{7}\b/g) || [];
+        for (const cand of finCandidates) {
+          if (cand === result.cardNumber) continue;
+          if (/[A-Z]/.test(cand) && /[0-9]/.test(cand)) { result.finCode = cand; break; }
+        }
+      }
+
+      const currentYear = new Date().getFullYear();
+      // OCR ayraçları (nokta/tire/boşluk) yanlış okuyabildiğinden esnek bir kalıp kullanılıyor
+      const dateMatches = [...text.matchAll(/\b(\d{1,2})\s*[.\-\/ ]\s*(\d{1,2})\s*[.\-\/ ]\s*(\d{4})\b/g)];
+      const plausibleDates = dateMatches
+        .map(m => ({ day: m[1], month: m[2], year: parseInt(m[3], 10) }))
+        .filter(d => d.year <= currentYear - 5 && d.year >= currentYear - 100);
+      let birthYearForFallback = null;
+      if (plausibleDates.length) {
+        // kartta doğum tarixi ile geçerlilik tarihi gibi birden fazla tarih olabilir —
+        // doğum tarihi bunlar arasında her zaman en eski (yılı en küçük) olanıdır
+        const best = plausibleDates.reduce((a, b) => (a.year <= b.year ? a : b));
+        result.birthDate = `${best.day.padStart(2, '0')}.${best.month.padStart(2, '0')}.${best.year}`;
+        birthYearForFallback = best.year;
+      } else {
+        // tarih formatı hiç yakalanamazsa, makul aralıktaki tek başına bir yılı dene (gün/ay bilinmiyor)
+        const bareYears = [...text.matchAll(/\b(19\d{2}|20[0-3]\d)\b/g)]
+          .map(m => parseInt(m[1], 10))
+          .filter(y => y <= currentYear - 5);
+        if (bareYears.length) {
+          result.birthDate = `01.01.${Math.min(...bareYears)}`;
+          birthYearForFallback = Math.min(...bareYears);
+        }
+      }
+
+      // Zayıf FIN yedeği: kart üzerinde vəsiqə no ilə FIN yan yana aynı satırda basılı, bu yüzden
+      // OCR onları tek satır olarak okuyor. FIN'deki tək rəqəm bəzən hərflə səhv oxunur (5→S,
+      // 8→B kimi), bu zaman "hərf+rəqəm qarışığı" şərti heç vaxt ödənmir və yuxarıdakı ciddi
+      // axtarış heç nə tapmır. Doğum tarixinin tapıldığı sətir kartda FIN-ə ən yaxın etibarlı
+      // mövqedir, ona görə tapılmasa belə burada mövqeyə etibar edib zəif adayı qəbul edirik
+      if (!result.finCode && birthYearForFallback) {
+        const dateLineIndex = lines.findIndex(l => l.includes(String(birthYearForFallback)));
+        if (dateLineIndex !== -1) {
+          for (let i = dateLineIndex; i < Math.min(dateLineIndex + 2, lines.length); i++) {
+            const tokens = lines[i].split(/\s+/).filter(t => /^[A-Z0-9]{7}$/.test(t));
+            const cand = tokens.find(t => t !== result.cardNumber && !/^\d+$/.test(t));
+            if (cand) { result.finCode = cand; break; }
+          }
+        }
+      }
+
+      const labelKeywords = /SOYAD|SURNAME|ADI|GIVEN|ATASI|PATRONYM|CINS|SEX|VETEN|NATIONAL|DOGUL|BIRTH|VESIQ|CARD|FERDI|PERSONAL|ETIBAR|EXPIRY|REPUBLIK|AZERBAIJAN|IDENTITY|SEXSIYYET/;
+      const knownConstants = /^(AZ[EO]RBAYCAN|AZERBAIJAN|REPUBLIC|IDENTITY CARD)$/;
+
+      // OCR bozukluklarından arınmış aday satır: harf/boşluk dışını temizleyip yeterince harf var mı bak
+      function cleanNameCandidate(line) {
+        let cleaned = line.replace(/[^A-ZÇƏĞİIÖŞÜ\s]/g, ' ').replace(/\s+/g, ' ').trim();
+        // komşu satırdan sızan tek harflik gürültü kelimeleri (ör. "K TOĞRUL") isme karışmasın
+        cleaned = cleaned.split(' ').filter(w => w.length >= 2).join(' ');
+        if (cleaned.length < 2) return '';
+        const folded = foldAz(cleaned);
+        if (labelKeywords.test(folded) || knownConstants.test(folded)) return '';
+        if (!/[A-ZÇƏĞİIÖŞÜ]{2,}/.test(cleaned)) return '';
+        return cleaned;
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        if (!result.lastName && /SOYAD|SURNAME/.test(lines[i])) {
+          for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+            const cand = cleanNameCandidate(lines[j]);
+            if (cand) { result.lastName = cand; break; }
+          }
+        }
+        if (!result.firstName && /GIVEN NAME/.test(lines[i]) && !/ATASI/.test(lines[i])) {
+          for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+            const cand = cleanNameCandidate(lines[j]);
+            if (cand) { result.firstName = cand; break; }
+          }
+        }
+      }
+
+      // Yedek: OCR etiket satırlarını (SOYADI/SURNAME, ADI/GIVEN NAME) çoğu zaman tamamen
+      // atlıyor — üstteki etiket-bazlı arama bu durumda hiçbir şey bulamıyor, oysa isim
+      // değerleri metinde gerçekten var. Bu değerler her zaman kart başlığından hemen sonra,
+      // cinsiyet/uyruk/doğum bloğundan (rakam içeren ilk satır) önceki dar bir pencerede yer
+      // alıyor — o pencereyi konumsal olarak tarayıp ilk iki temiz aday satırı sırayla al
+      if (!result.lastName || !result.firstName) {
+        let start = -1;
+        for (let i = 0; i < lines.length; i++) {
+          if (/VESIQ|IDENTITY CARD|REPUBLIK|REPUBLIC OF AZERBAIJAN/.test(foldAz(lines[i]))) start = i;
+        }
+        // Başlık satırı hiç tanınmadıysa metnin en başından taramak güvenli değil —
+        // orası genelde logo/gürültü kalıntısı oluyor ve yanlış ama "temiz görünen" bir
+        // aday (ör. bozuk "AZERBAVHAN" gibi ülke adı) isim sanılabilir. Bu durumda alanı
+        // boş bırakmak (manuel giriş) yanlış otomatik doldurmaktan daha güvenli
+        if (start !== -1) {
+          let end = lines.length;
+          for (let i = start + 1; i < lines.length; i++) {
+            if (/\d/.test(lines[i]) || /CINS|SEX|VETEN|NATIONAL|ATASI|PATRONYM/.test(foldAz(lines[i]))) { end = i; break; }
+          }
+          const candidates = [];
+          for (let i = start + 1; i < end && candidates.length < 2; i++) {
+            const cand = cleanNameCandidate(lines[i]);
+            if (cand) candidates.push(cand);
+          }
+          if (!result.lastName && candidates[0]) result.lastName = candidates[0];
+          if (!result.firstName && candidates[1]) result.firstName = candidates[1];
+        }
+      }
+
+      return result;
+    }
+
     async function saveItem(e) {
       e.preventDefault();
       const payload = {
-        first_name: document.getElementById('fFirst').value.trim(),
-        last_name:  document.getElementById('fLast').value.trim(),
-        email:      document.getElementById('fEmail').value.trim(),
-        phone:      document.getElementById('fPhone').value.trim(),
-        birth_year: parseInt(document.getElementById('fBirth').value),
+        first_name:    document.getElementById('fFirst').value.trim(),
+        last_name:     document.getElementById('fLast').value.trim(),
+        email:         document.getElementById('fEmail').value.trim(),
+        phone:         document.getElementById('fPhone').value.trim(),
+        birth_date:    ddmmyyyyToIso(document.getElementById('fBirth').value.trim()),
+        fin_code:      document.getElementById('fFin').value.trim(),
+        id_card_number: document.getElementById('fCardNo').value.trim(),
       };
       const url    = editingId ? `/api/clients/${editingId}` : '/api/clients';
       const method = editingId ? 'PUT' : 'POST';
       try {
         const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         if (res.ok) {
+          const saved = await res.json();
+          if (pendingDocumentFile) {
+            const formData = new FormData();
+            formData.append('document', pendingDocumentFile);
+            await fetch(`/api/clients/${saved.id}/document`, { method: 'POST', body: formData });
+          }
           closeModal();
           showToast('✓ ' + (editingId ? 'Müşteri güncellendi' : 'Müşteri eklendi'), 'success');
           setTimeout(() => location.reload(), 700);

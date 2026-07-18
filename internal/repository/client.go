@@ -14,6 +14,7 @@ type ClientRepository interface {
 	Create(ctx context.Context, req model.CreateClientRequest) (*model.Client, error)
 	Update(ctx context.Context, id int64, req model.UpdateClientRequest) (*model.Client, error)
 	Delete(ctx context.Context, id int64) error
+	UpdateDocumentPhoto(ctx context.Context, id int64, path string) (*model.Client, error)
 }
 
 type clientRepo struct {
@@ -41,11 +42,13 @@ func (r *clientRepo) GetByID(ctx context.Context, id int64) (*model.Client, erro
 
 func (r *clientRepo) Create(ctx context.Context, req model.CreateClientRequest) (*model.Client, error) {
 	c := model.Client{
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		Email:     req.Email,
-		Phone:     req.Phone,
-		BirthYear: req.BirthYear,
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		Email:        req.Email,
+		Phone:        req.Phone,
+		BirthDate:    req.BirthDate,
+		FinCode:      req.FinCode,
+		IDCardNumber: req.IDCardNumber,
 	}
 	if err := r.db.WithContext(ctx).Create(&c).Error; err != nil {
 		return nil, err
@@ -55,11 +58,13 @@ func (r *clientRepo) Create(ctx context.Context, req model.CreateClientRequest) 
 
 func (r *clientRepo) Update(ctx context.Context, id int64, req model.UpdateClientRequest) (*model.Client, error) {
 	result := r.db.WithContext(ctx).Model(&model.Client{}).Where("id = ?", id).Updates(map[string]any{
-		"first_name": req.FirstName,
-		"last_name":  req.LastName,
-		"email":      req.Email,
-		"phone":      req.Phone,
-		"birth_year": req.BirthYear,
+		"first_name":     req.FirstName,
+		"last_name":      req.LastName,
+		"email":          req.Email,
+		"phone":          req.Phone,
+		"birth_date":     req.BirthDate,
+		"fin_code":       req.FinCode,
+		"id_card_number": req.IDCardNumber,
 	})
 	if result.Error != nil {
 		return nil, result.Error
@@ -72,4 +77,15 @@ func (r *clientRepo) Update(ctx context.Context, id int64, req model.UpdateClien
 
 func (r *clientRepo) Delete(ctx context.Context, id int64) error {
 	return r.db.WithContext(ctx).Delete(&model.Client{}, id).Error
+}
+
+func (r *clientRepo) UpdateDocumentPhoto(ctx context.Context, id int64, path string) (*model.Client, error) {
+	result := r.db.WithContext(ctx).Model(&model.Client{}).Where("id = ?", id).Update("document_photo", path)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return r.GetByID(ctx, id)
 }

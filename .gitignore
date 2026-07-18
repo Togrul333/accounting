@@ -2,3 +2,4 @@
 .idea/
 *.exe
 credentials.json
+web/static/uploads/

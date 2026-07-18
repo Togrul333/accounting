@@ -187,6 +187,19 @@
     let activeTabGID = null;
     let tourCodes = new Set();
 
+    function ddmmyyyyToIso(s) {
+      const m = (s || '').trim().match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
+      if (!m) return '';
+      const [, d, mo, y] = m;
+      return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    function isoToDdmmyyyy(s) {
+      const m = (s || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (!m) return '';
+      const [, y, mo, d] = m;
+      return `${d}.${mo}.${y}`;
+    }
+
     function openModal({ title, subtitle, fields }) {
       return new Promise(resolve => {
         document.getElementById('modalTitle').textContent = title;
@@ -600,23 +613,24 @@
       let clientId = p.client_match ? p.client_match.id : null;
 
       if (!clientId) {
-        let clientPayload = { first_name: p.first_name, last_name: p.last_name, birth_year: p.birth_year, phone: p.phone, email: '' };
+        let clientPayload = { first_name: p.first_name, last_name: p.last_name, birth_date: p.birth_date || '', phone: p.phone, email: '' };
 
-        const missingImportant = !p.first_name || !p.last_name || !p.birth_year;
+        const missingImportant = !p.first_name || !p.last_name || !p.birth_date;
         if (missingImportant) {
           const result = await openModal({
             title: 'Vacib məlumat çatışmır',
-            subtitle: `"${who}" üçün Ad/Soyad/Doğum ili tam deyil — tamamlayın`,
+            subtitle: `"${who}" üçün Ad/Soyad/Doğum tarixi tam deyil — tamamlayın`,
             fields: [
               { key: 'first_name', label: 'Ad', type: 'text', value: p.first_name },
               { key: 'last_name', label: 'Soyad', type: 'text', value: p.last_name },
-              { key: 'birth_year', label: 'Doğum ili', type: 'number', value: p.birth_year },
+              { key: 'birth_date', label: 'Doğum tarixi (GG.AA.YYYY)', type: 'text', value: isoToDdmmyyyy(p.birth_date) },
               { key: 'phone', label: 'Telefon', type: 'text', value: p.phone },
               { key: 'passport', label: 'Passport (məlumat üçün)', type: 'info', value: p.passport_no },
               { key: 'email', label: 'Email', type: 'text', value: '' },
             ],
           });
           if (!result) return { status: 'cancel', msg: `${who} — müştəri yaradılmadı (imtina)` };
+          result.birth_date = ddmmyyyyToIso(result.birth_date);
           clientPayload = result;
         }
 

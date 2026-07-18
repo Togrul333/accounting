@@ -3,8 +3,13 @@ package handler
 import (
 	"gorm.io/gorm"
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -76,6 +81,57 @@ func (h *ClientHandler) Update(c *gin.Context) {
 		return
 	}
 	client, err := h.svc.Update(c.Request.Context(), id, req)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "client not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, client)
+}
+
+var allowedDocumentExts = map[string]bool{
+	".jpg":  true,
+	".jpeg": true,
+	".png":  true,
+	".webp": true,
+}
+
+func (h *ClientHandler) UploadDocument(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	file, err := c.FormFile("document")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "document dosyası bulunamadı"})
+		return
+	}
+
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if !allowedDocumentExts[ext] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "desteklenmeyen dosya türü"})
+		return
+	}
+
+	uploadDir := filepath.Join("web", "static", "uploads", "clients")
+	if err := os.MkdirAll(uploadDir, 0o755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	filename := fmt.Sprintf("%d_%d%s", id, time.Now().UnixNano(), ext)
+	dest := filepath.Join(uploadDir, filename)
+	if err := c.SaveUploadedFile(file, dest); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	client, err := h.svc.UpdateDocumentPhoto(c.Request.Context(), id, "/static/uploads/clients/"+filename)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "client not found"})

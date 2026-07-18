@@ -117,6 +117,7 @@ func NewRouter(
 		api.GET("/clients/:id", clients.GetByID)
 		api.PUT("/clients/:id", clients.Update)
 		api.DELETE("/clients/:id", clients.Delete)
+		api.POST("/clients/:id/document", clients.UploadDocument)
 
 		api.PUT("/settings/rates", settings.UpdateRates)
 

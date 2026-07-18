@@ -34,3 +34,7 @@ func (s *ClientService) Update(ctx context.Context, id int64, req model.UpdateCl
 func (s *ClientService) Delete(ctx context.Context, id int64) error {
 	return s.repo.Delete(ctx, id)
 }
+
+func (s *ClientService) UpdateDocumentPhoto(ctx context.Context, id int64, path string) (*model.Client, error) {
+	return s.repo.UpdateDocumentPhoto(ctx, id, path)
+}
