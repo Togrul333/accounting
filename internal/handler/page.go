@@ -36,6 +36,7 @@ type PageHandler struct {
 	discountCategorySvc *service.DiscountCategoryService
 	discountSvc         *service.DiscountService
 	orderSvc            *service.OrderService
+	taskSvc             *service.TaskService
 }
 
 func NewPageHandler(
@@ -53,6 +54,7 @@ func NewPageHandler(
 	discountCategorySvc *service.DiscountCategoryService,
 	discountSvc *service.DiscountService,
 	orderSvc *service.OrderService,
+	taskSvc *service.TaskService,
 ) *PageHandler {
 	return &PageHandler{
 		accountSvc:          accountSvc,
@@ -69,6 +71,7 @@ func NewPageHandler(
 		discountCategorySvc: discountCategorySvc,
 		discountSvc:         discountSvc,
 		orderSvc:            orderSvc,
+		taskSvc:             taskSvc,
 	}
 }
 
@@ -756,5 +759,29 @@ func (h *PageHandler) Expenses(c *gin.Context) {
 		"tours":      tours,
 		"total":      total,
 		"active":     "expenses",
+	})
+}
+
+func (h *PageHandler) Tasks(c *gin.Context) {
+	tasks, err := h.taskSvc.GetAll(c.Request.Context())
+	if err != nil {
+		log.Printf("tasks page error: %v", err)
+		tasks = []model.Task{}
+	}
+	if tasks == nil {
+		tasks = []model.Task{}
+	}
+
+	grouped := map[string][]model.Task{"todo": {}, "in_progress": {}, "done": {}}
+	for _, t := range tasks {
+		grouped[t.Status] = append(grouped[t.Status], t)
+	}
+
+	c.HTML(http.StatusOK, "tasks.html", gin.H{
+		"todoTasks":       grouped["todo"],
+		"inProgressTasks": grouped["in_progress"],
+		"doneTasks":       grouped["done"],
+		"taskCount":       len(tasks),
+		"active":          "tasks",
 	})
 }

@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -42,6 +43,7 @@ func main() {
 			b, err := json.Marshal(v)
 			return template.JS(b), err
 		},
+		"now": time.Now,
 	}).ParseGlob("web/templates/*.html")
 	if err != nil {
 		log.Fatalf("şablon hatası: %v", err)
@@ -89,6 +91,9 @@ func main() {
 	orderRepo := repository.NewOrderRepository(db)
 	orderSvc := service.NewOrderService(orderRepo, incomeRepo, discountRepo)
 
+	taskRepo := repository.NewTaskRepository(db)
+	taskSvc := service.NewTaskService(taskRepo)
+
 	sheetsClient, err := googlesheets.NewClient(context.Background(), googlesheets.CredentialsPath())
 	if err != nil {
 		log.Printf("Google Sheets qoşulmadı: %v", err)
@@ -111,9 +116,10 @@ func main() {
 	discountCategoryHandler := handler.NewDiscountCategoryHandler(discountCategorySvc)
 	discountHandler := handler.NewDiscountHandler(discountSvc)
 	orderHandler := handler.NewOrderHandler(orderSvc)
-	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, tourSvc, clientSvc, settingSvc, userSvc, discountCategorySvc, discountSvc, orderSvc)
+	taskHandler := handler.NewTaskHandler(taskSvc)
+	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, tourSvc, clientSvc, settingSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc)
 	sheetsImportHandler := handler.NewSheetsImportHandler(sheetsClient, sheetLinkSvc, tourSvc, clientSvc, orderSvc)
 
-	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, pageHandler, sheetsImportHandler, tmpl)
+	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, tmpl)
 	router.Run(":" + os.Getenv("PORT"))
 }

@@ -22,6 +22,7 @@ func NewRouter(
 	discountCategories *DiscountCategoryHandler,
 	discounts *DiscountHandler,
 	orders *OrderHandler,
+	tasks *TaskHandler,
 	pages *PageHandler,
 	sheetsImport *SheetsImportHandler,
 	tmpl *template.Template,
@@ -55,6 +56,7 @@ func NewRouter(
 	r.GET("/orders/:id", pages.OrderShow)
 	r.GET("/orders/:id/edit", pages.OrderEdit)
 	r.GET("/sheets-import", pages.SheetsImport)
+	r.GET("/tasks", pages.Tasks)
 
 	api := r.Group("/api")
 	{
@@ -140,6 +142,13 @@ func NewRouter(
 		api.DELETE("/orders/:id", orders.Delete)
 		api.POST("/orders/:id/incomes", orders.AddIncome)
 		api.POST("/orders/:id/discounts", orders.AddDiscount)
+
+		api.GET("/tasks", tasks.GetAll)
+		api.POST("/tasks", tasks.Create)
+		api.GET("/tasks/:id", tasks.GetByID)
+		api.PUT("/tasks/:id", tasks.Update)
+		api.PUT("/tasks/:id/status", tasks.UpdateStatus)
+		api.DELETE("/tasks/:id", tasks.Delete)
 
 		api.GET("/sheets-import/links", sheetsImport.Links)
 		api.POST("/sheets-import/tabs", sheetsImport.Tabs)

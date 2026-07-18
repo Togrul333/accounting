@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Görevler — Hisar Tour</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #0d0d0d; color: #ececec; }
+
+    .board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+    @media (max-width: 1100px) { .board { grid-template-columns: 1fr; } }
+
+    .kanban-col {
+      background: #161616; border: 1px solid #242424; border-radius: 16px;
+      padding: 14px; min-height: 140px; transition: border-color .15s, background .15s;
+    }
+    .kanban-col.drag-over { border-color: #00d4ff; background: rgba(0,212,255,0.04); }
+
+    .kanban-col-head { display: flex; align-items: center; gap: 8px; padding: 4px 6px 14px; }
+    .kanban-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .kanban-count {
+      margin-left: auto; font-size: 11px; font-weight: 700; padding: 2px 9px;
+      border-radius: 999px; background: rgba(255,255,255,0.06); color: #888;
+    }
+
+    .task-card {
+      background: #1c1c1c; border: 1px solid #262626; border-left: 3px solid #333;
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; cursor: grab;
+      transition: all .15s;
+    }
+    .task-card:hover { border-color: #333; box-shadow: 0 4px 16px rgba(0,0,0,0.35); transform: translateY(-1px); }
+    .task-card.dragging { opacity: 0.4; }
+    .task-card.status-todo        { border-left-color: #606060; }
+    .task-card.status-in_progress { border-left-color: #f97316; }
+    .task-card.status-done        { border-left-color: #00d464; }
+
+    .task-title { font-size: 14px; font-weight: 600; color: #ececec; }
+    .task-desc {
+      font-size: 12.5px; color: #777; margin-top: 4px; line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .task-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+    .task-due { font-size: 11px; color: #555; }
+    .task-due.overdue { color: #ff5555; }
+    .task-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+    .task-card:hover .task-actions { opacity: 1; }
+    .action-btn { padding: 4px; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: #555; transition: all .15s; }
+    .action-btn.edit:hover   { color: #00d4ff; background: rgba(0,212,255,0.1); }
+    .action-btn.delete:hover { color: #ff5555; background: rgba(255,85,85,0.1); }
+    .empty-col { text-align: center; padding: 24px 8px; font-size: 12.5px; color: #3a3a3a; }
+
+    .input-field {
+      width: 100%; padding: 10px 14px; border-radius: 10px;
+      border: 1px solid #262626; background: #1c1c1c;
+      color: #ececec; font-size: 14px; outline: none; transition: all .2s;
+    }
+    .input-field::placeholder { color: #444; }
+    .input-field:focus { border-color: #00d4ff; box-shadow: 0 0 0 3px rgba(0,212,255,0.12); }
+    select.input-field { cursor: pointer; }
+    textarea.input-field { resize: vertical; min-height: 80px; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 18px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #00d4ff, #0090b0);
+      color: #04181c; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s;
+    }
+    .btn-primary:hover { filter: brightness(1.08); box-shadow: 0 0 24px rgba(0,212,255,0.25); }
+
+    .modal-overlay { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); }
+    .modal-overlay.open { display: flex; }
+    .modal-card { background: #161616; border: 1px solid #242424; border-radius: 20px; width: 100%; max-width: 460px; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
+    .toast { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 11px 18px; border-radius: 12px; font-size: 13px; font-weight: 500; display: none; }
+    .toast.show { display: flex; align-items: center; gap: 8px; }
+    .toast.success { background: rgba(0,212,255,0.12); color: #00d4ff; border: 1px solid rgba(0,212,255,0.25); }
+    .toast.error   { background: #2a1a1a; color: #ff5555; border: 1px solid rgba(255,85,85,0.2); }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0d0d0d; }
+    ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+{{template "sidebar" .}}
+{{template "topbar" .}}
+
+<main class="ml-64 min-h-screen p-8">
+
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold" style="color:#ececec;">Görevler</h1>
+      <p class="text-sm mt-1" style="color:#484848;">{{.taskCount}} görev</p>
+    </div>
+    <button onclick="openCreate()" class="btn-primary">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+      Görev Ekle
+    </button>
+  </div>
+
+  <div class="board">
+
+    <!-- Yapılacak -->
+    <div class="kanban-col" data-status="todo" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
+      <div class="kanban-col-head">
+        <span class="kanban-dot" style="background:#606060;"></span>
+        <span class="text-xs font-bold uppercase tracking-wider" style="color:#aaa;">Yapılacak</span>
+        <span class="kanban-count">{{len .todoTasks}}</span>
+      </div>
+      <div id="col-todo">
+        {{range .todoTasks}}
+          {{template "taskCard" .}}
+        {{else}}
+        <div class="empty-col">Görev yok</div>
+        {{end}}
+      </div>
+    </div>
+
+    <!-- Devam Ediyor -->
+    <div class="kanban-col" data-status="in_progress" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
+      <div class="kanban-col-head">
+        <span class="kanban-dot" style="background:#f97316;"></span>
+        <span class="text-xs font-bold uppercase tracking-wider" style="color:#aaa;">Devam Ediyor</span>
+        <span class="kanban-count">{{len .inProgressTasks}}</span>
+      </div>
+      <div id="col-in_progress">
+        {{range .inProgressTasks}}
+          {{template "taskCard" .}}
+        {{else}}
+        <div class="empty-col">Görev yok</div>
+        {{end}}
+      </div>
+    </div>
+
+    <!-- Tamamlandı -->
+    <div class="kanban-col" data-status="done" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
+      <div class="kanban-col-head">
+        <span class="kanban-dot" style="background:#00d464;"></span>
+        <span class="text-xs font-bold uppercase tracking-wider" style="color:#aaa;">Tamamlandı</span>
+        <span class="kanban-count">{{len .doneTasks}}</span>
+      </div>
+      <div id="col-done">
+        {{range .doneTasks}}
+          {{template "taskCard" .}}
+        {{else}}
+        <div class="empty-col">Görev yok</div>
+        {{end}}
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="modal" class="modal-overlay" onclick="closeModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between px-6 pt-6 pb-5" style="border-bottom:1px solid #242424;">
+      <h3 id="modalTitle" class="text-base font-bold" style="color:#ececec;"></h3>
+      <button onclick="closeModal()"
+              style="padding:6px; border-radius:8px; border:none; cursor:pointer; background:transparent; color:#555; transition:.15s;"
+              onmouseover="this.style.background='rgba(255,255,255,0.06)'; this.style.color='#ececec';"
+              onmouseout="this.style.background='transparent'; this.style.color='#555';">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <form id="taskForm" onsubmit="saveTask(event)" class="px-6 py-5 space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-1.5" style="color:#888;">
+          Başlık <span style="color:#00d4ff;">*</span>
+        </label>
+        <input id="fTitle" type="text" required placeholder="Görev başlığı" class="input-field">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1.5" style="color:#888;">Açıklama</label>
+        <textarea id="fDescription" placeholder="Görev açıklaması (isteğe bağlı)" class="input-field"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium mb-1.5" style="color:#888;">Durum</label>
+          <select id="fStatus" class="input-field">
+            <option value="todo">Yapılacak</option>
+            <option value="in_progress">Devam Ediyor</option>
+            <option value="done">Tamamlandı</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1.5" style="color:#888;">Bitiş Tarihi</label>
+          <input id="fDueDate" type="date" class="input-field">
+        </div>
+      </div>
+      <div class="flex gap-3 pt-1">
+        <button type="button" onclick="closeModal()"
+                style="flex:1; padding:11px; border-radius:10px; border:1px solid #242424; color:#888; font-size:14px; font-weight:600; cursor:pointer; background:#1c1c1c; transition:.15s;"
+                onmouseover="this.style.background='#242424'; this.style.color='#ececec';"
+                onmouseout="this.style.background='#1c1c1c'; this.style.color='#888';">
+          İptal
+        </button>
+        <button type="submit"
+                style="flex:1; padding:11px; border-radius:10px; border:none; background:linear-gradient(135deg,#00d4ff,#0090b0); color:#04181c; font-size:14px; font-weight:700; cursor:pointer; transition:.15s;"
+                onmouseover="this.style.filter='brightness(1.08)';"
+                onmouseout="this.style.filter='none';">
+          Kaydet
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  let editingId = null;
+
+  function openCreate() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = 'Yeni Görev';
+    document.getElementById('taskForm').reset();
+    document.getElementById('modal').classList.add('open');
+    setTimeout(() => document.getElementById('fTitle').focus(), 50);
+  }
+
+  function openEdit(t) {
+    editingId = t.id;
+    document.getElementById('modalTitle').textContent = 'Görevi Düzenle';
+    document.getElementById('fTitle').value = t.title;
+    document.getElementById('fDescription').value = t.description || '';
+    document.getElementById('fStatus').value = t.status;
+    document.getElementById('fDueDate').value = t.due_date ? t.due_date.slice(0, 10) : '';
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  async function saveTask(e) {
+    e.preventDefault();
+    const payload = {
+      title:       document.getElementById('fTitle').value,
+      description: document.getElementById('fDescription').value,
+      status:      document.getElementById('fStatus').value,
+      due_date:    document.getElementById('fDueDate').value,
+    };
+    const url    = editingId ? `/api/tasks/${editingId}` : '/api/tasks';
+    const method = editingId ? 'PUT' : 'POST';
+    try {
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) {
+        closeModal();
+        showToast('✓ ' + (editingId ? 'Görev güncellendi' : 'Görev eklendi'), 'success');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        const err = await res.json();
+        showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'error');
+      }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
+  }
+
+  async function deleteTask(id) {
+    if (!confirm('Bu görevi silmek istediğinizden emin misiniz?')) return;
+    try {
+      const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+      if (res.ok) { showToast('✓ Görev silindi', 'success'); setTimeout(() => location.reload(), 700); }
+      else { showToast('✕ Silme işlemi başarısız', 'error'); }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
+  }
+
+  function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show ' + type;
+    setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  // Sürükle-bırak ile durum değiştirme
+  let draggedId = null;
+
+  function dragStart(e, id) {
+    draggedId = id;
+    e.currentTarget.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function dragEnd(e) { e.currentTarget.classList.remove('dragging'); }
+
+  function allowDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+  }
+
+  function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+  async function drop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const status = e.currentTarget.dataset.status;
+    const id = draggedId || e.dataTransfer.getData('text/plain');
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/tasks/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) location.reload();
+      else showToast('✕ Durum güncellenemedi', 'error');
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
+  }
+</script>
+</body>
+</html>
+
+{{define "taskCard"}}
+<div class="task-card status-{{.Status}}" draggable="true"
+     ondragstart="dragStart(event, {{.ID}})" ondragend="dragEnd(event)">
+  <div class="task-title">{{.Title}}</div>
+  {{if .Description}}<div class="task-desc">{{.Description}}</div>{{end}}
+  <div class="task-meta">
+    <span class="task-due{{if and .DueDate (ne .Status "done") (.DueDate.Before now)}} overdue{{end}}">
+      {{if .DueDate}}{{.DueDate.Format "02.01.2006"}}{{end}}
+    </span>
+    <div class="task-actions">
+      <button onclick='openEdit({{json .}})' title="Düzenle" class="action-btn edit">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+        </svg>
+      </button>
+      <button onclick="deleteTask({{.ID}})" title="Sil" class="action-btn delete">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+{{end}}
