@@ -174,6 +174,26 @@
     importDiscountCategoryId = created ? created.id : 0;
     return importDiscountCategoryId;
   }
+
+  let accountsList = null;
+  let incomeCategoriesList = null;
+  let lastIncomeAccountId = null;
+  let lastIncomeCategoryId = null;
+
+  async function getAccountsList() {
+    if (accountsList !== null) return accountsList;
+    const res = await fetch('/api/accounts');
+    accountsList = res.ok ? await res.json() : [];
+    return accountsList;
+  }
+
+  async function getIncomeCategoriesList() {
+    if (incomeCategoriesList !== null) return incomeCategoriesList;
+    const res = await fetch('/api/income-categories');
+    incomeCategoriesList = res.ok ? await res.json() : [];
+    return incomeCategoriesList;
+  }
+
   let dynamicModal;
   document.addEventListener('DOMContentLoaded', () => {
     dynamicModal = new bootstrap.Modal(document.getElementById('dynamicModal'));
@@ -203,6 +223,12 @@
         const wrap = document.createElement('div');
         if (f.type === 'info') {
           wrap.innerHTML = `<p class="small text-secondary mb-0">${f.label}: <span class="text-body">${f.value ?? '—'}</span></p>`;
+        } else if (f.type === 'select') {
+          const opts = (f.options || []).map(o => `<option value="${o.value}" ${String(o.value) === String(f.value) ? 'selected' : ''}>${o.label}</option>`).join('');
+          wrap.innerHTML = `<div>
+            <label class="form-label small">${f.label}</label>
+            <select id="modalField_${f.key}" class="form-select">${opts}</select>
+          </div>`;
         } else {
           wrap.innerHTML = `<div>
             <label class="form-label small">${f.label}</label>
@@ -232,7 +258,7 @@
         (fields || []).forEach(f => {
           if (f.type === 'info') return;
           const el = document.getElementById(`modalField_${f.key}`);
-          result[f.key] = f.type === 'number' ? parseFloat(el.value) : el.value;
+          result[f.key] = f.type === 'number' || f.type === 'select' ? parseFloat(el.value) || el.value : el.value;
         });
         cleanup(result);
       };
@@ -574,9 +600,11 @@
       }
 
       const cancelledTag = p.cancelled ? ` <span class="text-danger small">(İPTAL)</span>` : '';
+      const discountTag = p.discount_amount > 0 ? ` <span class="badge bg-warning-subtle text-warning-emphasis">Endirim ${p.discount_amount}</span>` : '';
+      const incomeTag = p.income_amount > 0 ? ` <span class="badge bg-success-subtle text-success-emphasis">Gəlir ${p.income_amount}</span>` : '';
       row.innerHTML = `
         <div>
-          <p class="fw-semibold mb-0">${p.first_name} ${p.last_name}${cancelledTag}</p>
+          <p class="fw-semibold mb-0">${p.first_name} ${p.last_name}${cancelledTag}${discountTag}${incomeTag}</p>
           <p class="small text-secondary mb-0 mt-1">${p.birth_year || '—'} · ${p.room_code || '—'} / ${p.category_name || '—'} · ${p.phone || ''}</p>
         </div>
         <div class="d-flex align-items-center gap-2">${badge}${actionHtml}</div>`;
@@ -587,8 +615,13 @@
     });
   }
 
-  // Bir sərnişini emal edir. Müştəri yoxdursa və Ad/Soyad/Doğum ili tamdırsa — sual vermədən avtomatik
-  // yaradır; yalnız vacib məlumat çatışmadıqda popup açır. Sifariş həmişə sual vermədən yaradılır.
+  function todayDdmmyyyy() {
+    return isoToDdmmyyyy(new Date().toISOString().slice(0, 10));
+  }
+
+  // Bir sərnişini emal edir. Yaradılacaq məlumatlar (müştəri sahələri əskikdirsə, ya da TAHSİLAT-a görə
+  // gəlir yaradılacaqsa) əvvəlcə bir önizləmə modalında göstərilir ki, istifadəçi hesab/kateqoriyanı seçib
+  // təsdiqləsin. Heç nə çatışmırsa və gəlir yoxdursa, sual vermədən avtomatik yaradılır.
   // Nəticəni { status: 'ok'|'skip'|'cancel'|'error', msg } kimi qaytarır ki, həm tək düymə, həm də
   // "Hamısını Yarat" ardıcıl loop-u eyni funksiyadan istifadə edə bilsin.
   async function processPassenger(idx) {
@@ -598,32 +631,73 @@
     if (!p.tour_match) return { status: 'skip', msg: `${who} — tur tapılmadı (${p.tour_code || '—'} / ${p.room_code || '—'} / ${p.category_name || '—'}), ötürüldü` };
     if (p.has_order) return { status: 'skip', msg: `${who} — artıq sifariş var` };
 
+    const missingImportant = !p.client_match && (!p.first_name || !p.last_name || !p.birth_date);
+    const needsIncomeChoice = p.income_amount > 0;
+
+    let clientOverride = {};
+    let incomeChoice = null;
+
+    if (missingImportant || needsIncomeChoice) {
+      const fields = [
+        { key: 'tour_info', type: 'info', label: 'Tur', value: `${p.tour_code || '—'} · ${p.room_code || '—'} / ${p.category_name || '—'}` },
+      ];
+      if (p.discount_amount > 0) {
+        fields.push({ key: 'discount_info', type: 'info', label: 'Endirim (Sheets İmport)', value: p.discount_amount });
+      }
+      if (missingImportant) {
+        fields.push(
+          { key: 'first_name', label: 'Ad', type: 'text', value: p.first_name },
+          { key: 'last_name', label: 'Soyad', type: 'text', value: p.last_name },
+          { key: 'birth_date', label: 'Doğum tarixi (GG.AA.YYYY)', type: 'text', value: isoToDdmmyyyy(p.birth_date) },
+          { key: 'phone', label: 'Telefon', type: 'text', value: p.phone },
+          { key: 'passport', label: 'Passport (məlumat üçün)', type: 'info', value: p.passport_no },
+          { key: 'email', label: 'Email', type: 'text', value: '' },
+        );
+      }
+      if (needsIncomeChoice) {
+        const [accounts, categories] = await Promise.all([getAccountsList(), getIncomeCategoriesList()]);
+        const accountOptions = accounts.map(a => ({ value: a.id, label: `${a.name} (${a.currency})` }));
+        const categoryOptions = categories.map(c => ({ value: c.id, label: c.name }));
+        fields.push(
+          { key: 'income_amount_info', type: 'info', label: 'Gəlir (TAHSİLAT)', value: p.income_amount },
+          { key: 'income_account_id', label: 'Hesab', type: 'select', options: accountOptions, value: lastIncomeAccountId ?? accountOptions[0]?.value },
+          { key: 'income_category_id', label: 'Gəlir kateqoriyası', type: 'select', options: categoryOptions, value: lastIncomeCategoryId ?? categoryOptions[0]?.value },
+          { key: 'income_date', label: 'Tarix (GG.AA.YYYY)', type: 'text', value: todayDdmmyyyy() },
+        );
+      }
+
+      const result = await openModal({
+        title: `${who} — yoxlayın və təsdiqləyin`,
+        subtitle: missingImportant ? 'Vacib məlumat çatışmır — tamamlayın' : 'Yaradılacaq məlumatları yoxlayıb təsdiqləyin',
+        fields,
+      });
+      if (!result) return { status: 'cancel', msg: `${who} — imtina edildi` };
+
+      if (missingImportant) {
+        clientOverride = {
+          first_name: result.first_name, last_name: result.last_name,
+          birth_date: ddmmyyyyToIso(result.birth_date), phone: result.phone, email: result.email,
+        };
+      }
+      if (needsIncomeChoice) {
+        lastIncomeAccountId = result.income_account_id;
+        lastIncomeCategoryId = result.income_category_id;
+        incomeChoice = {
+          account_id: parseInt(result.income_account_id),
+          income_category_id: parseInt(result.income_category_id),
+          date: ddmmyyyyToIso(result.income_date) || new Date().toISOString().slice(0, 10),
+        };
+      }
+    }
+
     let clientId = p.client_match ? p.client_match.id : null;
 
     if (!clientId) {
-      let clientPayload = {
+      const clientPayload = {
         first_name: p.first_name, last_name: p.last_name, birth_date: p.birth_date || '', phone: p.phone, email: '',
         gender: p.gender || '', nationality: p.nationality || '', father_name: p.father_name || '', reference_name: p.reference_name || '',
+        ...clientOverride,
       };
-
-      const missingImportant = !p.first_name || !p.last_name || !p.birth_date;
-      if (missingImportant) {
-        const result = await openModal({
-          title: 'Vacib məlumat çatışmır',
-          subtitle: `"${who}" üçün Ad/Soyad/Doğum tarixi tam deyil — tamamlayın`,
-          fields: [
-            { key: 'first_name', label: 'Ad', type: 'text', value: p.first_name },
-            { key: 'last_name', label: 'Soyad', type: 'text', value: p.last_name },
-            { key: 'birth_date', label: 'Doğum tarixi (GG.AA.YYYY)', type: 'text', value: isoToDdmmyyyy(p.birth_date) },
-            { key: 'phone', label: 'Telefon', type: 'text', value: p.phone },
-            { key: 'passport', label: 'Passport (məlumat üçün)', type: 'info', value: p.passport_no },
-            { key: 'email', label: 'Email', type: 'text', value: '' },
-          ],
-        });
-        if (!result) return { status: 'cancel', msg: `${who} — müştəri yaradılmadı (imtina)` };
-        result.birth_date = ddmmyyyyToIso(result.birth_date);
-        clientPayload = { ...clientPayload, ...result };
-      }
 
       const res = await fetch('/api/clients', {
         method: 'POST',
@@ -645,6 +719,7 @@
     const order = await res.json();
 
     p.has_order = true;
+    let warnings = [];
 
     if (p.discount_amount > 0) {
       const catId = await getImportDiscountCategoryId();
@@ -654,11 +729,29 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount: p.discount_amount, discount_category_id: catId }),
         });
-        if (!discRes.ok) return { status: 'ok', msg: `${who} — sifariş yaradıldı, endirim əlavə edilmədi` };
+        if (!discRes.ok) warnings.push('endirim əlavə edilmədi');
       }
     }
 
-    return { status: 'ok', msg: `${who} — sifariş yaradıldı` };
+    if (incomeChoice) {
+      const incRes = await fetch('/api/incomes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `Sheets import — ${who}`,
+          amount: p.income_amount,
+          date: incomeChoice.date,
+          income_category_id: incomeChoice.income_category_id,
+          account_id: incomeChoice.account_id,
+          tour_id: p.tour_match,
+          order_id: order.id,
+        }),
+      });
+      if (!incRes.ok) warnings.push('gəlir əlavə edilmədi');
+    }
+
+    const suffix = warnings.length ? `, ${warnings.join(', ')}` : '';
+    return { status: 'ok', msg: `${who} — sifariş yaradıldı${suffix}` };
   }
 
   async function handlePassengerAction(idx, btn) {

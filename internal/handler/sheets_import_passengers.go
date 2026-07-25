@@ -32,6 +32,7 @@ type passengerCandidate struct {
 	CategoryName   string          `json:"category_name"`
 	Cancelled      bool            `json:"cancelled"`
 	DiscountAmount float64         `json:"discount_amount"`
+	IncomeAmount   float64         `json:"income_amount"`
 	ClientMatch    *passengerMatch `json:"client_match"`
 	TourMatch      *int64          `json:"tour_match"`
 	HasOrder       bool            `json:"has_order"`
@@ -109,6 +110,7 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 
 		birthDate, birthYear := parseBirthDate(cellAt(row, cols.birth))
 		discountAmount, _ := parsePrice(cellAt(row, cols.discount))
+		incomeAmount, _ := parsePrice(cellAt(row, cols.income))
 		cand := passengerCandidate{
 			FirstName:      firstName,
 			LastName:       lastName,
@@ -125,6 +127,7 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 			CategoryName:   cellAt(row, cols.category),
 			Cancelled:      cellAt(row, cols.cancelled) == "1",
 			DiscountAmount: discountAmount,
+			IncomeAmount:   incomeAmount,
 		}
 
 		if m, ok := clientByKey[clientKey(cand.FirstName, cand.LastName, cand.BirthYear)]; ok {
@@ -149,14 +152,14 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 
 type passengerCols struct {
 	code, room, category, first, last, birth, phone, passport, cancelled int
-	gender, nationality, fatherName, reference, discount               int
+	gender, nationality, fatherName, reference, discount, income        int
 }
 
 // findPassengerHeader "AD" və "SOYAD" xanaları olan sətri axtarır (sərnişin cədvəllərinin başlıq sətri).
 func findPassengerHeader(rows [][]string) (passengerCols, int) {
 	cols := passengerCols{
 		code: -1, room: -1, category: -1, first: -1, last: -1, birth: -1, phone: -1, passport: -1, cancelled: -1,
-		gender: -1, nationality: -1, fatherName: -1, reference: -1, discount: -1,
+		gender: -1, nationality: -1, fatherName: -1, reference: -1, discount: -1, income: -1,
 	}
 
 	for ri, row := range rows {
@@ -204,6 +207,8 @@ func findPassengerHeader(rows [][]string) (passengerCols, int) {
 				cols.reference = ci
 			case lower == "indirim" || lower == "endirim":
 				cols.discount = ci
+			case strings.Contains(lower, "tahsilat"):
+				cols.income = ci
 			}
 		}
 		return cols, ri
