@@ -58,6 +58,10 @@
                   <th>E-posta</th>
                   <th>Telefon</th>
                   <th>Doğum Tarihi</th>
+                  <th>Cinsiyet</th>
+                  <th>Uyruk</th>
+                  <th>Baba Adı</th>
+                  <th>Referans</th>
                   <th>Aksiyon</th>
                 </tr>
               </thead>
@@ -69,6 +73,10 @@
                   <td>{{.Email}}</td>
                   <td>{{.Phone}}</td>
                   <td>{{ddmmyyyy .BirthDate}}</td>
+                  <td>{{.Gender}}</td>
+                  <td>{{.Nationality}}</td>
+                  <td>{{.FatherName}}</td>
+                  <td>{{.ReferenceName}}</td>
                   <td>
                     <div class="d-flex gap-1">
                       <button type="button" class="btn btn-icon btn-sm btn-light" title="Düzenle" onclick='openEdit({{json .}})'>
@@ -125,38 +133,64 @@
           <div class="row g-3 mb-3">
             <div class="col-6">
               <label class="form-label">Ad <span class="text-danger">*</span></label>
-              <input id="fFirst" type="text" required placeholder="Ahmet" class="form-control">
+              <input id="fFirst" type="text" required class="form-control">
             </div>
             <div class="col-6">
               <label class="form-label">Soyad <span class="text-danger">*</span></label>
-              <input id="fLast" type="text" required placeholder="Yılmaz" class="form-control">
+              <input id="fLast" type="text" required class="form-control">
             </div>
           </div>
 
           <div class="mb-3">
             <label class="form-label">E-posta</label>
-            <input id="fEmail" type="email" placeholder="ahmet@mail.com" class="form-control">
+            <input id="fEmail" type="email" class="form-control">
           </div>
 
           <div class="row g-3 mb-3">
             <div class="col-6">
               <label class="form-label">Telefon</label>
-              <input id="fPhone" type="text" placeholder="+90 555 000 00 00" class="form-control">
+              <input id="fPhone" type="text" class="form-control">
             </div>
             <div class="col-6">
               <label class="form-label">Doğum Tarihi <span class="text-danger">*</span></label>
-              <input id="fBirth" type="text" required placeholder="08.01.1998" pattern="\d{2}\.\d{2}\.\d{4}" title="GG.AA.YYYY" class="form-control">
+              <input id="fBirth" type="text" required pattern="\d{2}\.\d{2}\.\d{4}" title="GG.AA.YYYY" class="form-control">
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">FIN</label>
+              <input id="fFin" type="text" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Vəsiqə No</label>
+              <input id="fCardNo" type="text" class="form-control">
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">Cinsiyet</label>
+              <select id="fGender" class="form-select">
+                <option value="">—</option>
+                <option value="MR">MR</option>
+                <option value="MRS">MRS</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Uyruk</label>
+              <input id="fNationality" type="text" class="form-control">
             </div>
           </div>
 
           <div class="row g-3">
             <div class="col-6">
-              <label class="form-label">FIN</label>
-              <input id="fFin" type="text" placeholder="5V8CKYF" class="form-control">
+              <label class="form-label">Baba Adı</label>
+              <input id="fFatherName" type="text" class="form-control">
             </div>
             <div class="col-6">
-              <label class="form-label">Vəsiqə No</label>
-              <input id="fCardNo" type="text" placeholder="AA0250651" class="form-control">
+              <label class="form-label">Referans</label>
+              <input id="fReference" type="text" class="form-control">
             </div>
           </div>
 
@@ -177,8 +211,15 @@
   let editingId = null;
   let pendingDocumentFile = null;
   let clientModal;
+  const allClients = {{json .clients}};
   document.addEventListener('DOMContentLoaded', () => {
     clientModal = new bootstrap.Modal(document.getElementById('clientModal'));
+
+    const openId = new URLSearchParams(location.search).get('open');
+    if (openId) {
+      const client = allClients.find(c => String(c.id) === openId);
+      if (client) openEdit(client);
+    }
   });
 
   function ddmmyyyyToIso(s) {
@@ -223,6 +264,10 @@
     document.getElementById('fBirth').value = isoToDdmmyyyy(c.birth_date);
     document.getElementById('fFin').value = c.fin_code || '';
     document.getElementById('fCardNo').value = c.id_card_number || '';
+    document.getElementById('fGender').value = c.gender || '';
+    document.getElementById('fNationality').value = c.nationality || '';
+    document.getElementById('fFatherName').value = c.father_name || '';
+    document.getElementById('fReference').value = c.reference_name || '';
     resetDocumentBox();
     if (c.document_photo) {
       const thumb = document.getElementById('docThumb');
@@ -488,6 +533,10 @@
       birth_date:    ddmmyyyyToIso(document.getElementById('fBirth').value.trim()),
       fin_code:      document.getElementById('fFin').value.trim(),
       id_card_number: document.getElementById('fCardNo').value.trim(),
+      gender:        document.getElementById('fGender').value,
+      nationality:   document.getElementById('fNationality').value.trim(),
+      father_name:   document.getElementById('fFatherName').value.trim(),
+      reference_name: document.getElementById('fReference').value.trim(),
     };
     const url    = editingId ? `/api/clients/${editingId}` : '/api/clients';
     const method = editingId ? 'PUT' : 'POST';

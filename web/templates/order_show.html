@@ -36,7 +36,10 @@
       <div class="col-lg-3 col-6">
         <div class="card p-4 h-100">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Müşteri</p>
-          <p class="fw-bold mb-0">{{.order.ClientName}}</p>
+          <p class="fw-bold mb-0">
+            {{.order.ClientName}}
+            <a href="/clients?open={{.order.ClientID}}" class="ms-1" title="Müşteriyə keç"><i class="ti ti-external-link fs-6"></i></a>
+          </p>
         </div>
       </div>
       <div class="col-lg-3 col-6">

@@ -17,19 +17,23 @@ type passengerMatch struct {
 }
 
 type passengerCandidate struct {
-	FirstName    string          `json:"first_name"`
-	LastName     string          `json:"last_name"`
-	BirthDate    string          `json:"birth_date"`
-	BirthYear    int             `json:"birth_year"`
-	Phone        string          `json:"phone"`
-	PassportNo   string          `json:"passport_no"`
-	TourCode     string          `json:"tour_code"`
-	RoomCode     string          `json:"room_code"`
-	CategoryName string          `json:"category_name"`
-	Cancelled    bool            `json:"cancelled"`
-	ClientMatch  *passengerMatch `json:"client_match"`
-	TourMatch    *int64          `json:"tour_match"`
-	HasOrder     bool            `json:"has_order"`
+	FirstName     string          `json:"first_name"`
+	LastName      string          `json:"last_name"`
+	BirthDate     string          `json:"birth_date"`
+	BirthYear     int             `json:"birth_year"`
+	Phone         string          `json:"phone"`
+	PassportNo    string          `json:"passport_no"`
+	Gender        string          `json:"gender"`
+	Nationality   string          `json:"nationality"`
+	FatherName    string          `json:"father_name"`
+	ReferenceName string          `json:"reference_name"`
+	TourCode      string          `json:"tour_code"`
+	RoomCode      string          `json:"room_code"`
+	CategoryName  string          `json:"category_name"`
+	Cancelled     bool            `json:"cancelled"`
+	ClientMatch   *passengerMatch `json:"client_match"`
+	TourMatch     *int64          `json:"tour_match"`
+	HasOrder      bool            `json:"has_order"`
 }
 
 // PassengerCandidates konkret tur kodu vərəqindəki (məsələn "AZ2606001") sərnişin siyahısını oxuyur,
@@ -104,16 +108,20 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 
 		birthDate, birthYear := parseBirthDate(cellAt(row, cols.birth))
 		cand := passengerCandidate{
-			FirstName:    firstName,
-			LastName:     lastName,
-			BirthDate:    birthDate,
-			BirthYear:    birthYear,
-			Phone:        cellAt(row, cols.phone),
-			PassportNo:   cellAt(row, cols.passport),
-			TourCode:     cellAt(row, cols.code),
-			RoomCode:     cellAt(row, cols.room),
-			CategoryName: cellAt(row, cols.category),
-			Cancelled:    cellAt(row, cols.cancelled) == "1",
+			FirstName:     firstName,
+			LastName:      lastName,
+			BirthDate:     birthDate,
+			BirthYear:     birthYear,
+			Phone:         cellAt(row, cols.phone),
+			PassportNo:    cellAt(row, cols.passport),
+			Gender:        cellAt(row, cols.gender),
+			Nationality:   cellAt(row, cols.nationality),
+			FatherName:    cellAt(row, cols.fatherName),
+			ReferenceName: cellAt(row, cols.reference),
+			TourCode:      cellAt(row, cols.code),
+			RoomCode:      cellAt(row, cols.room),
+			CategoryName:  cellAt(row, cols.category),
+			Cancelled:     cellAt(row, cols.cancelled) == "1",
 		}
 
 		if m, ok := clientByKey[clientKey(cand.FirstName, cand.LastName, cand.BirthYear)]; ok {
@@ -138,11 +146,15 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 
 type passengerCols struct {
 	code, room, category, first, last, birth, phone, passport, cancelled int
+	gender, nationality, fatherName, reference                          int
 }
 
 // findPassengerHeader "AD" və "SOYAD" xanaları olan sətri axtarır (sərnişin cədvəllərinin başlıq sətri).
 func findPassengerHeader(rows [][]string) (passengerCols, int) {
-	cols := passengerCols{-1, -1, -1, -1, -1, -1, -1, -1, -1}
+	cols := passengerCols{
+		code: -1, room: -1, category: -1, first: -1, last: -1, birth: -1, phone: -1, passport: -1, cancelled: -1,
+		gender: -1, nationality: -1, fatherName: -1, reference: -1,
+	}
 
 	for ri, row := range rows {
 		firstIdx, lastIdx := -1, -1
@@ -179,6 +191,14 @@ func findPassengerHeader(rows [][]string) (passengerCols, int) {
 				cols.passport = ci
 			case strings.Contains(lower, "iptal"):
 				cols.cancelled = ci
+			case strings.Contains(lower, "cinsiyet"):
+				cols.gender = ci
+			case strings.Contains(lower, "uyruk"):
+				cols.nationality = ci
+			case strings.Contains(lower, "baba"):
+				cols.fatherName = ci
+			case strings.Contains(lower, "referans"):
+				cols.reference = ci
 			}
 		}
 		return cols, ri

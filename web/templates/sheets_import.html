@@ -580,7 +580,10 @@
     let clientId = p.client_match ? p.client_match.id : null;
 
     if (!clientId) {
-      let clientPayload = { first_name: p.first_name, last_name: p.last_name, birth_date: p.birth_date || '', phone: p.phone, email: '' };
+      let clientPayload = {
+        first_name: p.first_name, last_name: p.last_name, birth_date: p.birth_date || '', phone: p.phone, email: '',
+        gender: p.gender || '', nationality: p.nationality || '', father_name: p.father_name || '', reference_name: p.reference_name || '',
+      };
 
       const missingImportant = !p.first_name || !p.last_name || !p.birth_date;
       if (missingImportant) {
@@ -598,7 +601,7 @@
         });
         if (!result) return { status: 'cancel', msg: `${who} — müştəri yaradılmadı (imtina)` };
         result.birth_date = ddmmyyyyToIso(result.birth_date);
-        clientPayload = result;
+        clientPayload = { ...clientPayload, ...result };
       }
 
       const res = await fetch('/api/clients', {

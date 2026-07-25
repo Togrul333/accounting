@@ -9,6 +9,10 @@ type Client struct {
 	Email         string    `json:"email"`
 	Phone         string    `json:"phone"`
 	BirthDate     string    `json:"birth_date"`
+	Gender        string    `json:"gender"`
+	Nationality   string    `json:"nationality"`
+	FatherName    string    `json:"father_name"`
+	ReferenceName string    `json:"reference_name"`
 	FinCode       string    `json:"fin_code"`
 	IDCardNumber  string    `json:"id_card_number"`
 	DocumentPhoto string    `json:"document_photo"`
@@ -17,21 +21,29 @@ type Client struct {
 }
 
 type CreateClientRequest struct {
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
-	Email        string `json:"email"`
-	Phone        string `json:"phone"`
-	BirthDate    string `json:"birth_date"`
-	FinCode      string `json:"fin_code"`
-	IDCardNumber string `json:"id_card_number"`
+	FirstName     string `json:"first_name"`
+	LastName      string `json:"last_name"`
+	Email         string `json:"email"`
+	Phone         string `json:"phone"`
+	BirthDate     string `json:"birth_date"`
+	Gender        string `json:"gender"`
+	Nationality   string `json:"nationality"`
+	FatherName    string `json:"father_name"`
+	ReferenceName string `json:"reference_name"`
+	FinCode       string `json:"fin_code"`
+	IDCardNumber  string `json:"id_card_number"`
 }
 
 type UpdateClientRequest struct {
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
-	Email        string `json:"email"`
-	Phone        string `json:"phone"`
-	BirthDate    string `json:"birth_date"`
-	FinCode      string `json:"fin_code"`
-	IDCardNumber string `json:"id_card_number"`
+	FirstName     string `json:"first_name"`
+	LastName      string `json:"last_name"`
+	Email         string `json:"email"`
+	Phone         string `json:"phone"`
+	BirthDate     string `json:"birth_date"`
+	Gender        string `json:"gender"`
+	Nationality   string `json:"nationality"`
+	FatherName    string `json:"father_name"`
+	ReferenceName string `json:"reference_name"`
+	FinCode       string `json:"fin_code"`
+	IDCardNumber  string `json:"id_card_number"`
 }

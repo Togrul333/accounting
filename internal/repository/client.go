@@ -42,13 +42,17 @@ func (r *clientRepo) GetByID(ctx context.Context, id int64) (*model.Client, erro
 
 func (r *clientRepo) Create(ctx context.Context, req model.CreateClientRequest) (*model.Client, error) {
 	c := model.Client{
-		FirstName:    req.FirstName,
-		LastName:     req.LastName,
-		Email:        req.Email,
-		Phone:        req.Phone,
-		BirthDate:    req.BirthDate,
-		FinCode:      req.FinCode,
-		IDCardNumber: req.IDCardNumber,
+		FirstName:     req.FirstName,
+		LastName:      req.LastName,
+		Email:         req.Email,
+		Phone:         req.Phone,
+		BirthDate:     req.BirthDate,
+		Gender:        req.Gender,
+		Nationality:   req.Nationality,
+		FatherName:    req.FatherName,
+		ReferenceName: req.ReferenceName,
+		FinCode:       req.FinCode,
+		IDCardNumber:  req.IDCardNumber,
 	}
 	if err := r.db.WithContext(ctx).Create(&c).Error; err != nil {
 		return nil, err
@@ -63,6 +67,10 @@ func (r *clientRepo) Update(ctx context.Context, id int64, req model.UpdateClien
 		"email":          req.Email,
 		"phone":          req.Phone,
 		"birth_date":     req.BirthDate,
+		"gender":         req.Gender,
+		"nationality":    req.Nationality,
+		"father_name":    req.FatherName,
+		"reference_name": req.ReferenceName,
 		"fin_code":       req.FinCode,
 		"id_card_number": req.IDCardNumber,
 	})
