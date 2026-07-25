@@ -137,42 +137,108 @@
           <span id="gelirTotal" class="ms-auto fw-bold text-primary"></span>
         </div>
 
-        <div class="border rounded-2 p-3 mb-3 d-flex align-items-end gap-2 flex-wrap">
-          <div>
-            <label class="form-label small text-secondary text-uppercase fw-semibold mb-1">Tümüne uygula — Kategori</label>
-            <select id="bulkIncomeCat" class="form-select form-select-sm"></select>
-          </div>
-          <div>
-            <label class="form-label small text-secondary text-uppercase fw-semibold mb-1">Tur</label>
-            <select id="bulkIncomeTour" class="form-select form-select-sm"></select>
-          </div>
-          <div>
-            <label class="form-label small text-secondary text-uppercase fw-semibold mb-1">Müşteri</label>
-            <select id="bulkIncomeClient" class="form-select form-select-sm"></select>
-          </div>
-          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="applyBulkIncome()">Tümüne Uygula</button>
+        <div class="btn-group btn-group-sm mb-3" role="group">
+          <button type="button" id="gelirModeStepBtn" class="btn btn-primary" onclick="setGelirMode('step')">Tək-tək</button>
+          <button type="button" id="gelirModeAllBtn" class="btn btn-outline-primary" onclick="setGelirMode('all')">Hamısını bir dəfəyə</button>
         </div>
 
-        <div class="table-responsive mb-2">
-          <table class="table table-sm align-middle">
-            <thead class="table-light border-light">
-              <tr>
-                <th>#</th><th>Tarih</th><th>Referans</th><th>Karşı Taraf</th><th>Açıklama</th>
-                <th class="text-end">Tutar</th>
-                <th style="min-width:170px;">Kategori</th>
-                <th style="min-width:210px;">Tur</th>
-                <th style="min-width:170px;">Müşteri</th>
-              </tr>
-            </thead>
-            <tbody id="gelirRowsBody"></tbody>
-          </table>
+        <!-- Gelirler: tək-tək ilerleme -->
+        <div id="gelirStepView">
+          <div class="mb-2">
+            <span id="gelirProgress" class="badge bg-primary-subtle text-primary-emphasis">0 / 0</span>
+          </div>
+
+          <div id="gelirDoneMsg" class="alert alert-success d-none mb-3"></div>
+
+          <div id="gelirCard" class="card mb-3">
+            <div class="card-body">
+              <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                  <div class="small text-secondary text-uppercase fw-semibold">Tarih</div>
+                  <div id="curDate" class="fw-semibold"></div>
+                </div>
+                <div class="col-md-3">
+                  <div class="small text-secondary text-uppercase fw-semibold">Referans</div>
+                  <div id="curRef" class="font-monospace small"></div>
+                </div>
+                <div class="col-md-3">
+                  <div class="small text-secondary text-uppercase fw-semibold">Tutar</div>
+                  <div id="curAmount" class="fw-bold text-primary"></div>
+                </div>
+                <div class="col-md-3">
+                  <div class="small text-secondary text-uppercase fw-semibold">Karşı Taraf</div>
+                  <div id="curCP" class="small"></div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <div class="small text-secondary text-uppercase fw-semibold">Açıklama</div>
+                <div id="curDesc" class="small" style="white-space:pre-line;"></div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                  <select id="curCat" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Tur</label>
+                  <select id="curTour" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Müşteri</label>
+                  <select id="curClient" class="form-select"></select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="gelirStepperActions" class="d-flex align-items-center gap-2 mb-5">
+            <div id="incomeStepError" class="small text-danger d-none"></div>
+            <button type="button" class="btn btn-outline-secondary" onclick="skipGelirRow()">Keç</button>
+            <button id="saveGelirBtn" type="button" class="btn btn-primary ms-auto" onclick="saveCurrentGelirRow()">
+              <i class="ti ti-check"></i> Kaydet ve İlerle
+            </button>
+          </div>
         </div>
 
-        <div class="d-flex align-items-center gap-2 mb-5">
-          <div id="incomeImportError" class="small text-danger d-none"></div>
-          <button id="importIncomeBtn" type="button" class="btn btn-primary ms-auto" onclick="doImportIncomes()">
-            <i class="ti ti-download"></i> Gelirleri İçe Aktar
-          </button>
+        <!-- Gelirler: hamısını bir dəfəyə -->
+        <div id="gelirAllView" class="d-none">
+          <div class="border rounded-2 p-3 mb-3 d-flex align-items-end gap-2 flex-wrap">
+            <div>
+              <label class="form-label small text-secondary text-uppercase fw-semibold mb-1">Tümüne uygula — Kategori</label>
+              <select id="bulkIncomeCat" class="form-select form-select-sm"></select>
+            </div>
+            <div>
+              <label class="form-label small text-secondary text-uppercase fw-semibold mb-1">Tur</label>
+              <select id="bulkIncomeTour" class="form-select form-select-sm"></select>
+            </div>
+            <div>
+              <label class="form-label small text-secondary text-uppercase fw-semibold mb-1">Müşteri</label>
+              <select id="bulkIncomeClient" class="form-select form-select-sm"></select>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="applyBulkIncome()">Tümüne Uygula</button>
+          </div>
+
+          <div class="table-responsive mb-2">
+            <table class="table table-sm align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>#</th><th>Tarih</th><th>Referans</th><th>Karşı Taraf</th><th>Açıklama</th>
+                  <th class="text-end">Tutar</th>
+                  <th style="min-width:170px;">Kategori</th>
+                  <th style="min-width:210px;">Tur</th>
+                  <th style="min-width:170px;">Müşteri</th>
+                </tr>
+              </thead>
+              <tbody id="gelirRowsBody"></tbody>
+            </table>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 mb-5">
+            <div id="incomeAllError" class="small text-danger d-none"></div>
+            <button id="importIncomeAllBtn" type="button" class="btn btn-primary ms-auto" onclick="doImportAllGelir()">
+              <i class="ti ti-download"></i> Gelirleri İçe Aktar
+            </button>
+          </div>
         </div>
 
         <!-- Giderler -->
@@ -184,28 +250,86 @@
             <span id="giderTotal" class="ms-auto fw-bold text-danger"></span>
           </div>
 
-          <div class="mb-3" style="max-width:280px;">
-            <label class="form-label small text-secondary text-uppercase fw-semibold">Gider Kategorisi (tümü için)</label>
-            <select id="giderCatSelect" class="form-select"></select>
+          <div class="btn-group btn-group-sm mb-3" role="group">
+            <button type="button" id="giderModeStepBtn" class="btn btn-danger" onclick="setGiderMode('step')">Tək-tək</button>
+            <button type="button" id="giderModeAllBtn" class="btn btn-outline-danger" onclick="setGiderMode('all')">Hamısını bir dəfəyə</button>
           </div>
 
-          <div class="table-responsive mb-2">
-            <table class="table table-sm align-middle">
-              <thead class="table-light border-light">
-                <tr>
-                  <th>#</th><th>Tarih</th><th>Referans</th><th>Karşı Taraf</th><th>Açıklama</th>
-                  <th class="text-end">Tutar</th>
-                </tr>
-              </thead>
-              <tbody id="giderRowsBody"></tbody>
-            </table>
+          <!-- Giderler: tək-tək ilerleme -->
+          <div id="giderStepView">
+            <div class="mb-2">
+              <span id="giderProgress" class="badge bg-danger-subtle text-danger-emphasis">0 / 0</span>
+            </div>
+
+            <div id="giderDoneMsg" class="alert alert-success d-none mb-3"></div>
+
+            <div id="giderCard" class="card mb-3">
+              <div class="card-body">
+                <div class="row g-3 mb-3">
+                  <div class="col-md-3">
+                    <div class="small text-secondary text-uppercase fw-semibold">Tarih</div>
+                    <div id="curGiderDate" class="fw-semibold"></div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="small text-secondary text-uppercase fw-semibold">Referans</div>
+                    <div id="curGiderRef" class="font-monospace small"></div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="small text-secondary text-uppercase fw-semibold">Tutar</div>
+                    <div id="curGiderAmount" class="fw-bold text-danger"></div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="small text-secondary text-uppercase fw-semibold">Karşı Taraf</div>
+                    <div id="curGiderCP" class="small"></div>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <div class="small text-secondary text-uppercase fw-semibold">Açıklama</div>
+                  <div id="curGiderDesc" class="small" style="white-space:pre-line;"></div>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                    <select id="curGiderCat" class="form-select"></select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="giderStepperActions" class="d-flex align-items-center gap-2 mb-3">
+              <div id="giderStepError" class="small text-danger d-none"></div>
+              <button type="button" class="btn btn-outline-secondary" onclick="skipGiderRow()">Keç</button>
+              <button id="saveGiderBtn" type="button" class="btn btn-danger ms-auto" onclick="saveCurrentGiderRow()">
+                <i class="ti ti-check"></i> Kaydet ve İlerle
+              </button>
+            </div>
           </div>
 
-          <div class="d-flex align-items-center gap-2">
-            <div id="expenseImportError" class="small text-danger d-none"></div>
-            <button id="importExpenseBtn" type="button" class="btn btn-danger ms-auto" onclick="doImportExpenses()">
-              <i class="ti ti-download"></i> Giderleri İçe Aktar
-            </button>
+          <!-- Giderler: hamısını bir dəfəyə -->
+          <div id="giderAllView" class="d-none">
+            <div class="mb-3" style="max-width:280px;">
+              <label class="form-label small text-secondary text-uppercase fw-semibold">Gider Kategorisi (tümü için)</label>
+              <select id="giderCatSelect" class="form-select"></select>
+            </div>
+
+            <div class="table-responsive mb-2">
+              <table class="table table-sm align-middle">
+                <thead class="table-light border-light">
+                  <tr>
+                    <th>#</th><th>Tarih</th><th>Referans</th><th>Karşı Taraf</th><th>Açıklama</th>
+                    <th class="text-end">Tutar</th>
+                  </tr>
+                </thead>
+                <tbody id="giderRowsBody"></tbody>
+              </table>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+              <div id="expenseAllError" class="small text-danger d-none"></div>
+              <button id="importExpenseBtn" type="button" class="btn btn-danger ms-auto" onclick="doImportExpenses()">
+                <i class="ti ti-download"></i> Giderleri İçe Aktar
+              </button>
+            </div>
           </div>
         </div>
 
@@ -373,6 +497,30 @@
     return '<option value="">—</option>' + CLIENTS.map(c => `<option value="${c.id}">${escHtml(c.first_name)} ${escHtml(c.last_name)}</option>`).join('');
   }
 
+  function setFieldError(elId, msg) {
+    const el = document.getElementById(elId);
+    if (msg) { el.textContent = '✕ ' + msg; el.classList.remove('d-none'); }
+    else      { el.classList.add('d-none'); }
+  }
+
+  function setGelirMode(mode) {
+    document.getElementById('gelirStepView').classList.toggle('d-none', mode !== 'step');
+    document.getElementById('gelirAllView').classList.toggle('d-none', mode !== 'all');
+    document.getElementById('gelirModeStepBtn').classList.toggle('btn-primary', mode === 'step');
+    document.getElementById('gelirModeStepBtn').classList.toggle('btn-outline-primary', mode !== 'step');
+    document.getElementById('gelirModeAllBtn').classList.toggle('btn-primary', mode === 'all');
+    document.getElementById('gelirModeAllBtn').classList.toggle('btn-outline-primary', mode !== 'all');
+  }
+
+  function setGiderMode(mode) {
+    document.getElementById('giderStepView').classList.toggle('d-none', mode !== 'step');
+    document.getElementById('giderAllView').classList.toggle('d-none', mode !== 'all');
+    document.getElementById('giderModeStepBtn').classList.toggle('btn-danger', mode === 'step');
+    document.getElementById('giderModeStepBtn').classList.toggle('btn-outline-danger', mode !== 'step');
+    document.getElementById('giderModeAllBtn').classList.toggle('btn-danger', mode === 'all');
+    document.getElementById('giderModeAllBtn').classList.toggle('btn-outline-danger', mode !== 'all');
+  }
+
   function buildGelirRows(rows) {
     const catOpts = catOptions(INCOME_CATS);
     const tourOpts = tourOptions();
@@ -391,6 +539,60 @@
     </tr>`).join('');
   }
 
+  function applyBulkIncome() {
+    const cat    = document.getElementById('bulkIncomeCat').value;
+    const tour   = document.getElementById('bulkIncomeTour').value;
+    const client = document.getElementById('bulkIncomeClient').value;
+    PREVIEW_GELIRLER.forEach((_, i) => {
+      if (cat)    document.getElementById(`gelirCat_${i}`).value = cat;
+      if (tour)   document.getElementById(`gelirTour_${i}`).value = tour;
+      if (client) document.getElementById(`gelirClient_${i}`).value = client;
+    });
+  }
+
+  async function doImportAllGelir() {
+    setFieldError('incomeAllError', '');
+    if (!PREVIEW_GELIRLER.length) { setFieldError('incomeAllError', 'İçe aktarılacak gelir yok'); return; }
+
+    const rows = [];
+    for (let i = 0; i < PREVIEW_GELIRLER.length; i++) {
+      const catId = document.getElementById(`gelirCat_${i}`).value;
+      if (!catId) { setFieldError('incomeAllError', `${i + 1}. sətir üçün kateqoriya seçin`); return; }
+      const tourId   = document.getElementById(`gelirTour_${i}`).value;
+      const clientId = document.getElementById(`gelirClient_${i}`).value;
+      rows.push({
+        ...PREVIEW_GELIRLER[i],
+        income_category_id: parseInt(catId),
+        tour_id: tourId ? parseInt(tourId) : null,
+        client_id: clientId ? parseInt(clientId) : null,
+      });
+    }
+
+    const btn = document.getElementById('importIncomeAllBtn');
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = 'Gözləyin...';
+
+    try {
+      const res  = await fetch(`/api/accounts/${accountId}/statement-import-incomes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setFieldError('incomeAllError', data.error || 'Xəta baş verdi'); return; }
+      let msg = `✓ ${data.imported_incomes} gelir əlavə edildi`;
+      if (data.skipped_duplicates > 0) msg += ` (${data.skipped_duplicates} təkrar keçildi)`;
+      showToast(msg, 'success');
+      setTimeout(() => location.reload(), 1200);
+    } catch {
+      setFieldError('incomeAllError', 'Sunucu bağlantı hatası');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  }
+
   function buildGiderRows(rows) {
     if (!rows.length) return '<tr><td colspan="6" class="text-center text-secondary small py-3">Məlumat yoxdur</td></tr>';
     return rows.map((row, i) => `<tr>
@@ -403,15 +605,179 @@
     </tr>`).join('');
   }
 
-  function applyBulkIncome() {
-    const cat    = document.getElementById('bulkIncomeCat').value;
-    const tour   = document.getElementById('bulkIncomeTour').value;
-    const client = document.getElementById('bulkIncomeClient').value;
-    PREVIEW_GELIRLER.forEach((_, i) => {
-      if (cat)    document.getElementById(`gelirCat_${i}`).value = cat;
-      if (tour)   document.getElementById(`gelirTour_${i}`).value = tour;
-      if (client) document.getElementById(`gelirClient_${i}`).value = client;
-    });
+  // ── Gelirler: satır satır ilerleme durumu ──
+  let gelirIndex = 0;
+  let gelirImportedCount = 0;
+  let gelirSkippedCount = 0;
+  let lastUsedCatId = '';
+
+  function renderCurrentGelirRow() {
+    const card    = document.getElementById('gelirCard');
+    const actions = document.getElementById('gelirStepperActions');
+    const doneMsg = document.getElementById('gelirDoneMsg');
+
+    document.getElementById('gelirProgress').textContent = `${gelirIndex} / ${PREVIEW_GELIRLER.length}`;
+
+    if (gelirIndex >= PREVIEW_GELIRLER.length) {
+      card.classList.add('d-none');
+      actions.classList.add('d-none');
+      doneMsg.classList.remove('d-none');
+      const text = PREVIEW_GELIRLER.length
+        ? `Tüm gelir satırları işlendi — ${gelirImportedCount} əlavə edildi${gelirSkippedCount ? `, ${gelirSkippedCount} keçildi/təkrar` : ''}.`
+        : 'İçe aktarılacak gelir yok.';
+      doneMsg.innerHTML = `<div class="d-flex align-items-center gap-2 flex-wrap">
+        <span>${text}</span>
+        <button type="button" class="btn btn-sm btn-outline-success ms-auto" onclick="location.reload()">Sayfayı Yenile</button>
+      </div>`;
+      return;
+    }
+
+    card.classList.remove('d-none');
+    actions.classList.remove('d-none');
+    doneMsg.classList.add('d-none');
+
+    const row = PREVIEW_GELIRLER[gelirIndex];
+    document.getElementById('curDate').textContent  = row.date || '—';
+    document.getElementById('curRef').textContent    = row.ref || '—';
+    document.getElementById('curAmount').textContent = '+' + Number(row.credit).toFixed(2) + ' ₼';
+    document.getElementById('curCP').textContent      = row.cp || '—';
+    document.getElementById('curDesc').textContent    = row.desc || '—';
+
+    document.getElementById('curCat').innerHTML    = catOptions(INCOME_CATS);
+    document.getElementById('curTour').innerHTML   = tourOptions();
+    document.getElementById('curClient').innerHTML = clientOptions();
+    if (lastUsedCatId) document.getElementById('curCat').value = lastUsedCatId;
+
+    setFieldError('incomeStepError', '');
+  }
+
+  function skipGelirRow() {
+    gelirIndex++;
+    renderCurrentGelirRow();
+  }
+
+  async function saveCurrentGelirRow() {
+    setFieldError('incomeStepError', '');
+    const row = PREVIEW_GELIRLER[gelirIndex];
+    const catId = document.getElementById('curCat').value;
+    if (!catId) { setFieldError('incomeStepError', 'Kateqoriya seçin'); return; }
+    const tourId   = document.getElementById('curTour').value;
+    const clientId = document.getElementById('curClient').value;
+
+    const btn = document.getElementById('saveGelirBtn');
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = 'Gözləyin...';
+
+    try {
+      const res = await fetch(`/api/accounts/${accountId}/statement-import-incomes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows: [{
+          ...row,
+          income_category_id: parseInt(catId),
+          tour_id: tourId ? parseInt(tourId) : null,
+          client_id: clientId ? parseInt(clientId) : null,
+        }] }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setFieldError('incomeStepError', data.error || 'Xəta baş verdi'); return; }
+      gelirImportedCount += data.imported_incomes;
+      gelirSkippedCount  += data.skipped_duplicates;
+      if (data.imported_incomes > 0) showToast('✓ Sətir əlavə edildi', 'success');
+      else showToast('⚠ Bu sətir artıq mövcuddur (dublikat) — keçildi', 'warning');
+      lastUsedCatId = catId;
+      gelirIndex++;
+      renderCurrentGelirRow();
+    } catch {
+      setFieldError('incomeStepError', 'Sunucu bağlantı hatası');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  }
+
+  // ── Giderler: satır satır ilerleme durumu ──
+  let giderIndex = 0;
+  let giderImportedCount = 0;
+  let giderSkippedCount = 0;
+  let lastUsedGiderCatId = '';
+
+  function renderCurrentGiderRow() {
+    const card    = document.getElementById('giderCard');
+    const actions = document.getElementById('giderStepperActions');
+    const doneMsg = document.getElementById('giderDoneMsg');
+
+    document.getElementById('giderProgress').textContent = `${giderIndex} / ${PREVIEW_GIDERLER.length}`;
+
+    if (giderIndex >= PREVIEW_GIDERLER.length) {
+      card.classList.add('d-none');
+      actions.classList.add('d-none');
+      doneMsg.classList.remove('d-none');
+      const text = PREVIEW_GIDERLER.length
+        ? `Tüm gider satırları işlendi — ${giderImportedCount} əlavə edildi${giderSkippedCount ? `, ${giderSkippedCount} keçildi/təkrar` : ''}.`
+        : 'İçe aktarılacak gider yok.';
+      doneMsg.innerHTML = `<div class="d-flex align-items-center gap-2 flex-wrap">
+        <span>${text}</span>
+        <button type="button" class="btn btn-sm btn-outline-success ms-auto" onclick="location.reload()">Sayfayı Yenile</button>
+      </div>`;
+      return;
+    }
+
+    card.classList.remove('d-none');
+    actions.classList.remove('d-none');
+    doneMsg.classList.add('d-none');
+
+    const row = PREVIEW_GIDERLER[giderIndex];
+    document.getElementById('curGiderDate').textContent   = row.date || '—';
+    document.getElementById('curGiderRef').textContent    = row.ref || '—';
+    document.getElementById('curGiderAmount').textContent = '−' + Number(row.debit).toFixed(2) + ' ₼';
+    document.getElementById('curGiderCP').textContent      = row.cp || '—';
+    document.getElementById('curGiderDesc').textContent    = row.desc || '—';
+
+    document.getElementById('curGiderCat').innerHTML = catOptions(EXPENSE_CATS);
+    if (lastUsedGiderCatId) document.getElementById('curGiderCat').value = lastUsedGiderCatId;
+
+    setFieldError('giderStepError', '');
+  }
+
+  function skipGiderRow() {
+    giderIndex++;
+    renderCurrentGiderRow();
+  }
+
+  async function saveCurrentGiderRow() {
+    setFieldError('giderStepError', '');
+    const row = PREVIEW_GIDERLER[giderIndex];
+    const catId = document.getElementById('curGiderCat').value;
+    if (!catId) { setFieldError('giderStepError', 'Kateqoriya seçin'); return; }
+
+    const btn = document.getElementById('saveGiderBtn');
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = 'Gözləyin...';
+
+    try {
+      const res = await fetch(`/api/accounts/${accountId}/statement-import-expenses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expense_category_id: parseInt(catId), rows: [row] }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setFieldError('giderStepError', data.error || 'Xəta baş verdi'); return; }
+      giderImportedCount += data.imported_expenses;
+      giderSkippedCount  += data.skipped_duplicates;
+      if (data.imported_expenses > 0) showToast('✓ Sətir əlavə edildi', 'success');
+      else showToast('⚠ Bu sətir artıq mövcuddur (dublikat) — keçildi', 'warning');
+      lastUsedGiderCatId = catId;
+      giderIndex++;
+      renderCurrentGiderRow();
+    } catch {
+      setFieldError('giderStepError', 'Sunucu bağlantı hatası');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
   }
 
   async function handleExcelImport(event) {
@@ -445,71 +811,35 @@
     document.getElementById('bulkIncomeCat').innerHTML    = catOptions(INCOME_CATS);
     document.getElementById('bulkIncomeTour').innerHTML   = tourOptions();
     document.getElementById('bulkIncomeClient').innerHTML = clientOptions();
-    document.getElementById('giderCatSelect').innerHTML   = catOptions(EXPENSE_CATS);
+    document.getElementById('gelirRowsBody').innerHTML    = buildGelirRows(data.gelirler);
 
-    document.getElementById('gelirRowsBody').innerHTML = buildGelirRows(data.gelirler);
-    document.getElementById('giderRowsBody').innerHTML = buildGiderRows(data.giderler);
+    document.getElementById('giderCatSelect').innerHTML = catOptions(EXPENSE_CATS);
+    document.getElementById('giderRowsBody').innerHTML  = buildGiderRows(data.giderler);
 
-    setImportError('income', '');
-    setImportError('expense', '');
+    gelirIndex = 0;
+    gelirImportedCount = 0;
+    gelirSkippedCount = 0;
+    lastUsedCatId = '';
+    renderCurrentGelirRow();
+    setGelirMode('all');
+    setFieldError('incomeAllError', '');
+
+    giderIndex = 0;
+    giderImportedCount = 0;
+    giderSkippedCount = 0;
+    lastUsedGiderCatId = '';
+    renderCurrentGiderRow();
+    setGiderMode('all');
+    setFieldError('expenseAllError', '');
 
     importModal.show();
   }
 
-  function setImportError(kind, msg) {
-    const el = document.getElementById(kind === 'income' ? 'incomeImportError' : 'expenseImportError');
-    if (msg) { el.textContent = '✕ ' + msg; el.classList.remove('d-none'); }
-    else      { el.classList.add('d-none'); }
-  }
-
-  async function doImportIncomes() {
-    setImportError('income', '');
-    if (!PREVIEW_GELIRLER.length) { setImportError('income', 'İçe aktarılacak gelir yok'); return; }
-
-    const rows = [];
-    for (let i = 0; i < PREVIEW_GELIRLER.length; i++) {
-      const catId = document.getElementById(`gelirCat_${i}`).value;
-      if (!catId) { setImportError('income', `${i + 1}. sətir üçün kateqoriya seçin`); return; }
-      const tourId   = document.getElementById(`gelirTour_${i}`).value;
-      const clientId = document.getElementById(`gelirClient_${i}`).value;
-      rows.push({
-        ...PREVIEW_GELIRLER[i],
-        income_category_id: parseInt(catId),
-        tour_id: tourId ? parseInt(tourId) : null,
-        client_id: clientId ? parseInt(clientId) : null,
-      });
-    }
-
-    const btn = document.getElementById('importIncomeBtn');
-    btn.disabled = true;
-    const original = btn.innerHTML;
-    btn.innerHTML = 'Gözləyin...';
-
-    try {
-      const res  = await fetch(`/api/accounts/${accountId}/statement-import-incomes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rows }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setImportError('income', data.error || 'Xəta baş verdi'); return; }
-      let msg = `✓ ${data.imported_incomes} gelir əlavə edildi`;
-      if (data.skipped_duplicates > 0) msg += ` (${data.skipped_duplicates} təkrar keçildi)`;
-      showToast(msg, 'success');
-      setTimeout(() => location.reload(), 1200);
-    } catch {
-      setImportError('income', 'Sunucu bağlantı hatası');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = original;
-    }
-  }
-
   async function doImportExpenses() {
-    setImportError('expense', '');
-    if (!PREVIEW_GIDERLER.length) { setImportError('expense', 'İçe aktarılacak gider yok'); return; }
+    setFieldError('expenseAllError', '');
+    if (!PREVIEW_GIDERLER.length) { setFieldError('expenseAllError', 'İçe aktarılacak gider yok'); return; }
     const catId = document.getElementById('giderCatSelect').value;
-    if (!catId) { setImportError('expense', 'Gider kategorisini seçin'); return; }
+    if (!catId) { setFieldError('expenseAllError', 'Gider kategorisini seçin'); return; }
 
     const rows = PREVIEW_GIDERLER.map(row => ({ ...row }));
 
@@ -525,13 +855,13 @@
         body: JSON.stringify({ expense_category_id: parseInt(catId), rows }),
       });
       const data = await res.json();
-      if (!res.ok) { setImportError('expense', data.error || 'Xəta baş verdi'); return; }
+      if (!res.ok) { setFieldError('expenseAllError', data.error || 'Xəta baş verdi'); return; }
       let msg = `✓ ${data.imported_expenses} gider əlavə edildi`;
       if (data.skipped_duplicates > 0) msg += ` (${data.skipped_duplicates} təkrar keçildi)`;
       showToast(msg, 'success');
       setTimeout(() => location.reload(), 1200);
     } catch {
-      setImportError('expense', 'Sunucu bağlantı hatası');
+      setFieldError('expenseAllError', 'Sunucu bağlantı hatası');
     } finally {
       btn.disabled = false;
       btn.innerHTML = original;
