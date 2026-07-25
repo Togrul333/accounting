@@ -37,6 +37,30 @@ type StatementRow struct {
 	Tax    string  `json:"tax"`
 }
 
+// ImportGelirRow banka ekstresindeki tek bir gelir satırı ile birlikte,
+// kullanıcının o satır için seçtiği kategori/tur/müşteriyi taşır.
+type ImportGelirRow struct {
+	StatementRow
+	IncomeCategoryID int64  `json:"income_category_id"`
+	TourID           *int64 `json:"tour_id"`
+	ClientID         *int64 `json:"client_id"`
+}
+
+type ImportGelirlerRequest struct {
+	Rows []ImportGelirRow `json:"rows"`
+}
+
+// ImportGiderRow banka ekstresindeki tek bir gider satırıdır — kategori tüm
+// satırlar için tek seferde (ImportGiderlerRequest.ExpenseCategoryID) seçilir.
+type ImportGiderRow struct {
+	StatementRow
+}
+
+type ImportGiderlerRequest struct {
+	ExpenseCategoryID int64            `json:"expense_category_id"`
+	Rows              []ImportGiderRow `json:"rows"`
+}
+
 type StatementPreview struct {
 	IBAN        string         `json:"iban"`
 	Gelirler    []StatementRow `json:"gelirler"`

@@ -108,7 +108,7 @@ func main() {
 	sheetLinkRepo := repository.NewSheetLinkRepository(db)
 	sheetLinkSvc := service.NewSheetLinkService(sheetLinkRepo)
 
-	accountHandler := handler.NewAccountHandler(accountSvc, incomeSvc, expenseSvc)
+	accountHandler := handler.NewAccountHandler(accountSvc, incomeSvc, expenseSvc, orderSvc)
 	incomeCategoryHandler := handler.NewIncomeCategoryHandler(incomeCategorySvc)
 	incomeHandler := handler.NewIncomeHandler(incomeSvc)
 	expenseCategoryHandler := handler.NewExpenseCategoryHandler(expenseCategorySvc)

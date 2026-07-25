@@ -118,7 +118,7 @@
 
 <!-- Excel Import Preview Modal -->
 <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+  <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <div>
@@ -127,34 +127,88 @@
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
       </div>
-      <div class="px-4 py-3 border-bottom d-flex align-items-end gap-3 flex-wrap">
-        <div style="min-width:200px;">
-          <label class="form-label small text-secondary text-uppercase fw-semibold">Gelir Kategorisi</label>
-          <select id="importIncomeCat" class="form-select">
-            <option value="">— seçin —</option>
-            {{range .incomeCats}}
-            <option value="{{.ID}}">{{.Name}}</option>
-            {{end}}
-          </select>
+      <div class="modal-body">
+
+        <!-- Gelirler -->
+        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+          <span class="badge rounded-pill bg-primary">&nbsp;</span>
+          <span class="small text-uppercase fw-semibold">Gelirler (Kredit)</span>
+          <span id="gelirCount" class="badge bg-primary-subtle text-primary-emphasis">0</span>
+          <span id="gelirTotal" class="ms-auto fw-bold text-primary"></span>
         </div>
-        <div style="min-width:200px;">
-          <label class="form-label small text-secondary text-uppercase fw-semibold">Gider Kategorisi</label>
-          <select id="importExpenseCat" class="form-select">
-            <option value="">— seçin —</option>
-            {{range .expenseCats}}
-            <option value="{{.ID}}">{{.Name}}</option>
-            {{end}}
-          </select>
+
+        <div class="border rounded-2 p-3 mb-3 d-flex align-items-end gap-2 flex-wrap">
+          <div>
+            <label class="form-label small text-secondary text-uppercase fw-semibold mb-1">Tümüne uygula — Kategori</label>
+            <select id="bulkIncomeCat" class="form-select form-select-sm"></select>
+          </div>
+          <div>
+            <label class="form-label small text-secondary text-uppercase fw-semibold mb-1">Tur</label>
+            <select id="bulkIncomeTour" class="form-select form-select-sm"></select>
+          </div>
+          <div>
+            <label class="form-label small text-secondary text-uppercase fw-semibold mb-1">Müşteri</label>
+            <select id="bulkIncomeClient" class="form-select form-select-sm"></select>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="applyBulkIncome()">Tümüne Uygula</button>
         </div>
-        <div class="d-flex flex-column gap-1">
-          <div id="importError" class="small text-danger d-none"></div>
-          <button id="importBtn" type="button" class="btn btn-success" onclick="doImport()">
-            <i class="ti ti-download"></i> İmport Et
+
+        <div class="table-responsive mb-2">
+          <table class="table table-sm align-middle">
+            <thead class="table-light border-light">
+              <tr>
+                <th>#</th><th>Tarih</th><th>Referans</th><th>Karşı Taraf</th><th>Açıklama</th>
+                <th class="text-end">Tutar</th>
+                <th style="min-width:170px;">Kategori</th>
+                <th style="min-width:210px;">Tur</th>
+                <th style="min-width:170px;">Müşteri</th>
+              </tr>
+            </thead>
+            <tbody id="gelirRowsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 mb-5">
+          <div id="incomeImportError" class="small text-danger d-none"></div>
+          <button id="importIncomeBtn" type="button" class="btn btn-primary ms-auto" onclick="doImportIncomes()">
+            <i class="ti ti-download"></i> Gelirleri İçe Aktar
           </button>
         </div>
-      </div>
-      <div class="modal-body">
-        <div id="importTableWrapper"></div>
+
+        <!-- Giderler -->
+        <div class="border-top pt-4">
+          <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+            <span class="badge rounded-pill bg-danger">&nbsp;</span>
+            <span class="small text-uppercase fw-semibold">Giderler (Debit)</span>
+            <span id="giderCount" class="badge bg-danger-subtle text-danger-emphasis">0</span>
+            <span id="giderTotal" class="ms-auto fw-bold text-danger"></span>
+          </div>
+
+          <div class="mb-3" style="max-width:280px;">
+            <label class="form-label small text-secondary text-uppercase fw-semibold">Gider Kategorisi (tümü için)</label>
+            <select id="giderCatSelect" class="form-select"></select>
+          </div>
+
+          <div class="table-responsive mb-2">
+            <table class="table table-sm align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>#</th><th>Tarih</th><th>Referans</th><th>Karşı Taraf</th><th>Açıklama</th>
+                  <th class="text-end">Tutar</th>
+                </tr>
+              </thead>
+              <tbody id="giderRowsBody"></tbody>
+            </table>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <div id="expenseImportError" class="small text-danger d-none"></div>
+            <button id="importExpenseBtn" type="button" class="btn btn-danger ms-auto" onclick="doImportExpenses()">
+              <i class="ti ti-download"></i> Giderleri İçe Aktar
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -298,23 +352,72 @@
   setExpensePage(1);
 
   // ── Excel içe aktarma ──
-  let _lastFile = null;
+  const INCOME_CATS  = {{json .incomeCats}};
+  const EXPENSE_CATS = {{json .expenseCats}};
+  const TOURS        = {{json .tours}};
+  const CLIENTS      = {{json .clients}};
 
-  const COL_DEFS = [
-    { key: 'date',   az: 'Əməliyyatın tarixi',        tr: 'Tarih' },
-    { key: 'ref',    az: 'Əməliyyatın referensi',     tr: 'Referans' },
-    { key: 'cp',     az: 'Əks hesab üzrə məlumatlar', tr: 'Karşı Taraf' },
-    { key: 'debit',  az: 'Debit məbləğ',              tr: 'Gider Tutarı' },
-    { key: 'credit', az: 'Kredit məbləğ',             tr: 'Gelir Tutarı' },
-    { key: 'desc',   az: 'Ödənişin təyinatı',         tr: 'Açıklama' },
-    { key: 'tax',    az: 'Qarşı tərəfin VÖEN-i',      tr: 'Vergi No' },
-  ];
+  let PREVIEW_GELIRLER = [];
+  let PREVIEW_GIDERLER = [];
+
+  function catOptions(cats) {
+    return '<option value="">—</option>' + (cats||[]).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+  }
+  function tourOptions() {
+    return '<option value="">—</option>' + TOURS.map(t => {
+      const room = t.room_code ? ` — ${escHtml(t.room_code)}` : '';
+      return `<option value="${t.id}">${escHtml(t.code)}${room}</option>`;
+    }).join('');
+  }
+  function clientOptions() {
+    return '<option value="">—</option>' + CLIENTS.map(c => `<option value="${c.id}">${escHtml(c.first_name)} ${escHtml(c.last_name)}</option>`).join('');
+  }
+
+  function buildGelirRows(rows) {
+    const catOpts = catOptions(INCOME_CATS);
+    const tourOpts = tourOptions();
+    const clientOpts = clientOptions();
+    if (!rows.length) return '<tr><td colspan="9" class="text-center text-secondary small py-3">Məlumat yoxdur</td></tr>';
+    return rows.map((row, i) => `<tr>
+      <td class="text-secondary small">${i + 1}</td>
+      <td class="text-nowrap small">${escHtml(row.date)}</td>
+      <td class="font-monospace small text-secondary">${escHtml(row.ref)}</td>
+      <td class="small" style="max-width:180px;word-break:break-word;">${escHtml(row.cp)}</td>
+      <td class="small text-secondary" style="max-width:220px;word-break:break-word;white-space:pre-line;">${escHtml(row.desc)}</td>
+      <td class="text-end fw-semibold text-primary text-nowrap">+${row.credit.toFixed(2)}</td>
+      <td><select id="gelirCat_${i}" class="form-select form-select-sm">${catOpts}</select></td>
+      <td><select id="gelirTour_${i}" class="form-select form-select-sm">${tourOpts}</select></td>
+      <td><select id="gelirClient_${i}" class="form-select form-select-sm">${clientOpts}</select></td>
+    </tr>`).join('');
+  }
+
+  function buildGiderRows(rows) {
+    if (!rows.length) return '<tr><td colspan="6" class="text-center text-secondary small py-3">Məlumat yoxdur</td></tr>';
+    return rows.map((row, i) => `<tr>
+      <td class="text-secondary small">${i + 1}</td>
+      <td class="text-nowrap small">${escHtml(row.date)}</td>
+      <td class="font-monospace small text-secondary">${escHtml(row.ref)}</td>
+      <td class="small" style="max-width:220px;word-break:break-word;">${escHtml(row.cp)}</td>
+      <td class="small text-secondary" style="max-width:280px;word-break:break-word;white-space:pre-line;">${escHtml(row.desc)}</td>
+      <td class="text-end fw-semibold text-danger text-nowrap">−${row.debit.toFixed(2)}</td>
+    </tr>`).join('');
+  }
+
+  function applyBulkIncome() {
+    const cat    = document.getElementById('bulkIncomeCat').value;
+    const tour   = document.getElementById('bulkIncomeTour').value;
+    const client = document.getElementById('bulkIncomeClient').value;
+    PREVIEW_GELIRLER.forEach((_, i) => {
+      if (cat)    document.getElementById(`gelirCat_${i}`).value = cat;
+      if (tour)   document.getElementById(`gelirTour_${i}`).value = tour;
+      if (client) document.getElementById(`gelirClient_${i}`).value = client;
+    });
+  }
 
   async function handleExcelImport(event) {
     const file = event.target.files[0];
     event.target.value = '';
     if (!file) return;
-    _lastFile = file;
 
     const form = new FormData();
     form.append('file', file);
@@ -329,100 +432,114 @@
       return;
     }
 
+    PREVIEW_GELIRLER = data.gelirler;
+    PREVIEW_GIDERLER = data.giderler;
+
     document.getElementById('importMeta').textContent =
       `IBAN: ${data.iban} · ${data.gelirler.length} gelir · ${data.giderler.length} gider`;
+    document.getElementById('gelirCount').textContent = data.gelirler.length;
+    document.getElementById('gelirTotal').textContent = data.total_credit.toFixed(2) + ' ₼';
+    document.getElementById('giderCount').textContent = data.giderler.length;
+    document.getElementById('giderTotal').textContent = data.total_debit.toFixed(2) + ' ₼';
 
-    function buildTable(rows) {
-      if (!rows.length) return '<p class="text-secondary small py-3">Məlumat yoxdur</p>';
-      let t = '<div class="table-responsive"><table class="table table-sm mb-0"><thead class="table-light"><tr><th>#</th>';
-      COL_DEFS.forEach(c => {
-        t += `<th><span class="d-block">${c.az}</span><span class="small text-secondary fw-normal">(${c.tr})</span></th>`;
-      });
-      t += '</tr></thead><tbody>';
-      rows.forEach((row, i) => {
-        t += `<tr><td class="text-secondary small">${i + 1}</td>`;
-        COL_DEFS.forEach(c => {
-          let cell = '';
-          if      (c.key === 'date')   cell = `<span class="text-nowrap">${escHtml(row.date)}</span>`;
-          else if (c.key === 'ref')    cell = `<span class="font-monospace small text-secondary">${escHtml(row.ref)}</span>`;
-          else if (c.key === 'cp')     cell = escHtml(row.cp);
-          else if (c.key === 'debit')  cell = row.debit  > 0 ? `<span class="text-danger fw-semibold">−${row.debit.toFixed(2)}</span>`  : `<span class="text-secondary">—</span>`;
-          else if (c.key === 'credit') cell = row.credit > 0 ? `<span class="text-primary fw-semibold">+${row.credit.toFixed(2)}</span>` : `<span class="text-secondary">—</span>`;
-          else if (c.key === 'desc')   cell = `<span class="text-secondary" style="white-space:pre-line;">${escHtml(row.desc)}</span>`;
-          else if (c.key === 'tax')    cell = `<span class="font-monospace small text-secondary">${escHtml(row.tax)}</span>`;
-          t += `<td style="max-width:260px;word-break:break-word;">${cell}</td>`;
-        });
-        t += '</tr>';
-      });
-      t += '</tbody></table></div>';
-      return t;
-    }
+    document.getElementById('bulkIncomeCat').innerHTML    = catOptions(INCOME_CATS);
+    document.getElementById('bulkIncomeTour').innerHTML   = tourOptions();
+    document.getElementById('bulkIncomeClient').innerHTML = clientOptions();
+    document.getElementById('giderCatSelect').innerHTML   = catOptions(EXPENSE_CATS);
 
-    function sectionHeader(label, count, total, badgeClass, amountClass) {
-      return `<div class="d-flex align-items-center gap-2 mb-3">
-        <span class="badge rounded-pill ${badgeClass}">&nbsp;</span>
-        <span class="small text-uppercase fw-semibold">${label}</span>
-        <span class="badge ${badgeClass.replace('bg-','bg-').includes('primary') ? 'bg-primary-subtle text-primary-emphasis' : 'bg-danger-subtle text-danger-emphasis'}">${count}</span>
-        <span class="ms-auto fw-bold ${amountClass}">${total.toFixed(2)} ₼</span>
-      </div>`;
-    }
+    document.getElementById('gelirRowsBody').innerHTML = buildGelirRows(data.gelirler);
+    document.getElementById('giderRowsBody').innerHTML = buildGiderRows(data.giderler);
 
-    let html = '<div class="mb-4">';
-    html += sectionHeader('Gelirler (Kredit)', data.gelirler.length, data.total_credit, 'bg-primary', 'text-primary');
-    html += buildTable(data.gelirler);
-    html += '</div>';
-    html += '<div class="border-top pt-4">';
-    html += sectionHeader('Giderler (Debit)', data.giderler.length, data.total_debit, 'bg-danger', 'text-danger');
-    html += buildTable(data.giderler);
-    html += '</div>';
+    setImportError('income', '');
+    setImportError('expense', '');
 
-    document.getElementById('importTableWrapper').innerHTML = html;
     importModal.show();
   }
 
-  function setImportError(msg) {
-    const el = document.getElementById('importError');
+  function setImportError(kind, msg) {
+    const el = document.getElementById(kind === 'income' ? 'incomeImportError' : 'expenseImportError');
     if (msg) { el.textContent = '✕ ' + msg; el.classList.remove('d-none'); }
     else      { el.classList.add('d-none'); }
   }
 
-  async function doImport() {
-    setImportError('');
-    const incomeCatId  = document.getElementById('importIncomeCat').value;
-    const expenseCatId = document.getElementById('importExpenseCat').value;
-    if (!incomeCatId)  { setImportError('Gelir kategorisini seçin'); return; }
-    if (!expenseCatId) { setImportError('Gider kategorisini seçin'); return; }
-    if (!_lastFile)    { setImportError('Fayl tapılmadı, yenidən seçin'); return; }
+  async function doImportIncomes() {
+    setImportError('income', '');
+    if (!PREVIEW_GELIRLER.length) { setImportError('income', 'İçe aktarılacak gelir yok'); return; }
 
-    const btn = document.getElementById('importBtn');
+    const rows = [];
+    for (let i = 0; i < PREVIEW_GELIRLER.length; i++) {
+      const catId = document.getElementById(`gelirCat_${i}`).value;
+      if (!catId) { setImportError('income', `${i + 1}. sətir üçün kateqoriya seçin`); return; }
+      const tourId   = document.getElementById(`gelirTour_${i}`).value;
+      const clientId = document.getElementById(`gelirClient_${i}`).value;
+      rows.push({
+        ...PREVIEW_GELIRLER[i],
+        income_category_id: parseInt(catId),
+        tour_id: tourId ? parseInt(tourId) : null,
+        client_id: clientId ? parseInt(clientId) : null,
+      });
+    }
+
+    const btn = document.getElementById('importIncomeBtn');
     btn.disabled = true;
-    const originalText = btn.innerHTML;
+    const original = btn.innerHTML;
     btn.innerHTML = 'Gözləyin...';
 
-    const form = new FormData();
-    form.append('file', _lastFile);
-    form.append('income_category_id',  incomeCatId);
-    form.append('expense_category_id', expenseCatId);
-
     try {
-      const res  = await fetch(`/api/accounts/${accountId}/statement-import`, { method: 'POST', body: form });
+      const res  = await fetch(`/api/accounts/${accountId}/statement-import-incomes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows }),
+      });
       const data = await res.json();
-      if (!res.ok) { setImportError(data.error || 'Xəta baş verdi'); return; }
-      importModal.hide();
-      let msg = `✓ ${data.imported_incomes} gelir, ${data.imported_expenses} gider əlavə edildi`;
-      if (data.skipped_duplicates > 0) msg += ` (${data.skipped_duplicates} təkrar işlem keçildi)`;
+      if (!res.ok) { setImportError('income', data.error || 'Xəta baş verdi'); return; }
+      let msg = `✓ ${data.imported_incomes} gelir əlavə edildi`;
+      if (data.skipped_duplicates > 0) msg += ` (${data.skipped_duplicates} təkrar keçildi)`;
       showToast(msg, 'success');
       setTimeout(() => location.reload(), 1200);
-    } catch (err) {
-      setImportError('Sunucu bağlantı hatası');
+    } catch {
+      setImportError('income', 'Sunucu bağlantı hatası');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = originalText;
+      btn.innerHTML = original;
+    }
+  }
+
+  async function doImportExpenses() {
+    setImportError('expense', '');
+    if (!PREVIEW_GIDERLER.length) { setImportError('expense', 'İçe aktarılacak gider yok'); return; }
+    const catId = document.getElementById('giderCatSelect').value;
+    if (!catId) { setImportError('expense', 'Gider kategorisini seçin'); return; }
+
+    const rows = PREVIEW_GIDERLER.map(row => ({ ...row }));
+
+    const btn = document.getElementById('importExpenseBtn');
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = 'Gözləyin...';
+
+    try {
+      const res  = await fetch(`/api/accounts/${accountId}/statement-import-expenses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expense_category_id: parseInt(catId), rows }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setImportError('expense', data.error || 'Xəta baş verdi'); return; }
+      let msg = `✓ ${data.imported_expenses} gider əlavə edildi`;
+      if (data.skipped_duplicates > 0) msg += ` (${data.skipped_duplicates} təkrar keçildi)`;
+      showToast(msg, 'success');
+      setTimeout(() => location.reload(), 1200);
+    } catch {
+      setImportError('expense', 'Sunucu bağlantı hatası');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
     }
   }
 
   function escHtml(s) {
-    return String(s)
+    return String(s||'')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')

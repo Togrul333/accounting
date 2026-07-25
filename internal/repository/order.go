@@ -11,6 +11,7 @@ import (
 type OrderRepository interface {
 	GetAll(ctx context.Context) ([]model.Order, error)
 	GetByID(ctx context.Context, id int64) (*model.Order, error)
+	FindByClientAndTour(ctx context.Context, clientID, tourID int64) (*model.Order, error)
 	Create(ctx context.Context, clientID, tourID int64) (*model.Order, error)
 	Update(ctx context.Context, id int64, req model.UpdateOrderRequest) (*model.Order, error)
 	Delete(ctx context.Context, id int64) error
@@ -76,6 +77,20 @@ func (r *orderRepo) GetAll(ctx context.Context) ([]model.Order, error) {
 func (r *orderRepo) GetByID(ctx context.Context, id int64) (*model.Order, error) {
 	var order model.Order
 	result := r.db.WithContext(ctx).Raw(orderBaseQuery+` WHERE o.id = ?`, id).Scan(&order)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &order, nil
+}
+
+// FindByClientAndTour aynı müşteri + tur için zaten oluşturulmuş siparişi bulur —
+// banka ekstresi içe aktarımında her gelir satırı için yeni sipariş açmamak amacıyla kullanılır.
+func (r *orderRepo) FindByClientAndTour(ctx context.Context, clientID, tourID int64) (*model.Order, error) {
+	var order model.Order
+	result := r.db.WithContext(ctx).Raw(orderBaseQuery+` WHERE o.client_id = ? AND o.tour_id = ?`, clientID, tourID).Scan(&order)
 	if result.Error != nil {
 		return nil, result.Error
 	}

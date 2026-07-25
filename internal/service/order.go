@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"errors"
+
+	"gorm.io/gorm"
 
 	"accounting/internal/model"
 	"accounting/internal/repository"
@@ -53,6 +56,18 @@ func (s *OrderService) GetByID(ctx context.Context, id int64) (*model.Order, err
 	}
 	order.ComputeNet()
 	return order, nil
+}
+
+// FindOrCreateByClientAndTour var olan siparişi döner, yoksa yeni bir tane oluşturur.
+func (s *OrderService) FindOrCreateByClientAndTour(ctx context.Context, clientID, tourID int64) (*model.Order, error) {
+	order, err := s.repo.FindByClientAndTour(ctx, clientID, tourID)
+	if err == nil {
+		return order, nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	return s.repo.Create(ctx, clientID, tourID)
 }
 
 func (s *OrderService) Create(ctx context.Context, req model.CreateOrderRequest) (*model.Order, error) {

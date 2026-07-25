@@ -292,12 +292,22 @@ func (h *PageHandler) AccountEdit(c *gin.Context) {
 	if err != nil {
 		expenseCats = nil
 	}
+	tours, err := h.tourSvc.GetAll(ctx)
+	if err != nil {
+		tours = []model.Tour{}
+	}
+	clients, err := h.clientSvc.GetAll(ctx)
+	if err != nil {
+		clients = []model.Client{}
+	}
 	c.HTML(http.StatusOK, "account_edit.html", gin.H{
 		"account":     account,
 		"incomes":     incomes,
 		"expenses":    expenses,
 		"incomeCats":  incomeCats,
 		"expenseCats": expenseCats,
+		"tours":       tours,
+		"clients":     clients,
 		"active":      "accounts",
 		"user":        user,
 	})

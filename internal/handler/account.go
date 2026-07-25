@@ -23,10 +23,11 @@ type AccountHandler struct {
 	svc        *service.AccountService
 	incomeSvc  *service.IncomeService
 	expenseSvc *service.ExpenseService
+	orderSvc   *service.OrderService
 }
 
-func NewAccountHandler(svc *service.AccountService, incomeSvc *service.IncomeService, expenseSvc *service.ExpenseService) *AccountHandler {
-	return &AccountHandler{svc: svc, incomeSvc: incomeSvc, expenseSvc: expenseSvc}
+func NewAccountHandler(svc *service.AccountService, incomeSvc *service.IncomeService, expenseSvc *service.ExpenseService, orderSvc *service.OrderService) *AccountHandler {
+	return &AccountHandler{svc: svc, incomeSvc: incomeSvc, expenseSvc: expenseSvc, orderSvc: orderSvc}
 }
 
 func (h *AccountHandler) GetAll(c *gin.Context) {
@@ -280,126 +281,153 @@ func parseStatementDate(s string) (time.Time, error) {
 	return time.Parse("02.01.2006", s)
 }
 
-func (h *AccountHandler) ImportStatement(c *gin.Context) {
+// ImportIncomes bir banka ekstresi önizlemesindeki gelir satırlarını, her satır için
+// ayrı seçilmiş kategori/tur/müşteri ile birlikte kaydeder. Tur+müşteri seçilmişse
+// ilgili sipariş bulunur veya oluşturulur ve gelir ona bağlanır.
+func (h *AccountHandler) ImportIncomes(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	account, err := h.svc.GetByID(c.Request.Context(), id)
+
+	var req model.ImportGelirlerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	existingRefs, err := h.incomeSvc.GetBankRefsByAccountID(c.Request.Context(), id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "account not found"})
-			return
-		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	incomeCatID, err := strconv.ParseInt(c.PostForm("income_category_id"), 10, 64)
-	if err != nil || incomeCatID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "income_category_id is required"})
+	skipped := 0
+	seen := map[string]bool{}
+	orderCache := map[string]int64{}
+	var reqs []model.CreateIncomeRequest
+	for _, row := range req.Rows {
+		if row.IncomeCategoryID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "income_category_id is required for all rows"})
+			return
+		}
+		if row.Ref != "" && (existingRefs[row.Ref] || seen[row.Ref]) {
+			skipped++
+			continue
+		}
+		if row.Ref != "" {
+			seen[row.Ref] = true
+		}
+
+		date, err := parseStatementDate(row.Date)
+		if err != nil {
+			skipped++
+			continue
+		}
+
+		var orderID *int64
+		if row.TourID != nil && row.ClientID != nil {
+			cacheKey := fmt.Sprintf("%d:%d", *row.ClientID, *row.TourID)
+			if cachedID, ok := orderCache[cacheKey]; ok {
+				orderID = &cachedID
+			} else {
+				order, err := h.orderSvc.FindOrCreateByClientAndTour(c.Request.Context(), *row.ClientID, *row.TourID)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "order: " + err.Error()})
+					return
+				}
+				orderCache[cacheKey] = order.ID
+				orderID = &order.ID
+			}
+		}
+
+		name := row.Desc
+		if name == "" {
+			name = row.Ref
+		}
+		reqs = append(reqs, model.CreateIncomeRequest{
+			Name:              name,
+			Amount:            row.Credit,
+			Date:              date.Format("2006-01-02"),
+			IncomeCategoryID:  row.IncomeCategoryID,
+			AccountID:         id,
+			TourID:            row.TourID,
+			OrderID:           orderID,
+			BankRef:           row.Ref,
+			Counterparty:      row.CP,
+			CounterpartyTaxID: row.Tax,
+		})
+	}
+
+	imported := 0
+	if len(reqs) > 0 {
+		created, err := h.incomeSvc.BulkCreate(c.Request.Context(), reqs)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		imported = len(created)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"imported_incomes":   imported,
+		"skipped_duplicates": skipped,
+	})
+}
+
+// ImportExpenses bir banka ekstresi önizlemesindeki gider satırlarını, tüm satırlar
+// için tek bir kategori seçimiyle kaydeder.
+func (h *AccountHandler) ImportExpenses(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	expenseCatID, err := strconv.ParseInt(c.PostForm("expense_category_id"), 10, 64)
-	if err != nil || expenseCatID == 0 {
+
+	var req model.ImportGiderlerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+	if req.ExpenseCategoryID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "expense_category_id is required"})
 		return
 	}
 
-	fh, err := c.FormFile("file")
+	existingRefs, err := h.expenseSvc.GetBankRefsByAccountID(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
-		return
-	}
-	f, err := fh.Open()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot open file"})
-		return
-	}
-	defer f.Close()
-
-	xl, err := excelize.OpenReader(f)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid Excel file"})
-		return
-	}
-	defer xl.Close()
-
-	preview, err := parseStatement(xl, strings.TrimSpace(account.AccountNumber))
-	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// DD.MM.YYYY → YYYY-MM-DD
-	convertDate := func(s string) string {
-		t, err := parseStatementDate(s)
+	skipped := 0
+	seen := map[string]bool{}
+	var reqs []model.CreateExpenseRequest
+	for _, row := range req.Rows {
+		if row.Ref != "" && (existingRefs[row.Ref] || seen[row.Ref]) {
+			skipped++
+			continue
+		}
+		if row.Ref != "" {
+			seen[row.Ref] = true
+		}
+
+		date, err := parseStatementDate(row.Date)
 		if err != nil {
-			return ""
-		}
-		return t.Format("2006-01-02")
-	}
-
-	// Aynı banka referansına sahip işlemin tekrar eklenmesini önlemek için
-	// hesaba ait mevcut bank_ref'ler önceden yükleniyor.
-	existingIncomeRefs, err := h.incomeSvc.GetBankRefsByAccountID(c.Request.Context(), id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "incomes: " + err.Error()})
-		return
-	}
-	existingExpenseRefs, err := h.expenseSvc.GetBankRefsByAccountID(c.Request.Context(), id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "expenses: " + err.Error()})
-		return
-	}
-
-	skippedDuplicates := 0
-	seenIncomeRefs := map[string]bool{}
-	var incomeReqs []model.CreateIncomeRequest
-	for _, row := range preview.Gelirler {
-		if row.Ref != "" && (existingIncomeRefs[row.Ref] || seenIncomeRefs[row.Ref]) {
-			skippedDuplicates++
+			skipped++
 			continue
 		}
-		if row.Ref != "" {
-			seenIncomeRefs[row.Ref] = true
-		}
+
 		name := row.Desc
 		if name == "" {
 			name = row.Ref
 		}
-		incomeReqs = append(incomeReqs, model.CreateIncomeRequest{
-			Name:              name,
-			Amount:            row.Credit,
-			Date:              convertDate(row.Date),
-			IncomeCategoryID:  incomeCatID,
-			AccountID:         id,
-			BankRef:           row.Ref,
-			Counterparty:      row.CP,
-			CounterpartyTaxID: row.Tax,
-		})
-	}
-
-	seenExpenseRefs := map[string]bool{}
-	var expenseReqs []model.CreateExpenseRequest
-	for _, row := range preview.Giderler {
-		if row.Ref != "" && (existingExpenseRefs[row.Ref] || seenExpenseRefs[row.Ref]) {
-			skippedDuplicates++
-			continue
-		}
-		if row.Ref != "" {
-			seenExpenseRefs[row.Ref] = true
-		}
-		name := row.Desc
-		if name == "" {
-			name = row.Ref
-		}
-		expenseReqs = append(expenseReqs, model.CreateExpenseRequest{
+		reqs = append(reqs, model.CreateExpenseRequest{
 			Name:              name,
 			Amount:            row.Debit,
-			Date:              convertDate(row.Date),
-			ExpenseCategoryID: expenseCatID,
+			Date:              date.Format("2006-01-02"),
+			ExpenseCategoryID: req.ExpenseCategoryID,
 			AccountID:         id,
 			BankRef:           row.Ref,
 			Counterparty:      row.CP,
@@ -407,29 +435,18 @@ func (h *AccountHandler) ImportStatement(c *gin.Context) {
 		})
 	}
 
-	importedIncomes := 0
-	if len(incomeReqs) > 0 {
-		created, err := h.incomeSvc.BulkCreate(c.Request.Context(), incomeReqs)
+	imported := 0
+	if len(reqs) > 0 {
+		created, err := h.expenseSvc.BulkCreate(c.Request.Context(), reqs)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "incomes: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		importedIncomes = len(created)
-	}
-
-	importedExpenses := 0
-	if len(expenseReqs) > 0 {
-		created, err := h.expenseSvc.BulkCreate(c.Request.Context(), expenseReqs)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "expenses: " + err.Error()})
-			return
-		}
-		importedExpenses = len(created)
+		imported = len(created)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"imported_incomes":   importedIncomes,
-		"imported_expenses":  importedExpenses,
-		"skipped_duplicates": skippedDuplicates,
+		"imported_expenses":  imported,
+		"skipped_duplicates": skipped,
 	})
 }
