@@ -542,7 +542,7 @@
 
       let badge, actionHtml = '';
       if (!p.tour_match) {
-        badge = `<span title="Əvvəlcə Turlar-ı import edin" class="badge bg-secondary-subtle text-secondary-emphasis">Tur tapılmadı</span>`;
+        badge = `<span title="Əvvəlcə Turlar-ı import edin" class="badge bg-secondary-subtle text-secondary-emphasis">Tur tapılmadı (${p.tour_code || '—'} / ${p.room_code || '—'} / ${p.category_name || '—'})</span>`;
       } else if (p.has_order) {
         badge = `<span class="badge bg-primary-subtle text-primary-emphasis">Sifariş var</span>`;
       } else {
@@ -574,7 +574,7 @@
     const p = passengerCandidates[idx];
     const who = `${p.first_name} ${p.last_name}`;
 
-    if (!p.tour_match) return { status: 'skip', msg: `${who} — tur tapılmadı, ötürüldü` };
+    if (!p.tour_match) return { status: 'skip', msg: `${who} — tur tapılmadı (${p.tour_code || '—'} / ${p.room_code || '—'} / ${p.category_name || '—'}), ötürüldü` };
     if (p.has_order) return { status: 'skip', msg: `${who} — artıq sifariş var` };
 
     let clientId = p.client_match ? p.client_match.id : null;

@@ -76,8 +76,10 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 		return
 	}
 	tourByKey := make(map[string]int64, len(tours))
+	tourCodeByID := make(map[int64]string, len(tours))
 	for _, t := range tours {
 		tourByKey[tourKey(t.Code, t.RoomCode, t.TourCategoryName)] = t.ID
+		tourCodeByID[t.ID] = t.Code
 	}
 
 	orders, err := h.orderSvc.GetAll(ctx)
@@ -87,7 +89,9 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 	}
 	orderPairs := make(map[string]bool, len(orders))
 	for _, o := range orders {
-		orderPairs[orderKey(o.ClientID, o.TourID)] = true
+		if code, ok := tourCodeByID[o.TourID]; ok {
+			orderPairs[orderKey(o.ClientID, code)] = true
+		}
 	}
 
 	candidates := make([]passengerCandidate, 0)
@@ -120,9 +124,10 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 		if tourID, ok := tourByKey[tourKey(cand.TourCode, cand.RoomCode, cand.CategoryName)]; ok {
 			id := tourID
 			cand.TourMatch = &id
-			if cand.ClientMatch != nil {
-				cand.HasOrder = orderPairs[orderKey(cand.ClientMatch.ID, tourID)]
-			}
+		}
+
+		if cand.ClientMatch != nil {
+			cand.HasOrder = orderPairs[orderKey(cand.ClientMatch.ID, cand.TourCode)]
 		}
 
 		candidates = append(candidates, cand)
@@ -189,8 +194,8 @@ func tourKey(code, roomCode, categoryName string) string {
 	return strings.ToLower(strings.TrimSpace(code)) + "|" + strings.ToLower(strings.TrimSpace(roomCode)) + "|" + strings.ToLower(strings.TrimSpace(categoryName))
 }
 
-func orderKey(clientID, tourID int64) string {
-	return strconv.FormatInt(clientID, 10) + "|" + strconv.FormatInt(tourID, 10)
+func orderKey(clientID int64, tourCode string) string {
+	return strconv.FormatInt(clientID, 10) + "|" + strings.ToLower(strings.TrimSpace(tourCode))
 }
 
 // parseBirthDate doğum tarixi mətnindən (müxtəlif formatlarda) ISO tarix (yyyy-mm-dd) və il çıxarır.
@@ -200,7 +205,7 @@ func parseBirthDate(s string) (string, int) {
 	if s == "" {
 		return "", 0
 	}
-	for _, layout := range []string{"2006-01-02", "02.01.2006", "2006-1-2", "02/01/2006", "2.1.2006"} {
+	for _, layout := range []string{time.RFC3339, time.RFC3339Nano, "2006-01-02", "02.01.2006", "2006-1-2", "02/01/2006", "2.1.2006"} {
 		if t, err := time.Parse(layout, s); err == nil {
 			return t.Format("2006-01-02"), t.Year()
 		}

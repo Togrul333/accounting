@@ -53,6 +53,7 @@
               <thead class="table-light border-light">
                 <tr>
                   <th>#</th>
+                  <th>Kod</th>
                   <th class="text-end">Fiyat</th>
                   <th class="text-end">Yatak Sayısı</th>
                   <th>Aksiyon</th>
@@ -62,6 +63,7 @@
                 {{range .rooms}}
                 <tr>
                   <td class="text-secondary">{{.ID}}</td>
+                  <td class="fw-semibold">{{.Code}}</td>
                   <td class="text-end fw-semibold text-primary">{{printf "%.2f" .Price}} ₺</td>
                   <td class="text-end fw-semibold">{{.BedsCount}}</td>
                   <td>
@@ -105,6 +107,10 @@
       <form id="roomForm" onsubmit="saveItem(event)">
         <div class="modal-body">
           <div class="mb-3">
+            <label class="form-label">Kod</label>
+            <input id="fCode" type="text" placeholder="QDR, TRP, DBL..." class="form-control">
+          </div>
+          <div class="mb-3">
             <label class="form-label">Fiyat (₺) <span class="text-danger">*</span></label>
             <input id="fPrice" type="number" step="0.01" min="0" required placeholder="0.00" class="form-control">
           </div>
@@ -143,6 +149,7 @@
   function openEdit(room) {
     editingId = room.id;
     document.getElementById('modalTitle').textContent = 'Odayı Düzenle';
+    document.getElementById('fCode').value = room.code || '';
     document.getElementById('fPrice').value = room.price;
     document.getElementById('fBeds').value = room.beds_count;
     roomModal.show();
@@ -151,6 +158,7 @@
   async function saveItem(e) {
     e.preventDefault();
     const payload = {
+      code:       document.getElementById('fCode').value.trim(),
       price:      parseFloat(document.getElementById('fPrice').value),
       beds_count: parseInt(document.getElementById('fBeds').value),
     };
