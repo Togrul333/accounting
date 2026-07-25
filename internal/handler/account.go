@@ -137,6 +137,24 @@ func (h *AccountHandler) ParseStatement(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Hansı sətirlərin artıq bu hesaba əlavə edildiyini işarələyirik ki, önizləmədə
+	// istifadəçiyə göstərək (referansa görə).
+	if existingIncomeRefs, err := h.incomeSvc.GetBankRefsByAccountID(c.Request.Context(), id); err == nil {
+		for i := range preview.Gelirler {
+			if preview.Gelirler[i].Ref != "" && existingIncomeRefs[preview.Gelirler[i].Ref] {
+				preview.Gelirler[i].AlreadyImported = true
+			}
+		}
+	}
+	if existingExpenseRefs, err := h.expenseSvc.GetBankRefsByAccountID(c.Request.Context(), id); err == nil {
+		for i := range preview.Giderler {
+			if preview.Giderler[i].Ref != "" && existingExpenseRefs[preview.Giderler[i].Ref] {
+				preview.Giderler[i].AlreadyImported = true
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, preview)
 }
 

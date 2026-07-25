@@ -159,7 +159,10 @@
                 </div>
                 <div class="col-md-3">
                   <div class="small text-secondary text-uppercase fw-semibold">Referans</div>
-                  <div id="curRef" class="font-monospace small"></div>
+                  <div>
+                    <span id="curRef" class="font-monospace small"></span>
+                    <span id="curRefBadge"></span>
+                  </div>
                 </div>
                 <div class="col-md-3">
                   <div class="small text-secondary text-uppercase fw-semibold">Tutar</div>
@@ -272,7 +275,10 @@
                   </div>
                   <div class="col-md-3">
                     <div class="small text-secondary text-uppercase fw-semibold">Referans</div>
-                    <div id="curGiderRef" class="font-monospace small"></div>
+                    <div>
+                      <span id="curGiderRef" class="font-monospace small"></span>
+                      <span id="curGiderRefBadge"></span>
+                    </div>
                   </div>
                   <div class="col-md-3">
                     <div class="small text-secondary text-uppercase fw-semibold">Tutar</div>
@@ -483,6 +489,15 @@
 
   let PREVIEW_GELIRLER = [];
   let PREVIEW_GIDERLER = [];
+  let importedGelirRefs = new Set();
+  let importedGiderRefs = new Set();
+
+  function savedBadge(ref, set) {
+    if (ref && set.has(ref)) {
+      return '<span class="badge bg-secondary-subtle text-secondary-emphasis">Artıq mövcuddur</span>';
+    }
+    return '<span class="badge bg-light text-secondary border">Tapılmadı</span>';
+  }
 
   function catOptions(cats) {
     return '<option value="">—</option>' + (cats||[]).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
@@ -510,6 +525,7 @@
     document.getElementById('gelirModeStepBtn').classList.toggle('btn-outline-primary', mode !== 'step');
     document.getElementById('gelirModeAllBtn').classList.toggle('btn-primary', mode === 'all');
     document.getElementById('gelirModeAllBtn').classList.toggle('btn-outline-primary', mode !== 'all');
+    if (mode === 'all') document.getElementById('gelirRowsBody').innerHTML = buildGelirRows(PREVIEW_GELIRLER);
   }
 
   function setGiderMode(mode) {
@@ -519,6 +535,7 @@
     document.getElementById('giderModeStepBtn').classList.toggle('btn-outline-danger', mode !== 'step');
     document.getElementById('giderModeAllBtn').classList.toggle('btn-danger', mode === 'all');
     document.getElementById('giderModeAllBtn').classList.toggle('btn-outline-danger', mode !== 'all');
+    if (mode === 'all') document.getElementById('giderRowsBody').innerHTML = buildGiderRows(PREVIEW_GIDERLER);
   }
 
   function buildGelirRows(rows) {
@@ -529,7 +546,7 @@
     return rows.map((row, i) => `<tr>
       <td class="text-secondary small">${i + 1}</td>
       <td class="text-nowrap small">${escHtml(row.date)}</td>
-      <td class="font-monospace small text-secondary">${escHtml(row.ref)}</td>
+      <td class="font-monospace small text-secondary">${escHtml(row.ref)} ${savedBadge(row.ref, importedGelirRefs)}</td>
       <td class="small" style="max-width:180px;word-break:break-word;">${escHtml(row.cp)}</td>
       <td class="small text-secondary" style="max-width:220px;word-break:break-word;white-space:pre-line;">${escHtml(row.desc)}</td>
       <td class="text-end fw-semibold text-primary text-nowrap">+${row.credit.toFixed(2)}</td>
@@ -598,7 +615,7 @@
     return rows.map((row, i) => `<tr>
       <td class="text-secondary small">${i + 1}</td>
       <td class="text-nowrap small">${escHtml(row.date)}</td>
-      <td class="font-monospace small text-secondary">${escHtml(row.ref)}</td>
+      <td class="font-monospace small text-secondary">${escHtml(row.ref)} ${savedBadge(row.ref, importedGiderRefs)}</td>
       <td class="small" style="max-width:220px;word-break:break-word;">${escHtml(row.cp)}</td>
       <td class="small text-secondary" style="max-width:280px;word-break:break-word;white-space:pre-line;">${escHtml(row.desc)}</td>
       <td class="text-end fw-semibold text-danger text-nowrap">−${row.debit.toFixed(2)}</td>
@@ -639,6 +656,7 @@
     const row = PREVIEW_GELIRLER[gelirIndex];
     document.getElementById('curDate').textContent  = row.date || '—';
     document.getElementById('curRef').textContent    = row.ref || '—';
+    document.getElementById('curRefBadge').innerHTML = savedBadge(row.ref, importedGelirRefs);
     document.getElementById('curAmount').textContent = '+' + Number(row.credit).toFixed(2) + ' ₼';
     document.getElementById('curCP').textContent      = row.cp || '—';
     document.getElementById('curDesc').textContent    = row.desc || '—';
@@ -684,6 +702,7 @@
       if (!res.ok) { setFieldError('incomeStepError', data.error || 'Xəta baş verdi'); return; }
       gelirImportedCount += data.imported_incomes;
       gelirSkippedCount  += data.skipped_duplicates;
+      if (row.ref) importedGelirRefs.add(row.ref);
       if (data.imported_incomes > 0) showToast('✓ Sətir əlavə edildi', 'success');
       else showToast('⚠ Bu sətir artıq mövcuddur (dublikat) — keçildi', 'warning');
       lastUsedCatId = catId;
@@ -731,6 +750,7 @@
     const row = PREVIEW_GIDERLER[giderIndex];
     document.getElementById('curGiderDate').textContent   = row.date || '—';
     document.getElementById('curGiderRef').textContent    = row.ref || '—';
+    document.getElementById('curGiderRefBadge').innerHTML = savedBadge(row.ref, importedGiderRefs);
     document.getElementById('curGiderAmount').textContent = '−' + Number(row.debit).toFixed(2) + ' ₼';
     document.getElementById('curGiderCP').textContent      = row.cp || '—';
     document.getElementById('curGiderDesc').textContent    = row.desc || '—';
@@ -767,6 +787,7 @@
       if (!res.ok) { setFieldError('giderStepError', data.error || 'Xəta baş verdi'); return; }
       giderImportedCount += data.imported_expenses;
       giderSkippedCount  += data.skipped_duplicates;
+      if (row.ref) importedGiderRefs.add(row.ref);
       if (data.imported_expenses > 0) showToast('✓ Sətir əlavə edildi', 'success');
       else showToast('⚠ Bu sətir artıq mövcuddur (dublikat) — keçildi', 'warning');
       lastUsedGiderCatId = catId;
@@ -800,6 +821,8 @@
 
     PREVIEW_GELIRLER = data.gelirler;
     PREVIEW_GIDERLER = data.giderler;
+    importedGelirRefs = new Set(data.gelirler.filter(r => r.already_imported && r.ref).map(r => r.ref));
+    importedGiderRefs = new Set(data.giderler.filter(r => r.already_imported && r.ref).map(r => r.ref));
 
     document.getElementById('importMeta').textContent =
       `IBAN: ${data.iban} · ${data.gelirler.length} gelir · ${data.giderler.length} gider`;

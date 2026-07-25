@@ -28,13 +28,14 @@ type UpdateAccountRequest struct {
 }
 
 type StatementRow struct {
-	Date   string  `json:"date"`
-	Ref    string  `json:"ref"`
-	CP     string  `json:"cp"`
-	Debit  float64 `json:"debit"`
-	Credit float64 `json:"credit"`
-	Desc   string  `json:"desc"`
-	Tax    string  `json:"tax"`
+	Date            string  `json:"date"`
+	Ref             string  `json:"ref"`
+	CP              string  `json:"cp"`
+	Debit           float64 `json:"debit"`
+	Credit          float64 `json:"credit"`
+	Desc            string  `json:"desc"`
+	Tax             string  `json:"tax"`
+	AlreadyImported bool    `json:"already_imported"`
 }
 
 // ImportGelirRow banka ekstresindeki tek bir gelir satırı ile birlikte,
