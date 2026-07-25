@@ -153,6 +153,27 @@
   let currentSpreadsheetId = null;
   let activeTabGID = null;
   let tourCodes = new Set();
+  const IMPORT_DISCOUNT_CATEGORY_NAME = 'Sheets İmport';
+  let importDiscountCategoryId = null;
+
+  async function getImportDiscountCategoryId() {
+    if (importDiscountCategoryId !== null) return importDiscountCategoryId;
+    const res = await fetch('/api/discount-categories');
+    const categories = res.ok ? await res.json() : [];
+    const existing = categories.find(c => c.name === IMPORT_DISCOUNT_CATEGORY_NAME);
+    if (existing) {
+      importDiscountCategoryId = existing.id;
+      return importDiscountCategoryId;
+    }
+    const createRes = await fetch('/api/discount-categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: IMPORT_DISCOUNT_CATEGORY_NAME }),
+    });
+    const created = createRes.ok ? await createRes.json() : null;
+    importDiscountCategoryId = created ? created.id : 0;
+    return importDiscountCategoryId;
+  }
   let dynamicModal;
   document.addEventListener('DOMContentLoaded', () => {
     dynamicModal = new bootstrap.Modal(document.getElementById('dynamicModal'));
@@ -621,8 +642,22 @@
       body: JSON.stringify({ client_id: clientId, tour_id: p.tour_match, incomes: [] }),
     });
     if (!res.ok) return { status: 'error', msg: `${who} — sifariş yaradıla bilmədi` };
+    const order = await res.json();
 
     p.has_order = true;
+
+    if (p.discount_amount > 0) {
+      const catId = await getImportDiscountCategoryId();
+      if (catId) {
+        const discRes = await fetch(`/api/orders/${order.id}/discounts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: p.discount_amount, discount_category_id: catId }),
+        });
+        if (!discRes.ok) return { status: 'ok', msg: `${who} — sifariş yaradıldı, endirim əlavə edilmədi` };
+      }
+    }
+
     return { status: 'ok', msg: `${who} — sifariş yaradıldı` };
   }
 
