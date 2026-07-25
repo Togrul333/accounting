@@ -20,6 +20,9 @@
 	top: 0;
 	left: 0;
 	padding-top: 60px;
+	padding-bottom: 20px;
+	overflow-y: auto;
+	overflow-x: hidden;
 	z-index: 1030;
 	.nav-link {
 		color: $gray-800;

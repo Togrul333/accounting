@@ -4,314 +4,244 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{.tour.Code}} — Hisar Tour</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { font-family: 'Inter', sans-serif; }
-    .card { background:#161616; border:1px solid #242424; border-radius:16px; }
-    .sub-table thead tr { background: rgba(0,212,255,0.04); border-bottom: 1px solid #242424; }
-    .sub-table tbody tr { border-bottom: 1px solid #1e1e1e; transition: background .1s; }
-    .sub-table tbody tr:hover { background: rgba(255,255,255,0.02); }
-    .sub-table tbody tr:last-child { border-bottom: none; }
-  </style>
+  <link rel="stylesheet" href="/static/theme/assets/css/main.css">
 </head>
-<body style="background:#0d0d0d; min-height:100vh;">
+<body>
 
-  {{template "sidebar" .}}
-  {{template "topbar" .}}
+{{template "topbar_v2" .}}
+{{template "sidebar_v2" .}}
 
-  <div class="ml-64 min-h-screen flex flex-col">
+<main id="content" class="content py-10">
+  <div class="container-fluid">
 
-    <!-- Üst bar -->
-    <div class="px-8 h-16 flex items-center gap-4 flex-shrink-0"
-         style="background:#161616; border-bottom:1px solid #242424;">
-      <a href="/tours"
-         style="padding:6px 8px; border-radius:8px; border:1px solid #2a2a2a; color:#484848; display:inline-flex; align-items:center; transition:.15s;"
-         onmouseover="this.style.borderColor='#00d4ff'; this.style.color='#00d4ff';"
-         onmouseout="this.style.borderColor='#2a2a2a'; this.style.color='#484848';">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
-      </a>
-      <div class="flex items-center gap-3 flex-1">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-             style="background:#1e1e1e; border:1px solid #2a2a2a;">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00d4ff" opacity=".7">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-base font-bold leading-none" style="color:#ececec;">{{.tour.Code}}</h1>
-          <p class="text-xs mt-0.5" style="color:#484848;">{{.tour.StartDate.Format "02.01.2006"}} — {{.tour.EndDate.Format "02.01.2006"}}</p>
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <a href="/tours" class="btn btn-icon btn-sm btn-light"><i class="ti ti-arrow-left"></i></a>
+          <div class="flex-grow-1">
+            <h1 class="fs-3 mb-1">{{.tour.Code}}</h1>
+            <p class="mb-0 text-secondary">{{.tour.StartDate.Format "02.01.2006"}} — {{.tour.EndDate.Format "02.01.2006"}}</p>
+          </div>
+          <a href="/tours/{{.tour.ID}}/edit" class="btn btn-primary"><i class="ti ti-edit"></i> Düzenle</a>
         </div>
       </div>
-      <a href="/tours/{{.tour.ID}}/edit"
-         style="display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#00d4ff,#7b2fff);color:#fff;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;transition:.15s;"
-         onmouseover="this.style.filter='brightness(1.08)';" onmouseout="this.style.filter='none';">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
-        </svg>
-        Düzenle
-      </a>
     </div>
 
-    <div class="p-8 flex-1">
-
-      <!-- Detay kartları — Satır 1 -->
-      <div class="grid grid-cols-3 gap-4 mb-4">
-        <div class="card p-5">
-          <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Kategori</p>
-          <p class="text-sm font-bold" style="color:#ececec;">{{.tour.TourCategoryName}}</p>
-          <p class="text-xs mt-1 tabular-nums" style="color:#484848;">{{printf "%.2f" .tour.TourCategoryPrice}} ₺</p>
-        </div>
-        <div class="card p-5">
-          <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Oda</p>
-          <p class="text-sm font-bold tabular-nums" style="color:#00d4ff;">{{printf "%.2f" .tour.RoomPrice}} ₺</p>
-          <p class="text-xs mt-1" style="color:#484848;">{{.tour.RoomBedsCount}} yatak</p>
-        </div>
-        <div class="card p-5">
-          <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:#484848;">Sipariş Sayısı</p>
-          <p class="text-3xl font-extrabold tracking-tight" style="color:#ececec;">{{len .orders}}</p>
+    <!-- Bilgi kartları — Satır 1 -->
+    <div class="row g-3 mb-3">
+      <div class="col-lg-4 col-12">
+        <div class="card p-4 h-100">
+          <p class="small text-secondary text-uppercase fw-semibold mb-2">Kategori</p>
+          <p class="fw-bold mb-0">{{.tour.TourCategoryName}}</p>
+          <p class="small text-secondary mb-0 mt-1">{{printf "%.2f" .tour.TourCategoryPrice}} ₺</p>
         </div>
       </div>
+      <div class="col-lg-4 col-12">
+        <div class="card p-4 h-100">
+          <p class="small text-secondary text-uppercase fw-semibold mb-2">Oda</p>
+          <p class="fw-bold mb-0 text-primary">{{printf "%.2f" .tour.RoomPrice}} ₺</p>
+          <p class="small text-secondary mb-0 mt-1">{{.tour.RoomBedsCount}} yatak</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-12">
+        <div class="card p-4 h-100">
+          <p class="small text-secondary text-uppercase fw-semibold mb-2">Sipariş Sayısı</p>
+          <h3 class="fw-bold mb-0">{{len .orders}}</h3>
+        </div>
+      </div>
+    </div>
 
-      <!-- Detay kartları — Satır 2: Gelir & Gider -->
-      <div class="grid grid-cols-4 gap-4 mb-8">
+    <!-- Bilgi kartları — Satır 2: Gelir & Gider -->
+    <div class="row g-3 mb-4">
 
-        <!-- Toplam Gelir -->
-        <div class="card p-6">
-          <div class="flex items-start justify-between mb-4">
+      <!-- Toplam Gelir -->
+      <div class="col-lg-3 col-12">
+        <div class="card p-4 h-100">
+          <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color:#484848;">Toplam Gelir</p>
-              <p class="text-4xl font-extrabold tracking-tight tabular-nums" style="color:#22c55e;">{{printf "%.2f" .incomeTotal}} ₺</p>
+              <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Gelir</p>
+              <h3 class="fw-bold mb-0 text-success">{{printf "%.2f" .incomeTotal}} ₺</h3>
             </div>
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                 style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2);">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#22c55e">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-              </svg>
+            <div class="icon-shape icon-md bg-success bg-opacity-10 text-success rounded-2">
+              <i class="ti ti-trending-up fs-4"></i>
             </div>
           </div>
-          <p class="text-xs mb-3" style="color:#484848;">Siparişlerin toplam geliri (her siparişin gelir toplamları)</p>
-          <div style="border-top:1px solid #242424; padding-top:12px;">
+          <p class="small text-secondary mb-2">Siparişlerin toplam geliri</p>
+          <div class="border-top pt-2">
             {{if .orders}}
-            <div class="flex flex-col gap-1.5">
+            <div class="d-flex flex-column gap-1">
               {{range .orders}}
               {{if gt .IncomeTotal 0.0}}
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:#22c55e; opacity:.6;"></div>
-                  <span class="text-xs" style="color:#606060;">{{.ClientName}}</span>
-                  <span class="text-xs" style="color:#383838;">· {{.IncomeCount}} gelir</span>
-                </div>
-                <span class="text-xs font-bold tabular-nums" style="color:#22c55e;">+{{printf "%.2f" .IncomeTotal}} ₺</span>
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="small text-secondary text-truncate">{{.ClientName}} · {{.IncomeCount}} gelir</span>
+                <span class="small fw-bold text-success text-nowrap">+{{printf "%.2f" .IncomeTotal}} ₺</span>
               </div>
               {{end}}
               {{end}}
             </div>
             {{else}}
-            <p class="text-xs" style="color:#383838;">Henüz sipariş yok</p>
+            <p class="small text-secondary mb-0">Henüz sipariş yok</p>
             {{end}}
           </div>
         </div>
+      </div>
 
-        <!-- Toplam Gider -->
-        <div class="card p-6">
-          <div class="flex items-start justify-between mb-4">
+      <!-- Toplam Gider -->
+      <div class="col-lg-3 col-12">
+        <div class="card p-4 h-100">
+          <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color:#484848;">Toplam Gider</p>
-              <p class="text-4xl font-extrabold tracking-tight tabular-nums" style="color:#ef4444;">{{printf "%.2f" .expenseTotal}} ₺</p>
+              <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Gider</p>
+              <h3 class="fw-bold mb-0 text-danger">{{printf "%.2f" .expenseTotal}} ₺</h3>
             </div>
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                 style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2);">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#ef4444">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6L9 12.75l4.306-4.307a11.95 11.95 0 015.814 5.519l2.74 1.22m0 0l-5.94 2.28m5.94-2.28l-2.28-5.941" />
-              </svg>
+            <div class="icon-shape icon-md bg-danger bg-opacity-10 text-danger rounded-2">
+              <i class="ti ti-trending-down fs-4"></i>
             </div>
           </div>
-          <p class="text-xs mb-3" style="color:#484848;">Bu tura bağlı tüm giderlerin toplamı</p>
-          <div style="border-top:1px solid #242424; padding-top:12px;">
+          <p class="small text-secondary mb-2">Bu tura bağlı tüm giderler</p>
+          <div class="border-top pt-2">
             {{if .expenses}}
-            <div class="flex flex-col gap-1.5">
+            <div class="d-flex flex-column gap-1">
               {{range .expenses}}
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:#ef4444; opacity:.6;"></div>
-                  <span class="text-xs" style="color:#606060;">{{.Name}}</span>
-                  <span class="text-xs" style="color:#383838;">· {{.ExpenseCategoryName}}</span>
-                </div>
-                <span class="text-xs font-bold tabular-nums" style="color:#ef4444;">−{{printf "%.2f" .Amount}} ₺</span>
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="small text-secondary text-truncate">{{.Name}} · {{.ExpenseCategoryName}}</span>
+                <span class="small fw-bold text-danger text-nowrap">−{{printf "%.2f" .Amount}} ₺</span>
               </div>
               {{end}}
             </div>
             {{else}}
-            <p class="text-xs" style="color:#383838;">Bu tura bağlı gider yok</p>
+            <p class="small text-secondary mb-0">Bu tura bağlı gider yok</p>
             {{end}}
           </div>
         </div>
+      </div>
 
-        <!-- Toplam İndirimler -->
-        <div class="card p-6">
-          <div class="flex items-start justify-between mb-4">
+      <!-- Toplam İndirimler -->
+      <div class="col-lg-3 col-12">
+        <div class="card p-4 h-100">
+          <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color:#484848;">Toplam İndirimler</p>
-              <p class="text-4xl font-extrabold tracking-tight tabular-nums" style="color:#f59e0b;">{{printf "%.2f" .discountTotal}} ₺</p>
+              <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam İndirimler</p>
+              <h3 class="fw-bold mb-0 text-warning">{{printf "%.2f" .discountTotal}} ₺</h3>
             </div>
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                 style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2);">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#f59e0b">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185zM9.75 9h.008v.008H9.75V9zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 4.5h.008v.008h-.008V13.5zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-              </svg>
+            <div class="icon-shape icon-md bg-warning bg-opacity-10 text-warning rounded-2">
+              <i class="ti ti-discount-2 fs-4"></i>
             </div>
           </div>
-          <p class="text-xs mb-3" style="color:#484848;">Siparişlerin toplam indirimleri</p>
-          <div style="border-top:1px solid #242424; padding-top:12px;">
+          <p class="small text-secondary mb-2">Siparişlerin toplam indirimleri</p>
+          <div class="border-top pt-2">
             {{if .orders}}
-            <div class="flex flex-col gap-1.5">
+            <div class="d-flex flex-column gap-1">
               {{range .orders}}
               {{if gt .DiscountTotal 0.0}}
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:#f59e0b; opacity:.6;"></div>
-                  <span class="text-xs" style="color:#606060;">{{.ClientName}}</span>
-                  <span class="text-xs" style="color:#383838;">· {{.DiscountCount}} indirim</span>
-                </div>
-                <span class="text-xs font-bold tabular-nums" style="color:#f59e0b;">-{{printf "%.2f" .DiscountTotal}} ₺</span>
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="small text-secondary text-truncate">{{.ClientName}} · {{.DiscountCount}} indirim</span>
+                <span class="small fw-bold text-warning text-nowrap">-{{printf "%.2f" .DiscountTotal}} ₺</span>
               </div>
               {{end}}
               {{end}}
             </div>
             {{else}}
-            <p class="text-xs" style="color:#383838;">Henüz indirim yok</p>
+            <p class="small text-secondary mb-0">Henüz indirim yok</p>
             {{end}}
           </div>
         </div>
+      </div>
 
-        <!-- Toplam Net Tutar -->
-        <div class="card p-6">
-          <div class="flex items-start justify-between mb-4">
+      <!-- Toplam Net Tutar -->
+      <div class="col-lg-3 col-12">
+        <div class="card p-4 h-100 border-primary border-opacity-25">
+          <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color:#484848;">Toplam Net Tutar</p>
-              {{if ge .netTotal 0.0}}
-              <p class="text-4xl font-extrabold tracking-tight tabular-nums" style="color:#a78bfa;">{{printf "%.2f" .netTotal}} ₺</p>
-              {{else}}
-              <p class="text-4xl font-extrabold tracking-tight tabular-nums" style="color:#f97316;">{{printf "%.2f" .netTotal}} ₺</p>
-              {{end}}
+              <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Net Tutar</p>
+              <h3 class="fw-bold mb-0 {{if ge .netTotal 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .netTotal}} ₺</h3>
             </div>
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                 style="background:rgba(167,139,250,0.1); border:1px solid rgba(167,139,250,0.2);">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#a78bfa">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c-.99.143-1.99.317-3 .52m3-.52L2.25 15.697c-.122.499.106 1.028.589 1.202a5.989 5.989 0 002.031.352 5.989 5.989 0 002.031-.352c.483-.174.711-.703.59-1.202L5.25 4.971z" />
-              </svg>
+            <div class="icon-shape icon-md bg-primary bg-opacity-10 text-primary rounded-2">
+              <i class="ti ti-report-money fs-4"></i>
             </div>
           </div>
-          <p class="text-xs mb-3" style="color:#484848;">Toplam Gelir − Toplam Gider − Toplam İndirimler</p>
-          <div style="border-top:1px solid #242424; padding-top:12px;">
-            <div class="flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs" style="color:#606060;">Toplam Gelir</span>
-                <span class="text-xs font-bold tabular-nums" style="color:#22c55e;">+{{printf "%.2f" .incomeTotal}} ₺</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-xs" style="color:#606060;">Toplam Gider</span>
-                <span class="text-xs font-bold tabular-nums" style="color:#ef4444;">−{{printf "%.2f" .expenseTotal}} ₺</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-xs" style="color:#606060;">Toplam İndirimler</span>
-                <span class="text-xs font-bold tabular-nums" style="color:#f59e0b;">−{{printf "%.2f" .discountTotal}} ₺</span>
-              </div>
-              <div class="flex items-center justify-between" style="border-top:1px solid #242424; padding-top:8px; margin-top:4px;">
-                <span class="text-xs font-semibold" style="color:#ececec;">Net</span>
-                {{if ge .netTotal 0.0}}
-                <span class="text-sm font-extrabold tabular-nums" style="color:#a78bfa;">{{printf "%.2f" .netTotal}} ₺</span>
-                {{else}}
-                <span class="text-sm font-extrabold tabular-nums" style="color:#f97316;">{{printf "%.2f" .netTotal}} ₺</span>
-                {{end}}
-              </div>
+          <p class="small text-secondary mb-2">Gelir − Gider − İndirimler</p>
+          <div class="border-top pt-2 d-flex flex-column gap-1">
+            <div class="d-flex align-items-center justify-content-between small">
+              <span class="text-secondary">Toplam Gelir</span>
+              <span class="fw-bold text-success">+{{printf "%.2f" .incomeTotal}} ₺</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between small">
+              <span class="text-secondary">Toplam Gider</span>
+              <span class="fw-bold text-danger">−{{printf "%.2f" .expenseTotal}} ₺</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between small">
+              <span class="text-secondary">Toplam İndirimler</span>
+              <span class="fw-bold text-warning">−{{printf "%.2f" .discountTotal}} ₺</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between border-top pt-1 mt-1">
+              <span class="small fw-semibold">Net</span>
+              <span class="fw-bold {{if ge .netTotal 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .netTotal}} ₺</span>
             </div>
           </div>
         </div>
-
-      </div>
-
-      <!-- Siparişler tablosu -->
-      <div class="flex items-center gap-2 mb-3">
-        <div class="w-2 h-2 rounded-full" style="background:#00d4ff;"></div>
-        <h2 class="text-sm font-bold uppercase tracking-wider" style="color:#606060;">Siparişler</h2>
-        <span class="text-xs px-2 py-0.5 rounded-full font-semibold"
-              style="background:rgba(0,212,255,0.1); color:#00d4ff; border:1px solid rgba(0,212,255,0.2);">
-          {{len .orders}}
-        </span>
-      </div>
-
-      <div class="card overflow-hidden">
-        {{if .orders}}
-        <table class="w-full sub-table">
-          <thead>
-            <tr>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">#</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Müşteri</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Gelir Sayısı</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Toplam Gelir</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Tarih</th>
-              <th class="px-6 py-3.5 w-20"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {{range .orders}}
-            <tr class="group">
-              <td class="px-6 py-4">
-                <span class="text-xs tabular-nums" style="color:#383838;">{{.ID}}</span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="font-semibold text-sm" style="color:#ececec;">{{.ClientName}}</span>
-              </td>
-              <td class="px-6 py-4">
-                {{if gt .IncomeCount 0}}
-                <span class="text-sm tabular-nums" style="color:#888;">{{.IncomeCount}} gelir</span>
-                {{else}}
-                <span class="text-xs" style="color:#383838;">—</span>
-                {{end}}
-              </td>
-              <td class="px-6 py-4">
-                {{if gt .IncomeTotal 0.0}}
-                <span class="text-sm font-bold tabular-nums" style="color:#22c55e;">{{printf "%.2f" .IncomeTotal}} ₺</span>
-                {{else}}
-                <span class="text-xs" style="color:#383838;">—</span>
-                {{end}}
-              </td>
-              <td class="px-6 py-4">
-                <span class="text-sm tabular-nums" style="color:#606060;">{{.CreatedAt.Format "02.01.2006"}}</span>
-              </td>
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                  <a href="/orders/{{.ID}}" title="Görüntüle"
-                     style="padding:6px; border-radius:8px; border:none; cursor:pointer; background:transparent; color:#484848; transition:.15s; display:inline-flex;"
-                     onmouseover="this.style.color='#00d4ff'; this.style.background='rgba(0,212,255,0.1)';"
-                     onmouseout="this.style.color='#484848'; this.style.background='transparent';">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </a>
-                </div>
-              </td>
-            </tr>
-            {{end}}
-          </tbody>
-        </table>
-        {{else}}
-        <div class="flex flex-col items-center justify-center py-16">
-          <p class="text-sm font-semibold mb-1" style="color:#606060;">Sipariş bulunamadı</p>
-          <p class="text-xs" style="color:#383838;">Bu tura henüz sipariş eklenmemiş</p>
-        </div>
-        {{end}}
       </div>
 
     </div>
-  </div>
 
+    <!-- Siparişler tablosu -->
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge rounded-pill bg-primary">&nbsp;</span>
+          <h3 class="h6 mb-0">Siparişler</h3>
+          <span class="badge bg-primary-subtle text-primary-emphasis">{{len .orders}}</span>
+        </div>
+
+        <div class="card">
+          {{if .orders}}
+          <div class="table-responsive">
+            <table class="table mb-0 table-hover align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>#</th>
+                  <th>Müşteri</th>
+                  <th>Gelir Sayısı</th>
+                  <th>Toplam Gelir</th>
+                  <th>Tarih</th>
+                  <th>Aksiyon</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .orders}}
+                <tr>
+                  <td class="text-secondary">{{.ID}}</td>
+                  <td class="fw-semibold">{{.ClientName}}</td>
+                  <td>
+                    {{if gt .IncomeCount 0}}{{.IncomeCount}} gelir{{else}}<span class="text-secondary">—</span>{{end}}
+                  </td>
+                  <td>
+                    {{if gt .IncomeTotal 0.0}}<span class="text-success fw-semibold">{{printf "%.2f" .IncomeTotal}} ₺</span>{{else}}<span class="text-secondary">—</span>{{end}}
+                  </td>
+                  <td class="text-secondary">{{.CreatedAt.Format "02.01.2006"}}</td>
+                  <td>
+                    <a href="/orders/{{.ID}}" class="btn btn-icon btn-sm btn-light" title="Görüntüle">
+                      <i class="ti ti-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{else}}
+          <div class="card-body text-center py-6">
+            <p class="fw-semibold mb-1">Sipariş bulunamadı</p>
+            <p class="text-secondary mb-0">Bu tura henüz sipariş eklenmemiş</p>
+          </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="/static/theme/assets/js/main.js" type="module"></script>
 </body>
 </html>

@@ -4,125 +4,100 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gelirler — Hisar Tour</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { font-family: 'Inter', sans-serif; }
-    .card { background: rgb(99, 218, 160); border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; }
-    .table-wrap { background: rgb(99, 218, 160); border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; overflow: hidden; }
-    thead tr { background: rgba(0,0,0,0.07); border-bottom: 1px solid rgba(0,0,0,0.1); }
-    tbody tr { border-bottom: 1px solid rgba(0,0,0,0.06); transition: background .1s; }
-    tbody tr:hover { background: rgba(0,0,0,0.04); }
-    tbody tr:last-child { border-bottom: none; }
-    .badge      { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(123,47,255,0.15); color: #7b2fff; border: 1px solid rgba(123,47,255,0.25); }
-    .badge-blue { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(0,212,255,0.15); color: #00a8cc; border: 1px solid rgba(0,212,255,0.25); }
-  </style>
+  <link rel="stylesheet" href="/static/theme/assets/css/main.css">
 </head>
-<body style="background:#0d0d0d; min-height:100vh;">
+<body>
 
-  {{template "sidebar" .}}
-  {{template "topbar" .}}
+{{template "topbar_v2" .}}
+{{template "sidebar_v2" .}}
 
-  <div class="ml-64 min-h-screen flex flex-col">
+<main id="content" class="content py-10">
+  <div class="container-fluid">
 
-    <div class="px-8 h-16 flex items-center flex-shrink-0"
-         style="background:#161616; border-bottom:1px solid #242424;">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-             style="background:#1e1e1e; border:1px solid #2a2a2a;">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00d4ff" opacity=".6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-base font-bold leading-none" style="color:#ececec;">Gelirler</h1>
-          <p class="text-xs mt-0.5" style="color:#484848;">Tüm gelirler</p>
+    <div class="row">
+      <div class="col-12">
+        <div class="mb-4">
+          <h1 class="fs-3 mb-1">Gelirler</h1>
+          <p class="mb-0 text-secondary">Tüm gelirler</p>
         </div>
       </div>
     </div>
 
-    <div class="p-8 flex-1">
-
-      <div class="grid grid-cols-2 gap-5 mb-8 max-w-md">
-        <div class="card p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,0,0,0.1);border:1px solid rgba(0,0,0,0.12);display:flex;align-items:center;justify-content:center;">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="#2a5035">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
-              </svg>
+    <div class="row g-3 mb-3">
+      <div class="col-lg-3 col-12">
+        <div class="card p-4 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-2">
+          <div class="d-flex gap-3">
+            <div class="icon-shape icon-md bg-primary text-white rounded-2">
+              <i class="ti ti-list-numbers fs-4"></i>
             </div>
-            <p class="text-xs font-semibold uppercase tracking-wider" style="color:#2a5035;">Kayıt</p>
-          </div>
-          <p class="text-3xl font-extrabold tracking-tight" style="color:#0d1a12;">{{len .incomes}}</p>
-        </div>
-        <div class="card p-5" style="border-color:rgba(123,47,255,0.3);">
-          <div class="flex items-center gap-3 mb-4">
-            <div style="width:36px;height:36px;border-radius:10px;background:rgba(123,47,255,0.12);border:1px solid rgba(123,47,255,0.2);display:flex;align-items:center;justify-content:center;">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="#7b2fff" opacity=".8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            <div>
+              <h2 class="mb-3 fs-6">Kayıt</h2>
+              <h3 class="fw-bold mb-0">{{len .incomes}}</h3>
             </div>
-            <p class="text-xs font-semibold uppercase tracking-wider" style="color:#2a5035;">Toplam Tutar</p>
           </div>
-          <p class="text-2xl font-extrabold tracking-tight" style="color:#7b2fff;">{{printf "%.2f" .total}} ₺</p>
         </div>
       </div>
-
-      <div class="table-wrap">
-        {{if .incomes}}
-        <table class="w-full">
-          <thead>
-            <tr>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Ad</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Kategori</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Hesap</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tur</th>
-              <th class="text-right px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tutar</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tarih</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{range .incomes}}
-            <tr>
-              <td class="px-6 py-4">
-                <span class="font-semibold text-sm" style="color:#0d1a12;">{{.Name}}</span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="badge">{{.IncomeCategoryName}}</span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="badge-blue">{{.AccountName}}</span>
-              </td>
-              <td class="px-6 py-4">
-                {{if .TourCode}}<span class="badge">{{.TourCode}}</span>{{else}}<span style="color:rgba(0,0,0,0.25);">—</span>{{end}}
-              </td>
-              <td class="px-6 py-4 text-right">
-                <span class="font-bold text-sm tabular-nums" style="color:#7b2fff;">{{printf "%.2f" .Amount}} ₺</span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="text-sm tabular-nums" style="color:#3a5a40;">{{.Date.Format "02.01.2006"}}</span>
-              </td>
-            </tr>
-            {{end}}
-          </tbody>
-        </table>
-        {{else}}
-        <div class="flex flex-col items-center justify-center py-24">
-          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
-               style="background:rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.1);">
-            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke-width="1.3" stroke="rgba(0,0,0,0.2)">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-            </svg>
+      <div class="col-lg-3 col-12">
+        <div class="card p-4 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-2">
+          <div class="d-flex gap-3">
+            <div class="icon-shape icon-md bg-primary text-white rounded-2">
+              <i class="ti ti-coin fs-4"></i>
+            </div>
+            <div>
+              <h2 class="mb-3 fs-6">Toplam Tutar</h2>
+              <h3 class="fw-bold mb-0">{{printf "%.2f" .total}} ₺</h3>
+            </div>
           </div>
-          <p class="font-semibold" style="color:#2a5035;">Henüz gelir yok</p>
-          <p class="text-sm mt-1" style="color:rgba(0,0,0,0.35);">Gelirler siparişlerden eklenir</p>
         </div>
-        {{end}}
       </div>
     </div>
+
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          {{if .incomes}}
+          <div class="table-responsive">
+            <table class="table mb-0 table-hover align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>Ad</th>
+                  <th>Kategori</th>
+                  <th>Hesap</th>
+                  <th>Tur</th>
+                  <th class="text-end">Tutar</th>
+                  <th>Tarih</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .incomes}}
+                <tr>
+                  <td class="fw-semibold">{{.Name}}</td>
+                  <td><span class="badge bg-primary-subtle text-primary-emphasis">{{.IncomeCategoryName}}</span></td>
+                  <td><span class="badge bg-info-subtle text-info-emphasis">{{.AccountName}}</span></td>
+                  <td>
+                    {{if .TourCode}}<span class="badge bg-secondary-subtle text-secondary-emphasis">{{.TourCode}}</span>{{else}}<span class="text-secondary">—</span>{{end}}
+                  </td>
+                  <td class="text-end fw-semibold text-primary">{{printf "%.2f" .Amount}} ₺</td>
+                  <td class="text-secondary">{{.Date.Format "02.01.2006"}}</td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{else}}
+          <div class="card-body text-center py-8">
+            <i class="ti ti-cash fs-1 text-secondary"></i>
+            <p class="fw-semibold mt-3 mb-1">Henüz gelir yok</p>
+            <p class="text-secondary mb-0">Gelirler siparişlerden eklenir</p>
+          </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+
   </div>
+</main>
 
+<script src="/static/theme/assets/js/main.js" type="module"></script>
 </body>
 </html>
