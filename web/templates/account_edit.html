@@ -4,631 +4,431 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hesabı Düzenle — Hisar Tour</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { font-family: 'Inter', sans-serif; }
-
-    .input-field {
-      width: 100%; padding: 11px 14px; border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.15); background: rgba(0,0,0,0.1);
-      color: #0d1a12; font-size: 14px; outline: none; transition: all .2s;
-    }
-    .input-field::placeholder { color: rgba(0,0,0,0.3); }
-    .input-field:focus { border-color: #00d4ff; box-shadow: 0 0 0 3px rgba(0,212,255,0.12); }
-    select.input-field { cursor: pointer; }
-    textarea.input-field { resize: none; }
-
-    .btn-save {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 11px 28px; border-radius: 10px; border: none;
-      background: linear-gradient(135deg, #00d4ff, #7b2fff);
-      color: #fff; font-size: 14px; font-weight: 700;
-      cursor: pointer; transition: all .15s;
-    }
-    .btn-save:hover { filter: brightness(1.08); box-shadow: 0 0 24px rgba(0,212,255,0.2); }
-
-    .btn-cancel {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 11px 28px; border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.15);
-      background: rgba(0,0,0,0.08); color: #2a5035;
-      font-size: 14px; font-weight: 600;
-      cursor: pointer; transition: all .15s; text-decoration: none;
-    }
-    .btn-cancel:hover { background: rgba(0,0,0,0.14); color: #0d1a12; }
-
-    .sub-table thead tr { background: rgba(0,0,0,0.08); border-bottom: 1px solid rgba(0,0,0,0.12); }
-    .sub-table tbody tr { border-bottom: 1px solid rgba(0,0,0,0.07); transition: background .1s; }
-    .sub-table tbody tr:hover { background: rgba(0,0,0,0.04); }
-    .sub-table tbody tr:last-child { border-bottom: none; }
-
-    .toast {
-      position: fixed; top: 20px; right: 20px; z-index: 400;
-      padding: 11px 18px; border-radius: 12px;
-      font-size: 13px; font-weight: 500; display: none;
-    }
-    .toast.show { display: flex; align-items: center; gap: 8px; }
-    .toast.success { background: rgba(0,212,255,0.15); color: #00d4ff; border: 1px solid rgba(0,212,255,0.25); }
-    .toast.error   { background: rgba(255,85,85,0.15); color: #ff5555; border: 1px solid rgba(255,85,85,0.25); }
-
-    .btn-import {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 11px 22px; border-radius: 10px; border: none;
-      background: linear-gradient(135deg, #16a34a, #059669);
-      color: #fff; font-size: 14px; font-weight: 700;
-      cursor: pointer; transition: all .15s;
-    }
-    .btn-import:hover { filter: brightness(1.1); box-shadow: 0 0 20px rgba(22,163,74,0.25); }
-
-    /* Import Modal */
-    .import-modal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 300;
-      background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
-      justify-content: center; align-items: flex-start; padding: 32px 16px; overflow-y: auto;
-    }
-    .import-modal-overlay.open { display: flex; }
-    .import-modal {
-      width: 100%; max-width: 1100px; border-radius: 20px; overflow: hidden;
-      background: #1a2e1f; border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
-      flex-shrink: 0;
-    }
-    .import-modal-head {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 24px;
-      background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .import-modal-body { padding: 20px 24px; overflow-x: auto; }
-    .import-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .import-tbl thead tr { background: rgba(255,255,255,0.07); }
-    .import-tbl th {
-      padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,0.5);
-      white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .import-tbl td {
-      padding: 9px 12px; color: rgba(255,255,255,0.85);
-      border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: top;
-      max-width: 260px; word-break: break-word;
-    }
-    .import-tbl tbody tr:hover td { background: rgba(255,255,255,0.03); }
-    .import-tbl .debit  { color: #f87171; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .import-tbl .credit { color: #4ade80; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .import-tbl .ref    { color: rgba(255,255,255,0.45); font-size: 11px; font-family: 'Courier New', monospace; }
-    .import-tbl .desc   { color: rgba(255,255,255,0.65); white-space: pre-line; }
-  </style>
+  <link rel="stylesheet" href="/static/theme/assets/css/main.css">
 </head>
-<body style="background:#0d0d0d; min-height:100vh;">
+<body>
 
-  {{template "sidebar" .}}
-{{template "topbar" .}}
+{{template "topbar_v2" .}}
+{{template "sidebar_v2" .}}
 
-  <div class="ml-64 min-h-screen flex flex-col" style="background: rgb(99, 218, 160);">
+<main id="content" class="content py-10">
+  <div class="container-fluid">
 
-    <!-- Üst bar -->
-    <div class="px-8 h-16 flex items-center gap-4 flex-shrink-0"
-         style="background:rgba(0,0,0,0.08); border-bottom:1px solid rgba(0,0,0,0.1);">
-      <a href="/accounts"
-         style="padding:6px 8px; border-radius:8px; border:1px solid rgba(0,0,0,0.14);
-                color:rgba(0,0,0,0.45); display:inline-flex; align-items:center; transition:.15s;"
-         onmouseover="this.style.background='rgba(0,0,0,0.1)'; this.style.color='#0d1a12';"
-         onmouseout="this.style.background='transparent'; this.style.color='rgba(0,0,0,0.45)';">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
-      </a>
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-             style="background:rgba(0,212,255,0.15); border:1px solid rgba(0,212,255,0.25);">
-          <svg class="w-4 h-4" viewBox="0 0 36 28" fill="#00d4ff">
-            <rect x="0"    y="7"  width="7" height="10" rx="1.5"/>
-            <rect x="14.5" y="0"  width="7" height="17" rx="1.5"/>
-            <rect x="29"   y="7"  width="7" height="10" rx="1.5"/>
-            <rect x="0"    y="17" width="36" height="11" rx="2"/>
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-base font-bold leading-none" style="color:#0d1a12;">Hesabı Düzenle</h1>
-          <p class="text-xs mt-0.5" style="color:#2a5035;">{{.account.Name}}</p>
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <a href="/accounts" class="btn btn-icon btn-sm btn-light"><i class="ti ti-arrow-left"></i></a>
+          <div>
+            <h1 class="fs-3 mb-1">Hesabı Düzenle</h1>
+            <p class="mb-0 text-secondary">{{.account.Name}}</p>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="p-8 flex-1">
-
-      <!-- Bakiye stat + form -->
-      <div class="mb-10">
+    <div class="row">
+      <div class="col-12">
 
         <!-- Bakiye kartı -->
-        <div class="mb-6 px-5 py-4 rounded-2xl flex items-center gap-5"
-             style="background:rgba(0,0,0,0.1); border:1px solid rgba(0,0,0,0.12);">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-               style="background:rgba(123,47,255,0.15); border:1px solid rgba(123,47,255,0.2);">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="#7b2fff">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color:#2a5035;">Bakiye</p>
-            {{if lt .account.Balance 0.0}}
-              <p class="text-2xl font-extrabold tabular-nums" style="color:#c0392b;">{{printf "%.2f" .account.Balance}} {{.account.Currency}}</p>
-            {{else}}
-              <p class="text-2xl font-extrabold tabular-nums" style="color:#7b2fff;">{{printf "%.2f" .account.Balance}} {{.account.Currency}}</p>
-            {{end}}
-            <p class="text-xs mt-0.5" style="color:rgba(0,0,0,0.4);">Gelirler − Giderler</p>
+        <div class="card p-4 mb-3 border-primary border-opacity-25">
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-md bg-primary bg-opacity-10 text-primary rounded-2">
+              <i class="ti ti-coin fs-4"></i>
+            </div>
+            <div>
+              <p class="small text-secondary text-uppercase fw-semibold mb-1">Bakiye</p>
+              <p class="fw-bold mb-0 fs-4 {{if lt .account.Balance 0.0}}text-danger{{else}}text-primary{{end}}">
+                {{printf "%.2f" .account.Balance}} {{.account.Currency}}
+              </p>
+              <p class="small text-secondary mb-0">Gelirler − Giderler</p>
+            </div>
           </div>
         </div>
 
         <!-- Form -->
-        <form id="editForm" onsubmit="saveAccount(event)" class="space-y-5">
-          <div>
-            <label class="block text-sm font-semibold mb-1.5" style="color:#2a5035;">
-              Ad <span style="color:#c0392b;">*</span>
-            </label>
-            <input id="fName" type="text" required class="input-field"
-                   value="{{.account.Name}}">
+        <div class="card mb-3">
+          <div class="card-body">
+            <form id="editForm" onsubmit="saveAccount(event)">
+              <div class="mb-3">
+                <label class="form-label">Ad <span class="text-danger">*</span></label>
+                <input id="fName" type="text" required class="form-control" value="{{.account.Name}}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Hesap No <span class="text-danger">*</span></label>
+                <input id="fAccountNumber" type="text" required class="form-control font-monospace" value="{{.account.AccountNumber}}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Para Birimi</label>
+                <select id="fCurrency" class="form-select">
+                  <option value="AZN" {{if eq .account.Currency "AZN"}}selected{{end}}>AZN — Manat</option>
+                  <option value="USD" {{if eq .account.Currency "USD"}}selected{{end}}>USD — Dolar</option>
+                  <option value="EUR" {{if eq .account.Currency "EUR"}}selected{{end}}>EUR — Euro</option>
+                  <option value="RUB" {{if eq .account.Currency "RUB"}}selected{{end}}>RUB — Ruble</option>
+                  <option value="TRY" {{if eq .account.Currency "TRY"}}selected{{end}}>TRY — Lira</option>
+                  <option value="GBP" {{if eq .account.Currency "GBP"}}selected{{end}}>GBP — Sterlin</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Açıklama</label>
+                <textarea id="fDescription" rows="3" class="form-control" placeholder="İsteğe bağlı not...">{{.account.Description}}</textarea>
+              </div>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="submit" class="btn btn-primary"><i class="ti ti-check"></i> Kaydet</button>
+                <a href="/accounts" class="btn btn-outline-secondary">İptal</a>
+                <button type="button" class="btn btn-success" onclick="document.getElementById('xlsxInput').click()">
+                  <i class="ti ti-file-spreadsheet"></i> Excel'den İçe Aktar
+                </button>
+                <input type="file" id="xlsxInput" accept=".xlsx,.xls" style="display:none" onchange="handleExcelImport(event)">
+              </div>
+            </form>
           </div>
-
-          <div>
-            <label class="block text-sm font-semibold mb-1.5" style="color:#2a5035;">
-              Hesap No <span style="color:#c0392b;">*</span>
-            </label>
-            <input id="fAccountNumber" type="text" required class="input-field"
-                   style="font-family:'Courier New',monospace; font-size:13px;"
-                   value="{{.account.AccountNumber}}">
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold mb-1.5" style="color:#2a5035;">Para Birimi</label>
-            <select id="fCurrency" class="input-field">
-              <option value="AZN" {{if eq .account.Currency "AZN"}}selected{{end}}>AZN — Manat</option>
-              <option value="USD" {{if eq .account.Currency "USD"}}selected{{end}}>USD — Dolar</option>
-              <option value="EUR" {{if eq .account.Currency "EUR"}}selected{{end}}>EUR — Euro</option>
-              <option value="RUB" {{if eq .account.Currency "RUB"}}selected{{end}}>RUB — Ruble</option>
-              <option value="TRY" {{if eq .account.Currency "TRY"}}selected{{end}}>TRY — Lira</option>
-              <option value="GBP" {{if eq .account.Currency "GBP"}}selected{{end}}>GBP — Sterlin</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold mb-1.5" style="color:#2a5035;">Açıklama</label>
-            <textarea id="fDescription" rows="3" class="input-field"
-                      placeholder="İsteğe bağlı not...">{{.account.Description}}</textarea>
-          </div>
-
-          <div class="flex items-center gap-3 pt-2 flex-wrap">
-            <button type="submit" class="btn-save">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-              Kaydet
-            </button>
-            <a href="/accounts" class="btn-cancel">İptal</a>
-            <button type="button" class="btn-import" onclick="document.getElementById('xlsxInput').click()">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-              </svg>
-              Excel'den İçe Aktar
-            </button>
-            <input type="file" id="xlsxInput" accept=".xlsx,.xls"
-                   style="display:none" onchange="handleExcelImport(event)">
-          </div>
-        </form>
-      </div>
-
-      <!-- Gelirler tablosu -->
-      <div class="mb-8">
-        <div class="flex items-center gap-2 mb-3">
-          <div class="w-2 h-2 rounded-full" style="background:#00d4ff;"></div>
-          <h2 class="text-sm font-bold uppercase tracking-wider" style="color:#2a5035;">Gelirler</h2>
-          <span id="incomeCount" class="text-xs px-2 py-0.5 rounded-full font-semibold"
-                style="background:rgba(0,212,255,0.15); color:#00d4ff; border:1px solid rgba(0,212,255,0.25);">
-            {{len .incomes}}
-          </span>
-          <a href="/accounts/{{.account.ID}}/incomes" style="margin-left:auto;font-size:12px;font-weight:600;color:#0d6e3a;text-decoration:none;display:inline-flex;align-items:center;gap:4px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'">
-            Tümünü Gör
-            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
-          </a>
         </div>
-        <div style="background:rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.1); border-radius:14px; overflow:hidden;">
+
+        <!-- Gelirler tablosu -->
+        <div class="card mb-3">
+          <div class="card-header bg-transparent d-flex align-items-center gap-2 px-4 py-3">
+            <span class="badge rounded-pill bg-primary">&nbsp;</span>
+            <h3 class="h6 mb-0">Gelirler</h3>
+            <span id="incomeCount" class="badge bg-primary-subtle text-primary-emphasis">{{len .incomes}}</span>
+            <a href="/accounts/{{.account.ID}}/incomes" class="small text-primary text-decoration-underline ms-auto">Tümünü Gör</a>
+          </div>
           <div id="incomeTableWrap"></div>
-          <div id="incomePager" class="px-5 py-3" style="border-top:1px solid rgba(0,0,0,0.08);display:none;"></div>
+          <div id="incomePager" class="px-4 py-3 border-top d-none align-items-center gap-2 flex-wrap"></div>
         </div>
-      </div>
 
-      <!-- Giderler tablosu -->
-      <div>
-        <div class="flex items-center gap-2 mb-3">
-          <div class="w-2 h-2 rounded-full" style="background:#ff5555;"></div>
-          <h2 class="text-sm font-bold uppercase tracking-wider" style="color:#2a5035;">Giderler</h2>
-          <span id="expenseCount" class="text-xs px-2 py-0.5 rounded-full font-semibold"
-                style="background:rgba(255,85,85,0.15); color:#ff5555; border:1px solid rgba(255,85,85,0.25);">
-            {{len .expenses}}
-          </span>
-          <a href="/accounts/{{.account.ID}}/expenses" style="margin-left:auto;font-size:12px;font-weight:600;color:#c0392b;text-decoration:none;display:inline-flex;align-items:center;gap:4px;opacity:.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'">
-            Tümünü Gör
-            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
-          </a>
-        </div>
-        <div style="background:rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.1); border-radius:14px; overflow:hidden;">
+        <!-- Giderler tablosu -->
+        <div class="card mb-3">
+          <div class="card-header bg-transparent d-flex align-items-center gap-2 px-4 py-3">
+            <span class="badge rounded-pill bg-danger">&nbsp;</span>
+            <h3 class="h6 mb-0">Giderler</h3>
+            <span id="expenseCount" class="badge bg-danger-subtle text-danger-emphasis">{{len .expenses}}</span>
+            <a href="/accounts/{{.account.ID}}/expenses" class="small text-danger text-decoration-underline ms-auto">Tümünü Gör</a>
+          </div>
           <div id="expenseTableWrap"></div>
-          <div id="expensePager" class="px-5 py-3" style="border-top:1px solid rgba(0,0,0,0.08);display:none;"></div>
+          <div id="expensePager" class="px-4 py-3 border-top d-none align-items-center gap-2 flex-wrap"></div>
         </div>
+
       </div>
-
-      <script>
-        const INCOMES  = {{json .incomes}};
-        const EXPENSES = {{json .expenses}};
-        const PER_PAGE = 10;
-
-        function fmtDate(s) {
-          if (!s) return '';
-          const d = new Date(s);
-          return isNaN(d) ? s : `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
-        }
-
-        function renderTable(data, page, type) {
-          if (!data || !data.length) {
-            return '<div class="flex items-center justify-center py-10"><p class="text-sm" style="color:rgba(0,0,0,0.35);">Bu hesaba ait ' + (type==='income'?'gelir':'gider') + ' yok</p></div>';
-          }
-          const start = (page - 1) * PER_PAGE;
-          const slice = data.slice(start, start + PER_PAGE);
-          const color     = type === 'income' ? '#00c0e0' : '#ff5555';
-          const bgColor   = type === 'income' ? 'rgba(0,212,255,0.15)' : 'rgba(255,85,85,0.15)';
-          const borderCol = type === 'income' ? 'rgba(0,212,255,0.25)' : 'rgba(255,85,85,0.25)';
-          const amtColor  = type === 'income' ? '#0d6e3a' : '#c0392b';
-          const sign      = type === 'income' ? '+' : '−';
-          const catField  = type === 'income' ? 'income_category_name' : 'expense_category_name';
-
-          let t = `<table class="w-full sub-table"><thead><tr>
-            <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Ad</th>
-            <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Kategori</th>
-            <th class="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tutar</th>
-            <th class="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider" style="color:#2a5035;">Tarih</th>
-          </tr></thead><tbody>`;
-
-          slice.forEach(row => {
-            t += `<tr>
-              <td class="px-5 py-3"><span class="text-sm font-medium" style="color:#0d1a12;">${escH(row.name)}</span></td>
-              <td class="px-5 py-3"><span class="text-xs px-2.5 py-1 rounded-full font-semibold"
-                style="background:${bgColor};color:${color};border:1px solid ${borderCol};">${escH(row[catField]||'')}</span></td>
-              <td class="px-5 py-3 text-right"><span class="font-bold text-sm tabular-nums" style="color:${amtColor};">${sign}${Number(row.amount).toFixed(2)}</span></td>
-              <td class="px-5 py-3"><span class="text-xs" style="color:#3a5a40;">${fmtDate(row.date)}</span></td>
-            </tr>`;
-          });
-          t += '</tbody></table>';
-          return t;
-        }
-
-        function renderPager(data, page, setPage, pagerId) {
-          const total = Math.ceil(data.length / PER_PAGE);
-          if (total <= 1) { document.getElementById(pagerId).style.display = 'none'; return; }
-
-          const el = document.getElementById(pagerId);
-          el.style.display = 'flex';
-          el.style.alignItems = 'center';
-          el.style.gap = '6px';
-          el.style.flexWrap = 'wrap';
-
-          const btnStyle = (active) => `padding:5px 10px;border-radius:7px;border:1px solid rgba(0,0,0,0.15);
-            background:${active ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.06)'};
-            color:${active ? '#0d1a12' : '#3a5a40'};font-size:12px;font-weight:${active ? '700' : '500'};
-            cursor:pointer;min-width:30px;text-align:center;`;
-
-          let html = '';
-          // Кнопка «‹»
-          html += `<button onclick="${setPage}(${page-1})" ${page===1?'disabled':''} style="${btnStyle(false)}opacity:${page===1?0.35:1};">‹</button>`;
-
-          // Страницы — показываем не больше 7 кнопок
-          const range = buildPageRange(page, total);
-          range.forEach(p => {
-            if (p === '…') {
-              html += `<span style="color:rgba(0,0,0,0.35);font-size:12px;padding:0 2px;">…</span>`;
-            } else {
-              html += `<button onclick="${setPage}(${p})" style="${btnStyle(p===page)}">${p}</button>`;
-            }
-          });
-
-          // Кнопка «›»
-          html += `<button onclick="${setPage}(${page+1})" ${page===total?'disabled':''} style="${btnStyle(false)}opacity:${page===total?0.35:1};">›</button>`;
-          html += `<span style="margin-left:auto;font-size:11px;color:rgba(0,0,0,0.4);">${data.length} kayıt · ${page}/${total}</span>`;
-          el.innerHTML = html;
-        }
-
-        function buildPageRange(cur, total) {
-          if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
-          const pages = new Set([1, total, cur]);
-          for (let i = cur-1; i <= cur+1; i++) if (i > 0 && i <= total) pages.add(i);
-          const sorted = [...pages].sort((a,b) => a-b);
-          const result = [];
-          let prev = 0;
-          for (const p of sorted) {
-            if (p - prev > 1) result.push('…');
-            result.push(p);
-            prev = p;
-          }
-          return result;
-        }
-
-        function escH(s) {
-          return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        }
-
-        // Состояние пагинации
-        let incomePage = 1, expensePage = 1;
-
-        function setIncomePage(p) {
-          const total = Math.ceil((INCOMES||[]).length / PER_PAGE);
-          if (p < 1 || p > total) return;
-          incomePage = p;
-          document.getElementById('incomeTableWrap').innerHTML = renderTable(INCOMES, incomePage, 'income');
-          renderPager(INCOMES, incomePage, 'setIncomePage', 'incomePager');
-        }
-
-        function setExpensePage(p) {
-          const total = Math.ceil((EXPENSES||[]).length / PER_PAGE);
-          if (p < 1 || p > total) return;
-          expensePage = p;
-          document.getElementById('expenseTableWrap').innerHTML = renderTable(EXPENSES, expensePage, 'expense');
-          renderPager(EXPENSES, expensePage, 'setExpensePage', 'expensePager');
-        }
-
-        setIncomePage(1);
-        setExpensePage(1);
-      </script>
-
     </div>
+
   </div>
+</main>
 
-  <div id="toast" class="toast"></div>
+<div id="toast" class="alert position-fixed d-none align-items-center gap-2" style="top:20px; right:20px; z-index:1080; min-width:260px;" role="alert"></div>
 
-  <!-- Excel Import Preview Modal -->
-  <div id="importModal" class="import-modal-overlay" onclick="closeImportModalOnOverlay(event)">
-    <div class="import-modal">
-      <div class="import-modal-head">
+<!-- Excel Import Preview Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
         <div>
-          <p class="text-base font-bold" style="color:#fff;">Banka Ekstresi — Önizleme</p>
-          <p id="importMeta" class="text-xs mt-0.5" style="color:rgba(255,255,255,0.4);"></p>
+          <h5 class="modal-title mb-0">Banka Ekstresi — Önizleme</h5>
+          <p id="importMeta" class="small text-secondary mb-0 mt-1"></p>
         </div>
-        <button onclick="document.getElementById('importModal').classList.remove('open')"
-                style="width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);
-                       background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);
-                       display:flex;align-items:center;justify-content:center;cursor:pointer;">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
       </div>
-
-      <!-- Выбор категорий + кнопка импорта -->
-      <div style="padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.08);
-                  display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px;">
-          <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.05em;">
-            Gelir Kategorisi
-          </label>
-          <select id="importIncomeCat"
-                  style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);
-                         background:rgba(255,255,255,0.07);color:#fff;font-size:13px;outline:none;cursor:pointer;">
+      <div class="px-4 py-3 border-bottom d-flex align-items-end gap-3 flex-wrap">
+        <div style="min-width:200px;">
+          <label class="form-label small text-secondary text-uppercase fw-semibold">Gelir Kategorisi</label>
+          <select id="importIncomeCat" class="form-select">
             <option value="">— seçin —</option>
             {{range .incomeCats}}
             <option value="{{.ID}}">{{.Name}}</option>
             {{end}}
           </select>
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px;">
-          <label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.05em;">
-            Gider Kategorisi
-          </label>
-          <select id="importExpenseCat"
-                  style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);
-                         background:rgba(255,255,255,0.07);color:#fff;font-size:13px;outline:none;cursor:pointer;">
+        <div style="min-width:200px;">
+          <label class="form-label small text-secondary text-uppercase fw-semibold">Gider Kategorisi</label>
+          <select id="importExpenseCat" class="form-select">
             <option value="">— seçin —</option>
             {{range .expenseCats}}
             <option value="{{.ID}}">{{.Name}}</option>
             {{end}}
           </select>
         </div>
-        <div style="padding-top:18px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;">
-          <div id="importError" style="display:none;font-size:12px;color:#f87171;font-weight:500;"></div>
-          <button id="importBtn" type="button" onclick="doImport()"
-                  style="padding:9px 22px;border-radius:10px;border:none;
-                         background:linear-gradient(135deg,#16a34a,#059669);
-                         color:#fff;font-size:13px;font-weight:700;cursor:pointer;
-                         display:inline-flex;align-items:center;gap:7px;white-space:nowrap;">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3" />
-            </svg>
-            İmport Et
+        <div class="d-flex flex-column gap-1">
+          <div id="importError" class="small text-danger d-none"></div>
+          <button id="importBtn" type="button" class="btn btn-success" onclick="doImport()">
+            <i class="ti ti-download"></i> İmport Et
           </button>
         </div>
       </div>
-
-      <div class="import-modal-body">
+      <div class="modal-body">
         <div id="importTableWrapper"></div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    const accountId = {{.account.ID}};
+<script src="/static/theme/assets/js/main.js" type="module"></script>
+<script>
+  const accountId = {{.account.ID}};
+  const INCOMES  = {{json .incomes}};
+  const EXPENSES = {{json .expenses}};
+  const PER_PAGE = 10;
+  let importModal;
+  document.addEventListener('DOMContentLoaded', () => {
+    importModal = new bootstrap.Modal(document.getElementById('importModal'));
+  });
 
-    async function saveAccount(e) {
-      e.preventDefault();
-      const payload = {
-        name:           document.getElementById('fName').value.trim(),
-        account_number: document.getElementById('fAccountNumber').value.trim(),
-        currency:       document.getElementById('fCurrency').value,
-        description:    document.getElementById('fDescription').value.trim(),
-      };
-      try {
-        const res = await fetch(`/api/accounts/${accountId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) {
-          showToast('✓ Hesap güncellendi', 'success');
-          setTimeout(() => window.location.href = '/accounts', 700);
-        } else {
-          const err = await res.json();
-          showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'error');
-        }
-      } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
-    }
-
-    function showToast(msg, type) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = 'toast show ' + type;
-      setTimeout(() => el.classList.remove('show'), 2800);
-    }
-
-    let _lastFile = null; // сохраняем файл для последующего импорта
-
-    const COL_DEFS = [
-      { key: 'date',   az: 'Əməliyyatın tarixi',         tr: 'Tarih' },
-      { key: 'ref',    az: 'Əməliyyatın referensi',      tr: 'Referans' },
-      { key: 'cp',     az: 'Əks hesab üzrə məlumatlar', tr: 'Karşı Taraf' },
-      { key: 'debit',  az: 'Debit məbləğ',               tr: 'Gider Tutarı' },
-      { key: 'credit', az: 'Kredit məbləğ',              tr: 'Gelir Tutarı' },
-      { key: 'desc',   az: 'Ödənişin təyinatı',          tr: 'Açıklama' },
-      { key: 'tax',    az: 'Qarşı tərəfin VÖEN-i',      tr: 'Vergi No' },
-    ];
-
-    function closeImportModalOnOverlay(e) {
-      if (e.target === document.getElementById('importModal'))
-        document.getElementById('importModal').classList.remove('open');
-    }
-
-    async function handleExcelImport(event) {
-      const file = event.target.files[0];
-      event.target.value = '';
-      if (!file) return;
-      _lastFile = file;
-
-      const form = new FormData();
-      form.append('file', file);
-
-      let data;
-      try {
-        const res = await fetch(`/api/accounts/${accountId}/statement-preview`, {
-          method: 'POST', body: form,
-        });
-        data = await res.json();
-        if (!res.ok) { showToast('✕ ' + (data.error || 'Xəta baş verdi'), 'error'); return; }
-      } catch {
-        showToast('✕ Sunucu bağlantı hatası', 'error');
-        return;
+  async function saveAccount(e) {
+    e.preventDefault();
+    const payload = {
+      name:           document.getElementById('fName').value.trim(),
+      account_number: document.getElementById('fAccountNumber').value.trim(),
+      currency:       document.getElementById('fCurrency').value,
+      description:    document.getElementById('fDescription').value.trim(),
+    };
+    try {
+      const res = await fetch(`/api/accounts/${accountId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        showToast('✓ Hesap güncellendi', 'success');
+        setTimeout(() => window.location.href = '/accounts', 700);
+      } else {
+        const err = await res.json();
+        showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'danger');
       }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
 
-      document.getElementById('importMeta').textContent =
-        `IBAN: ${data.iban} · ${data.gelirler.length} gelir · ${data.giderler.length} gider`;
+  function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'alert position-fixed d-flex align-items-center gap-2 alert-' + type;
+    el.style.top = '20px';
+    el.style.right = '20px';
+    el.style.zIndex = 1080;
+    el.style.minWidth = '260px';
+    setTimeout(() => el.classList.add('d-none'), 2800);
+  }
 
-      function buildTable(rows) {
-        if (!rows.length) return '<p style="color:rgba(255,255,255,0.3);font-size:13px;padding:12px 0;">Məlumat yoxdur</p>';
-        let t = '<table class="import-tbl"><thead><tr><th>#</th>';
+  function fmtDate(s) {
+    if (!s) return '';
+    const d = new Date(s);
+    return isNaN(d) ? s : `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+  }
+
+  function renderTable(data, page, type) {
+    if (!data || !data.length) {
+      return `<div class="text-center text-secondary small py-4">Bu hesaba ait ${type==='income'?'gelir':'gider'} yok</div>`;
+    }
+    const start = (page - 1) * PER_PAGE;
+    const slice = data.slice(start, start + PER_PAGE);
+    const badgeClass = type === 'income' ? 'bg-primary-subtle text-primary-emphasis' : 'bg-danger-subtle text-danger-emphasis';
+    const amtClass   = type === 'income' ? 'text-primary' : 'text-danger';
+    const sign       = type === 'income' ? '+' : '−';
+    const catField   = type === 'income' ? 'income_category_name' : 'expense_category_name';
+
+    let t = `<div class="table-responsive"><table class="table mb-0 align-middle"><thead class="table-light border-light"><tr>
+      <th>Ad</th><th>Kategori</th><th class="text-end">Tutar</th><th>Tarih</th>
+    </tr></thead><tbody>`;
+
+    slice.forEach(row => {
+      t += `<tr>
+        <td class="fw-semibold">${escH(row.name)}</td>
+        <td><span class="badge ${badgeClass}">${escH(row[catField]||'')}</span></td>
+        <td class="text-end fw-semibold ${amtClass}">${sign}${Number(row.amount).toFixed(2)}</td>
+        <td class="text-secondary small">${fmtDate(row.date)}</td>
+      </tr>`;
+    });
+    t += '</tbody></table></div>';
+    return t;
+  }
+
+  function renderPager(data, page, setPage, pagerId) {
+    const total = Math.ceil(data.length / PER_PAGE);
+    const el = document.getElementById(pagerId);
+    if (total <= 1) { el.classList.add('d-none'); el.classList.remove('d-flex'); return; }
+
+    el.classList.remove('d-none');
+    el.classList.add('d-flex');
+
+    let html = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="${setPage}(${page-1})" ${page===1?'disabled':''}>‹</button>`;
+    buildPageRange(page, total).forEach(p => {
+      if (p === '…') html += `<span class="text-secondary small px-1">…</span>`;
+      else html += `<button type="button" class="btn btn-sm ${p===page?'btn-primary':'btn-outline-secondary'}" onclick="${setPage}(${p})">${p}</button>`;
+    });
+    html += `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="${setPage}(${page+1})" ${page===total?'disabled':''}>›</button>`;
+    html += `<span class="small text-secondary ms-auto">${data.length} kayıt · ${page}/${total}</span>`;
+    el.innerHTML = html;
+  }
+
+  function buildPageRange(cur, total) {
+    if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+    const pages = new Set([1, total, cur]);
+    for (let i = cur-1; i <= cur+1; i++) if (i > 0 && i <= total) pages.add(i);
+    const sorted = [...pages].sort((a,b) => a-b);
+    const result = [];
+    let prev = 0;
+    for (const p of sorted) {
+      if (p - prev > 1) result.push('…');
+      result.push(p);
+      prev = p;
+    }
+    return result;
+  }
+
+  function escH(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  let incomePage = 1, expensePage = 1;
+
+  function setIncomePage(p) {
+    const total = Math.ceil((INCOMES||[]).length / PER_PAGE);
+    if (p < 1 || p > total) return;
+    incomePage = p;
+    document.getElementById('incomeTableWrap').innerHTML = renderTable(INCOMES, incomePage, 'income');
+    renderPager(INCOMES, incomePage, 'setIncomePage', 'incomePager');
+  }
+
+  function setExpensePage(p) {
+    const total = Math.ceil((EXPENSES||[]).length / PER_PAGE);
+    if (p < 1 || p > total) return;
+    expensePage = p;
+    document.getElementById('expenseTableWrap').innerHTML = renderTable(EXPENSES, expensePage, 'expense');
+    renderPager(EXPENSES, expensePage, 'setExpensePage', 'expensePager');
+  }
+
+  setIncomePage(1);
+  setExpensePage(1);
+
+  // ── Excel içe aktarma ──
+  let _lastFile = null;
+
+  const COL_DEFS = [
+    { key: 'date',   az: 'Əməliyyatın tarixi',        tr: 'Tarih' },
+    { key: 'ref',    az: 'Əməliyyatın referensi',     tr: 'Referans' },
+    { key: 'cp',     az: 'Əks hesab üzrə məlumatlar', tr: 'Karşı Taraf' },
+    { key: 'debit',  az: 'Debit məbləğ',              tr: 'Gider Tutarı' },
+    { key: 'credit', az: 'Kredit məbləğ',             tr: 'Gelir Tutarı' },
+    { key: 'desc',   az: 'Ödənişin təyinatı',         tr: 'Açıklama' },
+    { key: 'tax',    az: 'Qarşı tərəfin VÖEN-i',      tr: 'Vergi No' },
+  ];
+
+  async function handleExcelImport(event) {
+    const file = event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    _lastFile = file;
+
+    const form = new FormData();
+    form.append('file', file);
+
+    let data;
+    try {
+      const res = await fetch(`/api/accounts/${accountId}/statement-preview`, { method: 'POST', body: form });
+      data = await res.json();
+      if (!res.ok) { showToast('✕ ' + (data.error || 'Xəta baş verdi'), 'danger'); return; }
+    } catch {
+      showToast('✕ Sunucu bağlantı hatası', 'danger');
+      return;
+    }
+
+    document.getElementById('importMeta').textContent =
+      `IBAN: ${data.iban} · ${data.gelirler.length} gelir · ${data.giderler.length} gider`;
+
+    function buildTable(rows) {
+      if (!rows.length) return '<p class="text-secondary small py-3">Məlumat yoxdur</p>';
+      let t = '<div class="table-responsive"><table class="table table-sm mb-0"><thead class="table-light"><tr><th>#</th>';
+      COL_DEFS.forEach(c => {
+        t += `<th><span class="d-block">${c.az}</span><span class="small text-secondary fw-normal">(${c.tr})</span></th>`;
+      });
+      t += '</tr></thead><tbody>';
+      rows.forEach((row, i) => {
+        t += `<tr><td class="text-secondary small">${i + 1}</td>`;
         COL_DEFS.forEach(c => {
-          t += `<th><span style="display:block;">${c.az}</span>
-            <span style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:500;text-transform:none;letter-spacing:0;">(${c.tr})</span></th>`;
+          let cell = '';
+          if      (c.key === 'date')   cell = `<span class="text-nowrap">${escHtml(row.date)}</span>`;
+          else if (c.key === 'ref')    cell = `<span class="font-monospace small text-secondary">${escHtml(row.ref)}</span>`;
+          else if (c.key === 'cp')     cell = escHtml(row.cp);
+          else if (c.key === 'debit')  cell = row.debit  > 0 ? `<span class="text-danger fw-semibold">−${row.debit.toFixed(2)}</span>`  : `<span class="text-secondary">—</span>`;
+          else if (c.key === 'credit') cell = row.credit > 0 ? `<span class="text-primary fw-semibold">+${row.credit.toFixed(2)}</span>` : `<span class="text-secondary">—</span>`;
+          else if (c.key === 'desc')   cell = `<span class="text-secondary" style="white-space:pre-line;">${escHtml(row.desc)}</span>`;
+          else if (c.key === 'tax')    cell = `<span class="font-monospace small text-secondary">${escHtml(row.tax)}</span>`;
+          t += `<td style="max-width:260px;word-break:break-word;">${cell}</td>`;
         });
-        t += '</tr></thead><tbody>';
-        rows.forEach((row, i) => {
-          t += `<tr><td style="color:rgba(255,255,255,0.3);font-size:11px;">${i + 1}</td>`;
-          COL_DEFS.forEach(c => {
-            let cell = '';
-            if      (c.key === 'date')   cell = `<span style="white-space:nowrap;">${escHtml(row.date)}</span>`;
-            else if (c.key === 'ref')    cell = `<span class="ref">${escHtml(row.ref)}</span>`;
-            else if (c.key === 'cp')     cell = escHtml(row.cp);
-            else if (c.key === 'debit')  cell = row.debit  > 0 ? `<span class="debit">−${row.debit.toFixed(2)}</span>`  : `<span style="color:rgba(255,255,255,0.2);">—</span>`;
-            else if (c.key === 'credit') cell = row.credit > 0 ? `<span class="credit">+${row.credit.toFixed(2)}</span>` : `<span style="color:rgba(255,255,255,0.2);">—</span>`;
-            else if (c.key === 'desc')   cell = `<span class="desc">${escHtml(row.desc)}</span>`;
-            else if (c.key === 'tax')    cell = `<span class="ref">${escHtml(row.tax)}</span>`;
-            t += `<td>${cell}</td>`;
-          });
-          t += '</tr>';
-        });
-        t += '</tbody></table>';
-        return t;
-      }
-
-      function sectionHeader(label, count, total, color) {
-        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div>
-          <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color};">${label}</span>
-          <span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;
-                       background:${color}1a;color:${color};border:1px solid ${color}33;">${count}</span>
-          <span style="margin-left:auto;font-size:13px;font-weight:700;color:${color};font-variant-numeric:tabular-nums;">
-            ${total.toFixed(2)} ₼
-          </span></div>`;
-      }
-
-      let html = '<div style="margin-bottom:28px;">';
-      html += sectionHeader('Gelirler (Kredit)', data.gelirler.length, data.total_credit, '#4ade80');
-      html += buildTable(data.gelirler);
-      html += '</div>';
-      html += '<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:24px;">';
-      html += sectionHeader('Giderler (Debit)', data.giderler.length, data.total_debit, '#f87171');
-      html += buildTable(data.giderler);
-      html += '</div>';
-
-      document.getElementById('importTableWrapper').innerHTML = html;
-      document.getElementById('importModal').classList.add('open');
+        t += '</tr>';
+      });
+      t += '</tbody></table></div>';
+      return t;
     }
 
-    function setImportError(msg) {
-      const el = document.getElementById('importError');
-      if (msg) { el.textContent = '✕ ' + msg; el.style.display = 'block'; }
-      else      { el.style.display = 'none'; }
+    function sectionHeader(label, count, total, badgeClass, amountClass) {
+      return `<div class="d-flex align-items-center gap-2 mb-3">
+        <span class="badge rounded-pill ${badgeClass}">&nbsp;</span>
+        <span class="small text-uppercase fw-semibold">${label}</span>
+        <span class="badge ${badgeClass.replace('bg-','bg-').includes('primary') ? 'bg-primary-subtle text-primary-emphasis' : 'bg-danger-subtle text-danger-emphasis'}">${count}</span>
+        <span class="ms-auto fw-bold ${amountClass}">${total.toFixed(2)} ₼</span>
+      </div>`;
     }
 
-    async function doImport() {
-      setImportError('');
-      const incomeCatId  = document.getElementById('importIncomeCat').value;
-      const expenseCatId = document.getElementById('importExpenseCat').value;
-      if (!incomeCatId)  { setImportError('Gelir kategorisini seçin'); return; }
-      if (!expenseCatId) { setImportError('Gider kategorisini seçin'); return; }
-      if (!_lastFile)    { setImportError('Fayl tapılmadı, yenidən seçin'); return; }
+    let html = '<div class="mb-4">';
+    html += sectionHeader('Gelirler (Kredit)', data.gelirler.length, data.total_credit, 'bg-primary', 'text-primary');
+    html += buildTable(data.gelirler);
+    html += '</div>';
+    html += '<div class="border-top pt-4">';
+    html += sectionHeader('Giderler (Debit)', data.giderler.length, data.total_debit, 'bg-danger', 'text-danger');
+    html += buildTable(data.giderler);
+    html += '</div>';
 
-      const btn = document.getElementById('importBtn');
-      btn.disabled = true;
-      btn.style.opacity = '0.6';
-      btn.textContent = 'Gözləyin...';
+    document.getElementById('importTableWrapper').innerHTML = html;
+    importModal.show();
+  }
 
-      const form = new FormData();
-      form.append('file', _lastFile);
-      form.append('income_category_id',  incomeCatId);
-      form.append('expense_category_id', expenseCatId);
+  function setImportError(msg) {
+    const el = document.getElementById('importError');
+    if (msg) { el.textContent = '✕ ' + msg; el.classList.remove('d-none'); }
+    else      { el.classList.add('d-none'); }
+  }
 
-      try {
-        const res  = await fetch(`/api/accounts/${accountId}/statement-import`, { method: 'POST', body: form });
-        const data = await res.json();
-        if (!res.ok) { setImportError(data.error || 'Xəta baş verdi'); return; }
-        document.getElementById('importModal').classList.remove('open');
-        showToast(`✓ ${data.imported_incomes} gelir, ${data.imported_expenses} gider əlavə edildi`, 'success');
-        setTimeout(() => location.reload(), 1200);
-      } catch (err) {
-        setImportError('Sunucu bağlantı hatası');
-      } finally {
-        btn.disabled = false;
-        btn.style.opacity = '1';
-        btn.textContent = 'İmport Et';
-      }
+  async function doImport() {
+    setImportError('');
+    const incomeCatId  = document.getElementById('importIncomeCat').value;
+    const expenseCatId = document.getElementById('importExpenseCat').value;
+    if (!incomeCatId)  { setImportError('Gelir kategorisini seçin'); return; }
+    if (!expenseCatId) { setImportError('Gider kategorisini seçin'); return; }
+    if (!_lastFile)    { setImportError('Fayl tapılmadı, yenidən seçin'); return; }
+
+    const btn = document.getElementById('importBtn');
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Gözləyin...';
+
+    const form = new FormData();
+    form.append('file', _lastFile);
+    form.append('income_category_id',  incomeCatId);
+    form.append('expense_category_id', expenseCatId);
+
+    try {
+      const res  = await fetch(`/api/accounts/${accountId}/statement-import`, { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) { setImportError(data.error || 'Xəta baş verdi'); return; }
+      importModal.hide();
+      let msg = `✓ ${data.imported_incomes} gelir, ${data.imported_expenses} gider əlavə edildi`;
+      if (data.skipped_duplicates > 0) msg += ` (${data.skipped_duplicates} təkrar işlem keçildi)`;
+      showToast(msg, 'success');
+      setTimeout(() => location.reload(), 1200);
+    } catch (err) {
+      setImportError('Sunucu bağlantı hatası');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
     }
+  }
 
-    function escHtml(s) {
-      return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-  </script>
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
 
 </body>
 </html>

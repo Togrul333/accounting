@@ -112,6 +112,12 @@ func (h *PageHandler) Settings(c *gin.Context) {
 func (h *PageHandler) Dashboard(c *gin.Context) {
 	ctx := c.Request.Context()
 
+	user, err := h.userSvc.GetByID(ctx, 1)
+	if err != nil {
+		log.Printf("dashboard user error: %v", err)
+		user = &model.User{Name: "Kullanıcı"}
+	}
+
 	accounts, _ := h.accountSvc.GetAll(ctx)
 	if accounts == nil {
 		accounts = []model.Account{}
@@ -194,24 +200,33 @@ func (h *PageHandler) Dashboard(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "dashboard.html", gin.H{
-		"active":               "dashboard",
-		"totalBalance":         totalBalance,
-		"accountCount":         len(accounts),
-		"totalIncome":          totalIncome,
-		"incomeCount":          len(incomes),
-		"totalExpense":         totalExpense,
-		"expenseCount":         len(expenses),
-		"net":                  totalIncome - totalExpense,
-		"tourCount":            len(tours),
-		"activeTourCount":      activeTourCount,
-		"clientCount":          len(clients),
-		"recentTours":          sortedTours,
-		"recentTransactions":   txs,
+		"active":             "dashboard",
+		"user":               user,
+		"totalBalance":       totalBalance,
+		"accountCount":       len(accounts),
+		"totalIncome":        totalIncome,
+		"incomeCount":        len(incomes),
+		"totalExpense":       totalExpense,
+		"expenseCount":       len(expenses),
+		"net":                totalIncome - totalExpense,
+		"tourCount":          len(tours),
+		"activeTourCount":    activeTourCount,
+		"clientCount":        len(clients),
+		"recentTours":        sortedTours,
+		"recentTransactions": txs,
 	})
 }
 
 func (h *PageHandler) Accounts(c *gin.Context) {
-	accounts, err := h.accountSvc.GetAll(c.Request.Context())
+	ctx := c.Request.Context()
+
+	user, err := h.userSvc.GetByID(ctx, 1)
+	if err != nil {
+		log.Printf("accounts page user error: %v", err)
+		user = &model.User{Name: "Kullanıcı"}
+	}
+
+	accounts, err := h.accountSvc.GetAll(ctx)
 	if err != nil {
 		log.Printf("accounts page error: %v", err)
 		accounts = []model.Account{}
@@ -229,22 +244,31 @@ func (h *PageHandler) Accounts(c *gin.Context) {
 		"accounts": accounts,
 		"total":    total,
 		"active":   "accounts",
+		"user":     user,
 	})
 }
 
 func (h *PageHandler) AccountEdit(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	user, err := h.userSvc.GetByID(ctx, 1)
+	if err != nil {
+		log.Printf("account edit page user error: %v", err)
+		user = &model.User{Name: "Kullanıcı"}
+	}
+
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Redirect(http.StatusFound, "/accounts")
 		return
 	}
-	account, err := h.accountSvc.GetByID(c.Request.Context(), id)
+	account, err := h.accountSvc.GetByID(ctx, id)
 	if err != nil {
 		log.Printf("account edit page error: %v", err)
 		c.Redirect(http.StatusFound, "/accounts")
 		return
 	}
-	incomes, err := h.incomeSvc.GetByAccountID(c.Request.Context(), id)
+	incomes, err := h.incomeSvc.GetByAccountID(ctx, id)
 	if err != nil {
 		log.Printf("account incomes error: %v", err)
 		incomes = []model.Income{}
@@ -252,7 +276,7 @@ func (h *PageHandler) AccountEdit(c *gin.Context) {
 	if incomes == nil {
 		incomes = []model.Income{}
 	}
-	expenses, err := h.expenseSvc.GetByAccountID(c.Request.Context(), id)
+	expenses, err := h.expenseSvc.GetByAccountID(ctx, id)
 	if err != nil {
 		log.Printf("account expenses error: %v", err)
 		expenses = []model.Expense{}
@@ -260,69 +284,88 @@ func (h *PageHandler) AccountEdit(c *gin.Context) {
 	if expenses == nil {
 		expenses = []model.Expense{}
 	}
-	incomeCats, err := h.incomeCategorySvc.GetAll(c.Request.Context())
+	incomeCats, err := h.incomeCategorySvc.GetAll(ctx)
 	if err != nil {
 		incomeCats = nil
 	}
-	expenseCats, err := h.expenseCategorySvc.GetAll(c.Request.Context())
+	expenseCats, err := h.expenseCategorySvc.GetAll(ctx)
 	if err != nil {
 		expenseCats = nil
 	}
 	c.HTML(http.StatusOK, "account_edit.html", gin.H{
-		"account":      account,
-		"incomes":      incomes,
-		"expenses":     expenses,
-		"incomeCats":   incomeCats,
-		"expenseCats":  expenseCats,
-		"active":       "accounts",
+		"account":     account,
+		"incomes":     incomes,
+		"expenses":    expenses,
+		"incomeCats":  incomeCats,
+		"expenseCats": expenseCats,
+		"active":      "accounts",
+		"user":        user,
 	})
 }
 
 func (h *PageHandler) AccountIncomes(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	user, err := h.userSvc.GetByID(ctx, 1)
+	if err != nil {
+		log.Printf("account incomes page user error: %v", err)
+		user = &model.User{Name: "Kullanıcı"}
+	}
+
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Redirect(http.StatusFound, "/accounts")
 		return
 	}
-	account, err := h.accountSvc.GetByID(c.Request.Context(), id)
+	account, err := h.accountSvc.GetByID(ctx, id)
 	if err != nil {
 		c.Redirect(http.StatusFound, "/accounts")
 		return
 	}
-	incomes, _ := h.incomeSvc.GetByAccountID(c.Request.Context(), id)
+	incomes, _ := h.incomeSvc.GetByAccountID(ctx, id)
 	if incomes == nil {
 		incomes = []model.Income{}
 	}
-	cats, _ := h.incomeCategorySvc.GetAll(c.Request.Context())
+	cats, _ := h.incomeCategorySvc.GetAll(ctx)
 	c.HTML(http.StatusOK, "account_incomes.html", gin.H{
 		"account": account,
 		"incomes": incomes,
 		"cats":    cats,
 		"active":  "accounts",
+		"user":    user,
 	})
 }
 
 func (h *PageHandler) AccountExpenses(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	user, err := h.userSvc.GetByID(ctx, 1)
+	if err != nil {
+		log.Printf("account expenses page user error: %v", err)
+		user = &model.User{Name: "Kullanıcı"}
+	}
+
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Redirect(http.StatusFound, "/accounts")
 		return
 	}
-	account, err := h.accountSvc.GetByID(c.Request.Context(), id)
+	account, err := h.accountSvc.GetByID(ctx, id)
 	if err != nil {
 		c.Redirect(http.StatusFound, "/accounts")
 		return
 	}
-	expenses, _ := h.expenseSvc.GetByAccountID(c.Request.Context(), id)
+	expenses, _ := h.expenseSvc.GetByAccountID(ctx, id)
 	if expenses == nil {
 		expenses = []model.Expense{}
 	}
-	cats, _ := h.expenseCategorySvc.GetAll(c.Request.Context())
+	cats, _ := h.expenseCategorySvc.GetAll(ctx)
 	c.HTML(http.StatusOK, "account_expenses.html", gin.H{
 		"account":  account,
 		"expenses": expenses,
 		"cats":     cats,
 		"active":   "accounts",
+		"user":     user,
 	})
 }
 
@@ -458,7 +501,15 @@ func (h *PageHandler) Tours(c *gin.Context) {
 }
 
 func (h *PageHandler) Clients(c *gin.Context) {
-	clients, err := h.clientSvc.GetAll(c.Request.Context())
+	ctx := c.Request.Context()
+
+	user, err := h.userSvc.GetByID(ctx, 1)
+	if err != nil {
+		log.Printf("clients page user error: %v", err)
+		user = &model.User{Name: "Kullanıcı"}
+	}
+
+	clients, err := h.clientSvc.GetAll(ctx)
 	if err != nil {
 		log.Printf("clients page error: %v", err)
 		clients = []model.Client{}
@@ -469,6 +520,7 @@ func (h *PageHandler) Clients(c *gin.Context) {
 	c.HTML(http.StatusOK, "clients.html", gin.H{
 		"clients": clients,
 		"active":  "clients",
+		"user":    user,
 	})
 }
 
@@ -605,26 +657,34 @@ func (h *PageHandler) TourEdit(c *gin.Context) {
 }
 
 func (h *PageHandler) OrderShow(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	user, err := h.userSvc.GetByID(ctx, 1)
+	if err != nil {
+		log.Printf("order show page user error: %v", err)
+		user = &model.User{Name: "Kullanıcı"}
+	}
+
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Redirect(http.StatusFound, "/orders")
 		return
 	}
-	order, err := h.orderSvc.GetByID(c.Request.Context(), id)
+	order, err := h.orderSvc.GetByID(ctx, id)
 	if err != nil {
 		log.Printf("order show page error: %v", err)
 		c.Redirect(http.StatusFound, "/orders")
 		return
 	}
-	incomeCategories, err := h.incomeCategorySvc.GetAll(c.Request.Context())
+	incomeCategories, err := h.incomeCategorySvc.GetAll(ctx)
 	if err != nil {
 		incomeCategories = []model.IncomeCategory{}
 	}
-	accounts, err := h.accountSvc.GetAll(c.Request.Context())
+	accounts, err := h.accountSvc.GetAll(ctx)
 	if err != nil {
 		accounts = []model.Account{}
 	}
-	discountCategories, err := h.discountCategorySvc.GetAll(c.Request.Context())
+	discountCategories, err := h.discountCategorySvc.GetAll(ctx)
 	if err != nil {
 		discountCategories = []model.DiscountCategory{}
 	}
@@ -634,38 +694,47 @@ func (h *PageHandler) OrderShow(c *gin.Context) {
 		"accounts":           accounts,
 		"discountCategories": discountCategories,
 		"active":             "orders",
+		"user":               user,
 	})
 }
 
 func (h *PageHandler) OrderEdit(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	user, err := h.userSvc.GetByID(ctx, 1)
+	if err != nil {
+		log.Printf("order edit page user error: %v", err)
+		user = &model.User{Name: "Kullanıcı"}
+	}
+
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Redirect(http.StatusFound, "/orders")
 		return
 	}
-	order, err := h.orderSvc.GetByID(c.Request.Context(), id)
+	order, err := h.orderSvc.GetByID(ctx, id)
 	if err != nil {
 		log.Printf("order edit page error: %v", err)
 		c.Redirect(http.StatusFound, "/orders")
 		return
 	}
-	clients, err := h.clientSvc.GetAll(c.Request.Context())
+	clients, err := h.clientSvc.GetAll(ctx)
 	if err != nil {
 		clients = []model.Client{}
 	}
-	tours, err := h.tourSvc.GetAll(c.Request.Context())
+	tours, err := h.tourSvc.GetAll(ctx)
 	if err != nil {
 		tours = []model.Tour{}
 	}
-	incomeCategories, err := h.incomeCategorySvc.GetAll(c.Request.Context())
+	incomeCategories, err := h.incomeCategorySvc.GetAll(ctx)
 	if err != nil {
 		incomeCategories = []model.IncomeCategory{}
 	}
-	accounts, err := h.accountSvc.GetAll(c.Request.Context())
+	accounts, err := h.accountSvc.GetAll(ctx)
 	if err != nil {
 		accounts = []model.Account{}
 	}
-	discountCategories, err := h.discountCategorySvc.GetAll(c.Request.Context())
+	discountCategories, err := h.discountCategorySvc.GetAll(ctx)
 	if err != nil {
 		discountCategories = []model.DiscountCategory{}
 	}
@@ -677,11 +746,18 @@ func (h *PageHandler) OrderEdit(c *gin.Context) {
 		"accounts":           accounts,
 		"discountCategories": discountCategories,
 		"active":             "orders",
+		"user":               user,
 	})
 }
 
 func (h *PageHandler) Orders(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	user, err := h.userSvc.GetByID(ctx, 1)
+	if err != nil {
+		log.Printf("orders page user error: %v", err)
+		user = &model.User{Name: "Kullanıcı"}
+	}
 
 	orders, err := h.orderSvc.GetAll(ctx)
 	if err != nil {
@@ -702,6 +778,16 @@ func (h *PageHandler) Orders(c *gin.Context) {
 		tours = []model.Tour{}
 	}
 
+	// Tur filtresinde hızlı seçim etiketleri için: başlangıç tarihine göre azalan son 5 tur
+	recentTours := make([]model.Tour, len(tours))
+	copy(recentTours, tours)
+	sort.Slice(recentTours, func(i, j int) bool {
+		return recentTours[i].StartDate.After(recentTours[j].StartDate)
+	})
+	if len(recentTours) > 5 {
+		recentTours = recentTours[:5]
+	}
+
 	incomeCategories, err := h.incomeCategorySvc.GetAll(ctx)
 	if err != nil {
 		incomeCategories = []model.IncomeCategory{}
@@ -716,9 +802,11 @@ func (h *PageHandler) Orders(c *gin.Context) {
 		"orders":           orders,
 		"clients":          clients,
 		"tours":            tours,
+		"recentTours":      recentTours,
 		"incomeCategories": incomeCategories,
 		"accounts":         accounts,
 		"active":           "orders",
+		"user":             user,
 	})
 }
 
@@ -763,7 +851,15 @@ func (h *PageHandler) Expenses(c *gin.Context) {
 }
 
 func (h *PageHandler) Tasks(c *gin.Context) {
-	tasks, err := h.taskSvc.GetAll(c.Request.Context())
+	ctx := c.Request.Context()
+
+	user, err := h.userSvc.GetByID(ctx, 1)
+	if err != nil {
+		log.Printf("tasks page user error: %v", err)
+		user = &model.User{Name: "Kullanıcı"}
+	}
+
+	tasks, err := h.taskSvc.GetAll(ctx)
 	if err != nil {
 		log.Printf("tasks page error: %v", err)
 		tasks = []model.Task{}
@@ -783,5 +879,6 @@ func (h *PageHandler) Tasks(c *gin.Context) {
 		"doneTasks":       grouped["done"],
 		"taskCount":       len(tasks),
 		"active":          "tasks",
+		"user":            user,
 	})
 }

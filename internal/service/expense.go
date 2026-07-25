@@ -27,6 +27,10 @@ func (s *ExpenseService) GetByAccountID(ctx context.Context, accountID int64) ([
 	return s.repo.GetByAccountID(ctx, accountID)
 }
 
+func (s *ExpenseService) GetBankRefsByAccountID(ctx context.Context, accountID int64) (map[string]bool, error) {
+	return s.repo.GetBankRefsByAccountID(ctx, accountID)
+}
+
 func (s *ExpenseService) Create(ctx context.Context, req model.CreateExpenseRequest) (*model.Expense, error) {
 	return s.repo.Create(ctx, req)
 }

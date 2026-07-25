@@ -13,6 +13,7 @@ type ExpenseRepository interface {
 	GetAll(ctx context.Context) ([]model.Expense, error)
 	GetByID(ctx context.Context, id int64) (*model.Expense, error)
 	GetByAccountID(ctx context.Context, accountID int64) ([]model.Expense, error)
+	GetBankRefsByAccountID(ctx context.Context, accountID int64) (map[string]bool, error)
 	Create(ctx context.Context, req model.CreateExpenseRequest) (*model.Expense, error)
 	BulkCreate(ctx context.Context, reqs []model.CreateExpenseRequest) ([]model.Expense, error)
 	Update(ctx context.Context, id int64, req model.UpdateExpenseRequest) (*model.Expense, error)
@@ -67,6 +68,24 @@ func (r *expenseRepo) GetByAccountID(ctx context.Context, accountID int64) ([]mo
 		expenses = []model.Expense{}
 	}
 	return expenses, err
+}
+
+// GetBankRefsByAccountID hesaba ait, boş olmayan bank_ref değerlerinin kümesini döner —
+// banka ekstresi içe aktarımında aynı işlemin tekrar eklenmesini önlemek için kullanılır.
+func (r *expenseRepo) GetBankRefsByAccountID(ctx context.Context, accountID int64) (map[string]bool, error) {
+	var refs []string
+	err := r.db.WithContext(ctx).
+		Model(&model.Expense{}).
+		Where("account_id = ? AND bank_ref IS NOT NULL AND bank_ref != ''", accountID).
+		Pluck("bank_ref", &refs).Error
+	if err != nil {
+		return nil, err
+	}
+	set := make(map[string]bool, len(refs))
+	for _, ref := range refs {
+		set[ref] = true
+	}
+	return set, nil
 }
 
 func (r *expenseRepo) Create(ctx context.Context, req model.CreateExpenseRequest) (*model.Expense, error) {

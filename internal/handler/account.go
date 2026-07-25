@@ -243,9 +243,9 @@ func parseStatement(xl *excelize.File, expectedIBAN string) (*model.StatementPre
 
 	preview := &model.StatementPreview{IBAN: fileIban}
 	for _, row := range rows[hdrIdx+1:] {
-		debit  := getF(row, colDebit)
+		debit := getF(row, colDebit)
 		credit := getF(row, colCredit)
-		date   := get(row, colDate)
+		date := get(row, colDate)
 		if date == "" && debit == 0 && credit == 0 {
 			continue
 		}
@@ -341,8 +341,30 @@ func (h *AccountHandler) ImportStatement(c *gin.Context) {
 		return t.Format("2006-01-02")
 	}
 
+	// Aynı banka referansına sahip işlemin tekrar eklenmesini önlemek için
+	// hesaba ait mevcut bank_ref'ler önceden yükleniyor.
+	existingIncomeRefs, err := h.incomeSvc.GetBankRefsByAccountID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "incomes: " + err.Error()})
+		return
+	}
+	existingExpenseRefs, err := h.expenseSvc.GetBankRefsByAccountID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "expenses: " + err.Error()})
+		return
+	}
+
+	skippedDuplicates := 0
+	seenIncomeRefs := map[string]bool{}
 	var incomeReqs []model.CreateIncomeRequest
 	for _, row := range preview.Gelirler {
+		if row.Ref != "" && (existingIncomeRefs[row.Ref] || seenIncomeRefs[row.Ref]) {
+			skippedDuplicates++
+			continue
+		}
+		if row.Ref != "" {
+			seenIncomeRefs[row.Ref] = true
+		}
 		name := row.Desc
 		if name == "" {
 			name = row.Ref
@@ -359,8 +381,16 @@ func (h *AccountHandler) ImportStatement(c *gin.Context) {
 		})
 	}
 
+	seenExpenseRefs := map[string]bool{}
 	var expenseReqs []model.CreateExpenseRequest
 	for _, row := range preview.Giderler {
+		if row.Ref != "" && (existingExpenseRefs[row.Ref] || seenExpenseRefs[row.Ref]) {
+			skippedDuplicates++
+			continue
+		}
+		if row.Ref != "" {
+			seenExpenseRefs[row.Ref] = true
+		}
 		name := row.Desc
 		if name == "" {
 			name = row.Ref
@@ -398,7 +428,8 @@ func (h *AccountHandler) ImportStatement(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"imported_incomes":  importedIncomes,
-		"imported_expenses": importedExpenses,
+		"imported_incomes":   importedIncomes,
+		"imported_expenses":  importedExpenses,
+		"skipped_duplicates": skippedDuplicates,
 	})
 }

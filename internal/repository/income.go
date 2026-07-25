@@ -14,6 +14,7 @@ type IncomeRepository interface {
 	GetByID(ctx context.Context, id int64) (*model.Income, error)
 	GetByAccountID(ctx context.Context, accountID int64) ([]model.Income, error)
 	GetByOrderID(ctx context.Context, orderID int64) ([]model.Income, error)
+	GetBankRefsByAccountID(ctx context.Context, accountID int64) (map[string]bool, error)
 	Create(ctx context.Context, req model.CreateIncomeRequest) (*model.Income, error)
 	BulkCreate(ctx context.Context, reqs []model.CreateIncomeRequest) ([]model.Income, error)
 	Update(ctx context.Context, id int64, req model.UpdateIncomeRequest) (*model.Income, error)
@@ -78,6 +79,24 @@ func (r *incomeRepo) GetByOrderID(ctx context.Context, orderID int64) ([]model.I
 		incomes = []model.Income{}
 	}
 	return incomes, err
+}
+
+// GetBankRefsByAccountID hesaba ait, boş olmayan bank_ref değerlerinin kümesini döner —
+// banka ekstresi içe aktarımında aynı işlemin tekrar eklenmesini önlemek için kullanılır.
+func (r *incomeRepo) GetBankRefsByAccountID(ctx context.Context, accountID int64) (map[string]bool, error) {
+	var refs []string
+	err := r.db.WithContext(ctx).
+		Model(&model.Income{}).
+		Where("account_id = ? AND bank_ref IS NOT NULL AND bank_ref != ''", accountID).
+		Pluck("bank_ref", &refs).Error
+	if err != nil {
+		return nil, err
+	}
+	set := make(map[string]bool, len(refs))
+	for _, ref := range refs {
+		set[ref] = true
+	}
+	return set, nil
 }
 
 func (r *incomeRepo) Create(ctx context.Context, req model.CreateIncomeRequest) (*model.Income, error) {

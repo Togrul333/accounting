@@ -4,598 +4,533 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Müşteriler — Hisar Tour</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/theme/assets/css/main.css">
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <style>
-    * { font-family: 'Inter', sans-serif; }
-    .input-field {
-      width: 100%; padding: 10px 14px; border-radius: 10px;
-      border: 1px solid #2a2a2a; background: #1e1e1e;
-      color: #ececec; font-size: 14px; outline: none; transition: all .2s;
-    }
-    .input-field::placeholder { color: #383838; }
-    .input-field:focus { border-color: #00d4ff; box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 8px 18px; border-radius: 10px; border: none;
-      background: linear-gradient(135deg, #00d4ff, #7b2fff);
-      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s;
-    }
-    .btn-primary:hover { filter: brightness(1.08); }
-    .table-wrap { background: #161616; border: 1px solid #242424; border-radius: 16px; overflow: hidden; }
-    thead tr { background: rgba(0,212,255,0.04); border-bottom: 1px solid #242424; }
-    tbody tr { border-bottom: 1px solid #1e1e1e; transition: background .1s; }
-    tbody tr:hover { background: rgba(255,255,255,0.02); }
-    tbody tr:last-child { border-bottom: none; }
-    .action-btn { padding: 6px; border-radius: 8px; border: none; cursor: pointer; background: transparent; color: #484848; transition: all .15s; }
-    .action-btn.edit:hover  { color: #00d4ff; background: rgba(0,212,255,0.1); }
-    .action-btn.delete:hover { color: #ff5555; background: rgba(255,85,85,0.1); }
-    .modal-overlay { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); }
-    .modal-overlay.open { display: flex; }
-    .modal-card { background: #161616; border: 1px solid #242424; border-radius: 20px; width: 100%; max-width: 480px; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
-    .toast { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 11px 18px; border-radius: 12px; font-size: 13px; font-weight: 500; display: none; }
-    .toast.show { display: flex; align-items: center; gap: 8px; }
-    .toast.success { background: rgba(0,212,255,0.1); color: #00d4ff; border: 1px solid rgba(0,212,255,0.2); }
-    .toast.error   { background: #2a1a1a; color: #ff5555; border: 1px solid rgba(255,85,85,0.2); }
-    .doc-upload-box {
-      border: 1.5px dashed #2a2a2a; border-radius: 12px; padding: 14px;
-      display: flex; align-items: center; gap: 12px; background: #1a1a1a; transition: all .15s;
-    }
-    .doc-upload-box:hover { border-color: #00d4ff; }
-    .doc-thumb { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; border: 1px solid #2a2a2a; flex-shrink: 0; }
-    .doc-btn {
-      padding: 7px 14px; border-radius: 8px; border: 1px solid #2a2a2a; background: #1e1e1e;
-      color: #ececec; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s;
-    }
-    .doc-btn:hover { border-color: #00d4ff; color: #00d4ff; }
-    .doc-status { font-size: 12px; color: #606060; }
-    .doc-status.scanning { color: #00d4ff; }
-    .doc-status.done { color: #4ade80; }
-    .doc-status.error { color: #ff5555; }
-  </style>
 </head>
-<body style="background:#0d0d0d; min-height:100vh;">
+<body>
 
-  {{template "sidebar" .}}
-{{template "topbar" .}}
+{{template "topbar_v2" .}}
+{{template "sidebar_v2" .}}
 
-  <div class="ml-64 min-h-screen flex flex-col">
+<main id="content" class="content py-10">
+  <div class="container-fluid">
 
-    <div class="px-8 h-16 flex items-center justify-between flex-shrink-0"
-         style="background:#161616; border-bottom:1px solid #242424;">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-             style="background:#1e1e1e; border:1px solid #2a2a2a;">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00d4ff" opacity=".7">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-base font-bold leading-none" style="color:#ececec;">Müşteriler</h1>
-          <p class="text-xs mt-0.5" style="color:#484848;">Müşteri bilgilerini yönetin</p>
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h1 class="fs-3 mb-1">Müşteriler</h1>
+            <p class="mb-0 text-secondary">Müşteri bilgilerini yönetin</p>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="openCreate()">
+            <i class="ti ti-plus"></i> Müşteri Ekle
+          </button>
         </div>
       </div>
-      <button onclick="openCreate()" class="btn-primary">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Müşteri Ekle
-      </button>
     </div>
 
-    <div class="p-8 flex-1">
-
-      <div class="mb-8 max-w-xs">
-        <div style="background:#161616; border:1px solid #242424; border-radius:16px;" class="p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div style="width:36px;height:36px;border-radius:10px;background:#1e1e1e;border:1px solid #2a2a2a;display:flex;align-items:center;justify-content:center;">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="#00d4ff">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07" />
-              </svg>
+    <div class="row g-3 mb-3">
+      <div class="col-lg-3 col-12">
+        <div class="card p-4 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-2">
+          <div class="d-flex gap-3">
+            <div class="icon-shape icon-md bg-primary text-white rounded-2">
+              <i class="ti ti-users fs-4"></i>
             </div>
-            <p class="text-xs font-semibold uppercase tracking-wider" style="color:#484848;">Toplam Müşteri</p>
+            <div>
+              <h2 class="mb-3 fs-6">Toplam Müşteri</h2>
+              <h3 class="fw-bold mb-0">{{len .clients}}</h3>
+            </div>
           </div>
-          <p class="text-3xl font-extrabold tracking-tight" style="color:#ececec;">{{len .clients}}</p>
         </div>
-      </div>
-
-      <div class="table-wrap">
-        {{if .clients}}
-        <table class="w-full">
-          <thead>
-            <tr>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">#</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Ad Soyad</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">E-posta</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Telefon</th>
-              <th class="text-left px-6 py-3.5 text-xs font-bold uppercase tracking-wider" style="color:#484848;">Doğum Tarihi</th>
-              <th class="px-6 py-3.5 w-20"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {{range .clients}}
-            <tr class="group">
-              <td class="px-6 py-4">
-                <span class="text-xs tabular-nums" style="color:#383838;">{{.ID}}</span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="font-semibold text-sm" style="color:#ececec;">{{.FirstName}} {{.LastName}}</span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="text-sm" style="color:#888888;">{{.Email}}</span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="text-sm tabular-nums" style="color:#888888;">{{.Phone}}</span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="text-sm tabular-nums" style="color:#888888;">{{ddmmyyyy .BirthDate}}</span>
-              </td>
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onclick='openEdit({{json .}})' title="Düzenle" class="action-btn edit">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                    </svg>
-                  </button>
-                  <button onclick="deleteItem({{.ID}})" title="Sil" class="action-btn delete">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            {{end}}
-          </tbody>
-        </table>
-        {{else}}
-        <div class="flex flex-col items-center justify-center py-24">
-          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
-               style="background:#1e1e1e; border:1px solid #2a2a2a;">
-            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke-width="1.3" stroke="#383838">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07" />
-            </svg>
-          </div>
-          <p class="font-semibold mb-1" style="color:#606060;">Müşteri bulunamadı</p>
-          <p class="text-sm mb-6" style="color:#383838;">İlk müşteriyi ekleyin</p>
-          <button onclick="openCreate()" class="btn-primary">+ Müşteri Ekle</button>
-        </div>
-        {{end}}
       </div>
     </div>
+
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          {{if .clients}}
+          <div class="table-responsive">
+            <table class="table mb-0 text-nowrap table-hover align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>#</th>
+                  <th>Ad Soyad</th>
+                  <th>E-posta</th>
+                  <th>Telefon</th>
+                  <th>Doğum Tarihi</th>
+                  <th>Aksiyon</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .clients}}
+                <tr>
+                  <td class="text-secondary">{{.ID}}</td>
+                  <td class="fw-semibold">{{.FirstName}} {{.LastName}}</td>
+                  <td>{{.Email}}</td>
+                  <td>{{.Phone}}</td>
+                  <td>{{ddmmyyyy .BirthDate}}</td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <button type="button" class="btn btn-icon btn-sm btn-light" title="Düzenle" onclick='openEdit({{json .}})'>
+                        <i class="ti ti-edit"></i>
+                      </button>
+                      <button type="button" class="btn btn-icon btn-sm btn-light text-danger" title="Sil" onclick="deleteItem({{.ID}})">
+                        <i class="ti ti-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{else}}
+          <div class="card-body text-center py-8">
+            <i class="ti ti-users fs-1 text-secondary"></i>
+            <p class="fw-semibold mt-3 mb-1">Müşteri bulunamadı</p>
+            <p class="text-secondary mb-4">İlk müşteriyi ekleyin</p>
+            <button type="button" class="btn btn-primary" onclick="openCreate()"><i class="ti ti-plus"></i> Müşteri Ekle</button>
+          </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+
   </div>
+</main>
 
-  <div id="modal" class="modal-overlay" onclick="closeModal()">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="flex items-center justify-between px-6 pt-6 pb-5" style="border-bottom:1px solid #242424;">
-        <h3 id="modalTitle" class="text-base font-bold" style="color:#ececec;"></h3>
-        <button onclick="closeModal()"
-                style="padding:6px; border-radius:8px; border:none; cursor:pointer; background:transparent; color:#484848; transition:.15s;"
-                onmouseover="this.style.background='#1e1e1e'; this.style.color='#ececec';"
-                onmouseout="this.style.background='transparent'; this.style.color='#484848';">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+<!-- Müşteri Modalı -->
+<div class="modal fade" id="clientModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Yeni Müşteri</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
       </div>
-      <form id="clientForm" onsubmit="saveItem(event)" class="px-6 py-5 space-y-4">
-        <div>
-          <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Kimlik Vəsiqəsi</label>
-          <div class="doc-upload-box">
-            <img id="docThumb" class="doc-thumb" style="display:none;">
-            <div class="flex-1 min-w-0">
-              <button type="button" class="doc-btn" onclick="document.getElementById('docFile').click()">Fotoğraf Yükle</button>
-              <p id="docStatus" class="doc-status mt-1.5">Kimlik fotoğrafı yükleyin, bilgiler otomatik doldurulsun</p>
+      <form id="clientForm" onsubmit="saveItem(event)">
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label">Kimlik Vəsiqəsi</label>
+            <div class="border border-dashed rounded-2 p-3 d-flex align-items-center gap-3">
+              <img id="docThumb" class="avatar avatar-lg rounded" style="display:none; object-fit:cover;">
+              <div class="flex-grow-1 min-w-0">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('docFile').click()">Fotoğraf Yükle</button>
+                <p id="docStatus" class="small text-secondary mt-1 mb-0">Kimlik fotoğrafı yükleyin, bilgiler otomatik doldurulsun</p>
+              </div>
+              <input id="docFile" type="file" accept="image/*" style="display:none;" onchange="handleDocumentUpload(event)">
             </div>
-            <input id="docFile" type="file" accept="image/*" style="display:none;" onchange="handleDocumentUpload(event)">
           </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">Ad <span class="text-danger">*</span></label>
+              <input id="fFirst" type="text" required placeholder="Ahmet" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Soyad <span class="text-danger">*</span></label>
+              <input id="fLast" type="text" required placeholder="Yılmaz" class="form-control">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">E-posta</label>
+            <input id="fEmail" type="email" placeholder="ahmet@mail.com" class="form-control">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">Telefon</label>
+              <input id="fPhone" type="text" placeholder="+90 555 000 00 00" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Doğum Tarihi <span class="text-danger">*</span></label>
+              <input id="fBirth" type="text" required placeholder="08.01.1998" pattern="\d{2}\.\d{2}\.\d{4}" title="GG.AA.YYYY" class="form-control">
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">FIN</label>
+              <input id="fFin" type="text" placeholder="5V8CKYF" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Vəsiqə No</label>
+              <input id="fCardNo" type="text" placeholder="AA0250651" class="form-control">
+            </div>
+          </div>
+
         </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Ad <span style="color:#ff5555;">*</span></label>
-            <input id="fFirst" type="text" required placeholder="Ahmet" class="input-field">
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Soyad <span style="color:#ff5555;">*</span></label>
-            <input id="fLast" type="text" required placeholder="Yılmaz" class="input-field">
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1.5" style="color:#888888;">E-posta</label>
-          <input id="fEmail" type="email" placeholder="ahmet@mail.com" class="input-field">
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Telefon</label>
-            <input id="fPhone" type="text" placeholder="+90 555 000 00 00" class="input-field">
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Doğum Tarihi <span style="color:#ff5555;">*</span></label>
-            <input id="fBirth" type="text" required placeholder="08.01.1998" pattern="\d{2}\.\d{2}\.\d{4}" title="GG.AA.YYYY" class="input-field">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">FIN</label>
-            <input id="fFin" type="text" placeholder="5V8CKYF" class="input-field">
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1.5" style="color:#888888;">Vəsiqə No</label>
-            <input id="fCardNo" type="text" placeholder="AA0250651" class="input-field">
-          </div>
-        </div>
-        <div class="flex gap-3 pt-1">
-          <button type="button" onclick="closeModal()"
-                  style="flex:1; padding:11px; border-radius:10px; border:1px solid #2a2a2a; color:#606060; font-size:14px; font-weight:600; cursor:pointer; background:#1e1e1e; transition:.15s;"
-                  onmouseover="this.style.background='#242424'; this.style.color='#ececec';"
-                  onmouseout="this.style.background='#1e1e1e'; this.style.color='#606060';">İptal</button>
-          <button type="submit"
-                  style="flex:1; padding:11px; border-radius:10px; border:none; background:linear-gradient(135deg,#00d4ff,#7b2fff); color:#fff; font-size:14px; font-weight:700; cursor:pointer; transition:.15s;"
-                  onmouseover="this.style.filter='brightness(1.08)';"
-                  onmouseout="this.style.filter='none';">Kaydet</button>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
         </div>
       </form>
     </div>
   </div>
+</div>
 
-  <div id="toast" class="toast"></div>
+<div id="toast" class="alert position-fixed d-none align-items-center gap-2" style="top:20px; right:20px; z-index:1080; min-width:260px;" role="alert"></div>
 
-  <script>
-    let editingId = null;
-    let pendingDocumentFile = null;
+<script src="/static/theme/assets/js/main.js" type="module"></script>
+<script>
+  let editingId = null;
+  let pendingDocumentFile = null;
+  let clientModal;
+  document.addEventListener('DOMContentLoaded', () => {
+    clientModal = new bootstrap.Modal(document.getElementById('clientModal'));
+  });
 
-    function ddmmyyyyToIso(s) {
-      const m = (s || '').trim().match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
-      if (!m) return '';
-      const [, d, mo, y] = m;
-      return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
-    }
-    function isoToDdmmyyyy(s) {
-      const m = (s || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if (!m) return '';
-      const [, y, mo, d] = m;
-      return `${d}.${mo}.${y}`;
-    }
+  function ddmmyyyyToIso(s) {
+    const m = (s || '').trim().match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
+    if (!m) return '';
+    const [, d, mo, y] = m;
+    return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  function isoToDdmmyyyy(s) {
+    const m = (s || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return '';
+    const [, y, mo, d] = m;
+    return `${d}.${mo}.${y}`;
+  }
 
-    function resetDocumentBox() {
-      pendingDocumentFile = null;
-      document.getElementById('docFile').value = '';
-      document.getElementById('docThumb').style.display = 'none';
-      document.getElementById('docThumb').src = '';
-      const status = document.getElementById('docStatus');
-      status.textContent = 'Kimlik fotoğrafı yükleyin, bilgiler otomatik doldurulsun';
-      status.className = 'doc-status mt-1.5';
-    }
+  function resetDocumentBox() {
+    pendingDocumentFile = null;
+    document.getElementById('docFile').value = '';
+    document.getElementById('docThumb').style.display = 'none';
+    document.getElementById('docThumb').src = '';
+    const status = document.getElementById('docStatus');
+    status.textContent = 'Kimlik fotoğrafı yükleyin, bilgiler otomatik doldurulsun';
+    status.className = 'small text-secondary mt-1 mb-0';
+  }
 
-    function openCreate() {
-      editingId = null;
-      document.getElementById('modalTitle').textContent = 'Yeni Müşteri';
-      document.getElementById('clientForm').reset();
-      resetDocumentBox();
-      document.getElementById('modal').classList.add('open');
-      setTimeout(() => document.getElementById('fFirst').focus(), 50);
-    }
+  function openCreate() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = 'Yeni Müşteri';
+    document.getElementById('clientForm').reset();
+    resetDocumentBox();
+    clientModal.show();
+    setTimeout(() => document.getElementById('fFirst').focus(), 200);
+  }
 
-    function openEdit(c) {
-      editingId = c.id;
-      document.getElementById('modalTitle').textContent = 'Müşteriyi Düzenle';
-      document.getElementById('fFirst').value = c.first_name;
-      document.getElementById('fLast').value  = c.last_name;
-      document.getElementById('fEmail').value = c.email;
-      document.getElementById('fPhone').value = c.phone;
-      document.getElementById('fBirth').value = isoToDdmmyyyy(c.birth_date);
-      document.getElementById('fFin').value = c.fin_code || '';
-      document.getElementById('fCardNo').value = c.id_card_number || '';
-      resetDocumentBox();
-      if (c.document_photo) {
-        const thumb = document.getElementById('docThumb');
-        thumb.src = c.document_photo;
-        thumb.style.display = 'block';
-        document.getElementById('docStatus').textContent = 'Kayıtlı kimlik fotoğrafı — değiştirmek için yükleyin';
-      }
-      document.getElementById('modal').classList.add('open');
-    }
-
-    function closeModal() { document.getElementById('modal').classList.remove('open'); }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-    function loadImageFromFile(file) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = URL.createObjectURL(file);
-      });
-    }
-
-    function rotateImageToCanvas(img, angleDeg) {
-      const rotatedW = angleDeg % 180 === 0 ? img.width : img.height;
-      const rotatedH = angleDeg % 180 === 0 ? img.height : img.width;
-      // Telefon fotoğrafları genelde küçük çözünürlükte oluyor; OCR doğruluğu düşük
-      // çözünürlükte belirgin şekilde düşüyor, bu yüzden gerekirse yukarı ölçekleniyor
-      const scale = Math.max(1, 1600 / Math.min(rotatedW, rotatedH));
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = rotatedW * scale;
-      canvas.height = rotatedH * scale;
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(angleDeg * Math.PI / 180);
-      ctx.scale(scale, scale);
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
-      return canvas;
-    }
-
-    function scoreFields(fields) {
-      return (fields.firstName ? 1 : 0) + (fields.lastName ? 1 : 0) + (fields.finCode ? 1 : 0) +
-             (fields.cardNumber ? 1 : 0) + (fields.birthDate ? 1 : 0);
-    }
-
-    async function handleDocumentUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      pendingDocumentFile = file;
-
+  function openEdit(c) {
+    editingId = c.id;
+    document.getElementById('modalTitle').textContent = 'Müşteriyi Düzenle';
+    document.getElementById('fFirst').value = c.first_name;
+    document.getElementById('fLast').value  = c.last_name;
+    document.getElementById('fEmail').value = c.email;
+    document.getElementById('fPhone').value = c.phone;
+    document.getElementById('fBirth').value = isoToDdmmyyyy(c.birth_date);
+    document.getElementById('fFin').value = c.fin_code || '';
+    document.getElementById('fCardNo').value = c.id_card_number || '';
+    resetDocumentBox();
+    if (c.document_photo) {
       const thumb = document.getElementById('docThumb');
-      thumb.src = URL.createObjectURL(file);
+      thumb.src = c.document_photo;
       thumb.style.display = 'block';
+      document.getElementById('docStatus').textContent = 'Kayıtlı kimlik fotoğrafı — değiştirmek için yükleyin';
+    }
+    clientModal.show();
+  }
 
-      const status = document.getElementById('docStatus');
-      status.className = 'doc-status mt-1.5 scanning';
+  function loadImageFromFile(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
 
-      let worker = null;
-      try {
-        const img = await loadImageFromFile(file);
-        // Fotoğraf hangi yönde çekilmiş olursa olsun okuyabilmek için birkaç döndürme deneniyor.
-        // Worker tek sefer oluşturulup döndürmeler arasında yeniden kullanılıyor (her denemede
-        // yeniden başlatmak hem yavaş hem gereksizdi). PSM 6 (tek düzgün metin bloğu) kimlik
-        // kartı gibi sabit düzenli belgelerde varsayılan moddan daha güvenilir sonuç veriyor.
-        worker = await Tesseract.createWorker('aze+eng');
-        await worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK });
+  function rotateImageToCanvas(img, angleDeg) {
+    const rotatedW = angleDeg % 180 === 0 ? img.width : img.height;
+    const rotatedH = angleDeg % 180 === 0 ? img.height : img.width;
+    // Telefon fotoğrafları genelde küçük çözünürlükte oluyor; OCR doğruluğu düşük
+    // çözünürlükte belirgin şekilde düşüyor, bu yüzden gerekirse yukarı ölçekleniyor
+    const scale = Math.max(1, 1600 / Math.min(rotatedW, rotatedH));
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = rotatedW * scale;
+    canvas.height = rotatedH * scale;
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(angleDeg * Math.PI / 180);
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+    return canvas;
+  }
 
-        const angles = [0, 90, 270, 180];
-        const attempts = [];
+  function scoreFields(fields) {
+    return (fields.firstName ? 1 : 0) + (fields.lastName ? 1 : 0) + (fields.finCode ? 1 : 0) +
+           (fields.cardNumber ? 1 : 0) + (fields.birthDate ? 1 : 0);
+  }
 
-        for (const angle of angles) {
-          status.textContent = `Kimlik okunuyor (${angle}°)...`;
-          const canvas = rotateImageToCanvas(img, angle);
-          const { data } = await worker.recognize(canvas);
-          const attempt = parseIdCardText(data.text || '');
-          attempt._score = scoreFields(attempt);
-          attempts.push(attempt);
-          if (attempt._score >= 4) break;
-        }
+  async function handleDocumentUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    pendingDocumentFile = file;
 
-        // Alanları döndürmeler arasında birleştiriyoruz, ama "ilk bulunan kazanır" değil —
-        // her alan en yüksek toplam skora sahip denemeden alınıyor. Yanlış açıdaki (ör. ters
-        // dönmüş) OCR çıktısı kısa alanlarda (FIN, vəsiqə no) tesadüfen geçerli görünen gürültü
-        // üretebiliyor; bunu doğru açının değerinin önüne geçirmemek için skor önceliği şart
-        attempts.sort((a, b) => b._score - a._score);
-        const fields = { firstName: '', lastName: '', finCode: '', cardNumber: '', birthDate: '' };
-        for (const key of Object.keys(fields)) {
-          const attempt = attempts.find(a => a[key]);
-          if (attempt) fields[key] = attempt[key];
-        }
+    const thumb = document.getElementById('docThumb');
+    thumb.src = URL.createObjectURL(file);
+    thumb.style.display = 'block';
 
-        let filled = [];
-        if (fields.firstName) { document.getElementById('fFirst').value = fields.firstName; filled.push('ad'); }
-        if (fields.lastName)  { document.getElementById('fLast').value  = fields.lastName;  filled.push('soyad'); }
-        if (fields.finCode)   { document.getElementById('fFin').value   = fields.finCode;   filled.push('FIN'); }
-        if (fields.cardNumber){ document.getElementById('fCardNo').value = fields.cardNumber; filled.push('vəsiqə no'); }
-        if (fields.birthDate) { document.getElementById('fBirth').value = fields.birthDate; filled.push('doğum tarixi'); }
+    const status = document.getElementById('docStatus');
+    status.className = 'small text-primary mt-1 mb-0';
 
-        status.className = 'doc-status mt-1.5 done';
-        status.textContent = filled.length
-          ? `✓ Otomatik dolduruldu (${filled.join(', ')}) — kontrol edin`
-          : 'Bilgiler otomatik okunamadı, lütfen manuel girin';
-      } catch (err) {
-        status.className = 'doc-status mt-1.5 error';
-        status.textContent = 'Kimlik okunamadı, lütfen manuel girin';
-      } finally {
-        if (worker) await worker.terminate();
+    let worker = null;
+    try {
+      const img = await loadImageFromFile(file);
+      // Fotoğraf hangi yönde çekilmiş olursa olsun okuyabilmek için birkaç döndürme deneniyor.
+      // Worker tek sefer oluşturulup döndürmeler arasında yeniden kullanılıyor (her denemede
+      // yeniden başlatmak hem yavaş hem gereksizdi). PSM 6 (tek düzgün metin bloğu) kimlik
+      // kartı gibi sabit düzenli belgelerde varsayılan moddan daha güvenilir sonuç veriyor.
+      worker = await Tesseract.createWorker('aze+eng');
+      await worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK });
+
+      const angles = [0, 90, 270, 180];
+      const attempts = [];
+
+      for (const angle of angles) {
+        status.textContent = `Kimlik okunuyor (${angle}°)...`;
+        const canvas = rotateImageToCanvas(img, angle);
+        const { data } = await worker.recognize(canvas);
+        const attempt = parseIdCardText(data.text || '');
+        attempt._score = scoreFields(attempt);
+        attempts.push(attempt);
+        if (attempt._score >= 4) break;
       }
+
+      // Alanları döndürmeler arasında birleştiriyoruz, ama "ilk bulunan kazanır" değil —
+      // her alan en yüksek toplam skora sahip denemeden alınıyor. Yanlış açıdaki (ör. ters
+      // dönmüş) OCR çıktısı kısa alanlarda (FIN, vəsiqə no) tesadüfen geçerli görünen gürültü
+      // üretebiliyor; bunu doğru açının değerinin önüne geçirmemek için skor önceliği şart
+      attempts.sort((a, b) => b._score - a._score);
+      const fields = { firstName: '', lastName: '', finCode: '', cardNumber: '', birthDate: '' };
+      for (const key of Object.keys(fields)) {
+        const attempt = attempts.find(a => a[key]);
+        if (attempt) fields[key] = attempt[key];
+      }
+
+      let filled = [];
+      if (fields.firstName) { document.getElementById('fFirst').value = fields.firstName; filled.push('ad'); }
+      if (fields.lastName)  { document.getElementById('fLast').value  = fields.lastName;  filled.push('soyad'); }
+      if (fields.finCode)   { document.getElementById('fFin').value   = fields.finCode;   filled.push('FIN'); }
+      if (fields.cardNumber){ document.getElementById('fCardNo').value = fields.cardNumber; filled.push('vəsiqə no'); }
+      if (fields.birthDate) { document.getElementById('fBirth').value = fields.birthDate; filled.push('doğum tarixi'); }
+
+      status.className = 'small text-success mt-1 mb-0';
+      status.textContent = filled.length
+        ? `✓ Otomatik dolduruldu (${filled.join(', ')}) — kontrol edin`
+        : 'Bilgiler otomatik okunamadı, lütfen manuel girin';
+    } catch (err) {
+      status.className = 'small text-danger mt-1 mb-0';
+      status.textContent = 'Kimlik okunamadı, lütfen manuel girin';
+    } finally {
+      if (worker) await worker.terminate();
+    }
+  }
+
+  function parseIdCardText(rawText) {
+    const text = (rawText || '').toUpperCase();
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const result = { firstName: '', lastName: '', finCode: '', cardNumber: '', birthDate: '' };
+
+    // OCR bəzən Ə/İ/Ğ/Ş/Ç/Ö/Ü hərflərini fərqli formalarda oxuyur (məs. VƏSİQ yerinə
+    // VESIQ və ya tərsinə); açar sözləri tanımaq üçün müqayisədən əvvəl bu hərflər
+    // ASCII qarşılığına endirilir — anlar sözün özündə isə orijinal hərflər saxlanılır
+    function foldAz(s) {
+      return s.replace(/Ə/g, 'E').replace(/İ/g, 'I').replace(/Ğ/g, 'G')
+        .replace(/Ş/g, 'S').replace(/Ç/g, 'C').replace(/Ö/g, 'O').replace(/Ü/g, 'U');
     }
 
-    function parseIdCardText(rawText) {
-      const text = (rawText || '').toUpperCase();
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      const result = { firstName: '', lastName: '', finCode: '', cardNumber: '', birthDate: '' };
-
-      // OCR bəzən Ə/İ/Ğ/Ş/Ç/Ö/Ü hərflərini fərqli formalarda oxuyur (məs. VƏSİQ yerinə
-      // VESIQ və ya tərsinə); açar sözləri tanımaq üçün müqayisədən əvvəl bu hərflər
-      // ASCII qarşılığına endirilir — anlar sözün özündə isə orijinal hərflər saxlanılır
-      function foldAz(s) {
-        return s.replace(/Ə/g, 'E').replace(/İ/g, 'I').replace(/Ğ/g, 'G')
-          .replace(/Ş/g, 'S').replace(/Ç/g, 'C').replace(/Ö/g, 'O').replace(/Ü/g, 'U');
-      }
-
-      // Etiketin (ör. "FƏRDİ İDENTİFİKASİYA NÖMRƏSİ/PERSONAL NO") hemen yanında veya
-      // sonraki birkaç satırda geçen değeri arar — metnin herhangi bir yerinde geçen ilk
-      // adayı almaktan daha güvenilir, çünkü kartın başka yerlerindeki gürültü metinleriyle
-      // (imza, seri numarası vb.) karışma riski düşük
-      function findNearLabel(labelRegex, valueRegex) {
-        for (let i = 0; i < lines.length; i++) {
-          if (labelRegex.test(foldAz(lines[i]))) {
-            for (let j = i; j < Math.min(i + 3, lines.length); j++) {
-              const m = lines[j].match(valueRegex);
-              if (m) return m;
-            }
-          }
-        }
-        return null;
-      }
-
-      const cardLabelMatch = findNearLabel(/VESIQ.*NOMR|CARD NO/, /\b([A-Z]{2}\d{7})\b/);
-      if (cardLabelMatch) {
-        result.cardNumber = cardLabelMatch[1];
-      } else {
-        const cardNoMatch = text.match(/\b([A-Z]{2}\d{7})\b/);
-        if (cardNoMatch) result.cardNumber = cardNoMatch[1];
-      }
-
-      const finLabelMatch = findNearLabel(/FERDI|PERSONAL/, /\b([A-Z0-9]{7})\b/);
-      if (finLabelMatch && finLabelMatch[1] !== result.cardNumber) result.finCode = finLabelMatch[1];
-      if (!result.finCode) {
-        const finCandidates = text.match(/\b[A-Z0-9]{7}\b/g) || [];
-        for (const cand of finCandidates) {
-          if (cand === result.cardNumber) continue;
-          if (/[A-Z]/.test(cand) && /[0-9]/.test(cand)) { result.finCode = cand; break; }
-        }
-      }
-
-      const currentYear = new Date().getFullYear();
-      // OCR ayraçları (nokta/tire/boşluk) yanlış okuyabildiğinden esnek bir kalıp kullanılıyor
-      const dateMatches = [...text.matchAll(/\b(\d{1,2})\s*[.\-\/ ]\s*(\d{1,2})\s*[.\-\/ ]\s*(\d{4})\b/g)];
-      const plausibleDates = dateMatches
-        .map(m => ({ day: m[1], month: m[2], year: parseInt(m[3], 10) }))
-        .filter(d => d.year <= currentYear - 5 && d.year >= currentYear - 100);
-      let birthYearForFallback = null;
-      if (plausibleDates.length) {
-        // kartta doğum tarixi ile geçerlilik tarihi gibi birden fazla tarih olabilir —
-        // doğum tarihi bunlar arasında her zaman en eski (yılı en küçük) olanıdır
-        const best = plausibleDates.reduce((a, b) => (a.year <= b.year ? a : b));
-        result.birthDate = `${best.day.padStart(2, '0')}.${best.month.padStart(2, '0')}.${best.year}`;
-        birthYearForFallback = best.year;
-      } else {
-        // tarih formatı hiç yakalanamazsa, makul aralıktaki tek başına bir yılı dene (gün/ay bilinmiyor)
-        const bareYears = [...text.matchAll(/\b(19\d{2}|20[0-3]\d)\b/g)]
-          .map(m => parseInt(m[1], 10))
-          .filter(y => y <= currentYear - 5);
-        if (bareYears.length) {
-          result.birthDate = `01.01.${Math.min(...bareYears)}`;
-          birthYearForFallback = Math.min(...bareYears);
-        }
-      }
-
-      // Zayıf FIN yedeği: kart üzerinde vəsiqə no ilə FIN yan yana aynı satırda basılı, bu yüzden
-      // OCR onları tek satır olarak okuyor. FIN'deki tək rəqəm bəzən hərflə səhv oxunur (5→S,
-      // 8→B kimi), bu zaman "hərf+rəqəm qarışığı" şərti heç vaxt ödənmir və yuxarıdakı ciddi
-      // axtarış heç nə tapmır. Doğum tarixinin tapıldığı sətir kartda FIN-ə ən yaxın etibarlı
-      // mövqedir, ona görə tapılmasa belə burada mövqeyə etibar edib zəif adayı qəbul edirik
-      if (!result.finCode && birthYearForFallback) {
-        const dateLineIndex = lines.findIndex(l => l.includes(String(birthYearForFallback)));
-        if (dateLineIndex !== -1) {
-          for (let i = dateLineIndex; i < Math.min(dateLineIndex + 2, lines.length); i++) {
-            const tokens = lines[i].split(/\s+/).filter(t => /^[A-Z0-9]{7}$/.test(t));
-            const cand = tokens.find(t => t !== result.cardNumber && !/^\d+$/.test(t));
-            if (cand) { result.finCode = cand; break; }
-          }
-        }
-      }
-
-      const labelKeywords = /SOYAD|SURNAME|ADI|GIVEN|ATASI|PATRONYM|CINS|SEX|VETEN|NATIONAL|DOGUL|BIRTH|VESIQ|CARD|FERDI|PERSONAL|ETIBAR|EXPIRY|REPUBLIK|AZERBAIJAN|IDENTITY|SEXSIYYET/;
-      const knownConstants = /^(AZ[EO]RBAYCAN|AZERBAIJAN|REPUBLIC|IDENTITY CARD)$/;
-
-      // OCR bozukluklarından arınmış aday satır: harf/boşluk dışını temizleyip yeterince harf var mı bak
-      function cleanNameCandidate(line) {
-        let cleaned = line.replace(/[^A-ZÇƏĞİIÖŞÜ\s]/g, ' ').replace(/\s+/g, ' ').trim();
-        // komşu satırdan sızan tek harflik gürültü kelimeleri (ör. "K TOĞRUL") isme karışmasın
-        cleaned = cleaned.split(' ').filter(w => w.length >= 2).join(' ');
-        if (cleaned.length < 2) return '';
-        const folded = foldAz(cleaned);
-        if (labelKeywords.test(folded) || knownConstants.test(folded)) return '';
-        if (!/[A-ZÇƏĞİIÖŞÜ]{2,}/.test(cleaned)) return '';
-        return cleaned;
-      }
-
+    // Etiketin (ör. "FƏRDİ İDENTİFİKASİYA NÖMRƏSİ/PERSONAL NO") hemen yanında veya
+    // sonraki birkaç satırda geçen değeri arar — metnin herhangi bir yerinde geçen ilk
+    // adayı almaktan daha güvenilir, çünkü kartın başka yerlerindeki gürültü metinleriyle
+    // (imza, seri numarası vb.) karışma riski düşük
+    function findNearLabel(labelRegex, valueRegex) {
       for (let i = 0; i < lines.length; i++) {
-        if (!result.lastName && /SOYAD|SURNAME/.test(lines[i])) {
-          for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
-            const cand = cleanNameCandidate(lines[j]);
-            if (cand) { result.lastName = cand; break; }
-          }
-        }
-        if (!result.firstName && /GIVEN NAME/.test(lines[i]) && !/ATASI/.test(lines[i])) {
-          for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
-            const cand = cleanNameCandidate(lines[j]);
-            if (cand) { result.firstName = cand; break; }
+        if (labelRegex.test(foldAz(lines[i]))) {
+          for (let j = i; j < Math.min(i + 3, lines.length); j++) {
+            const m = lines[j].match(valueRegex);
+            if (m) return m;
           }
         }
       }
+      return null;
+    }
 
-      // Yedek: OCR etiket satırlarını (SOYADI/SURNAME, ADI/GIVEN NAME) çoğu zaman tamamen
-      // atlıyor — üstteki etiket-bazlı arama bu durumda hiçbir şey bulamıyor, oysa isim
-      // değerleri metinde gerçekten var. Bu değerler her zaman kart başlığından hemen sonra,
-      // cinsiyet/uyruk/doğum bloğundan (rakam içeren ilk satır) önceki dar bir pencerede yer
-      // alıyor — o pencereyi konumsal olarak tarayıp ilk iki temiz aday satırı sırayla al
-      if (!result.lastName || !result.firstName) {
-        let start = -1;
-        for (let i = 0; i < lines.length; i++) {
-          if (/VESIQ|IDENTITY CARD|REPUBLIK|REPUBLIC OF AZERBAIJAN/.test(foldAz(lines[i]))) start = i;
-        }
-        // Başlık satırı hiç tanınmadıysa metnin en başından taramak güvenli değil —
-        // orası genelde logo/gürültü kalıntısı oluyor ve yanlış ama "temiz görünen" bir
-        // aday (ör. bozuk "AZERBAVHAN" gibi ülke adı) isim sanılabilir. Bu durumda alanı
-        // boş bırakmak (manuel giriş) yanlış otomatik doldurmaktan daha güvenli
-        if (start !== -1) {
-          let end = lines.length;
-          for (let i = start + 1; i < lines.length; i++) {
-            if (/\d/.test(lines[i]) || /CINS|SEX|VETEN|NATIONAL|ATASI|PATRONYM/.test(foldAz(lines[i]))) { end = i; break; }
-          }
-          const candidates = [];
-          for (let i = start + 1; i < end && candidates.length < 2; i++) {
-            const cand = cleanNameCandidate(lines[i]);
-            if (cand) candidates.push(cand);
-          }
-          if (!result.lastName && candidates[0]) result.lastName = candidates[0];
-          if (!result.firstName && candidates[1]) result.firstName = candidates[1];
+    const cardLabelMatch = findNearLabel(/VESIQ.*NOMR|CARD NO/, /\b([A-Z]{2}\d{7})\b/);
+    if (cardLabelMatch) {
+      result.cardNumber = cardLabelMatch[1];
+    } else {
+      const cardNoMatch = text.match(/\b([A-Z]{2}\d{7})\b/);
+      if (cardNoMatch) result.cardNumber = cardNoMatch[1];
+    }
+
+    const finLabelMatch = findNearLabel(/FERDI|PERSONAL/, /\b([A-Z0-9]{7})\b/);
+    if (finLabelMatch && finLabelMatch[1] !== result.cardNumber) result.finCode = finLabelMatch[1];
+    if (!result.finCode) {
+      const finCandidates = text.match(/\b[A-Z0-9]{7}\b/g) || [];
+      for (const cand of finCandidates) {
+        if (cand === result.cardNumber) continue;
+        if (/[A-Z]/.test(cand) && /[0-9]/.test(cand)) { result.finCode = cand; break; }
+      }
+    }
+
+    const currentYear = new Date().getFullYear();
+    // OCR ayraçları (nokta/tire/boşluk) yanlış okuyabildiğinden esnek bir kalıp kullanılıyor
+    const dateMatches = [...text.matchAll(/\b(\d{1,2})\s*[.\-\/ ]\s*(\d{1,2})\s*[.\-\/ ]\s*(\d{4})\b/g)];
+    const plausibleDates = dateMatches
+      .map(m => ({ day: m[1], month: m[2], year: parseInt(m[3], 10) }))
+      .filter(d => d.year <= currentYear - 5 && d.year >= currentYear - 100);
+    let birthYearForFallback = null;
+    if (plausibleDates.length) {
+      // kartta doğum tarixi ile geçerlilik tarihi gibi birden fazla tarih olabilir —
+      // doğum tarihi bunlar arasında her zaman en eski (yılı en küçük) olanıdır
+      const best = plausibleDates.reduce((a, b) => (a.year <= b.year ? a : b));
+      result.birthDate = `${best.day.padStart(2, '0')}.${best.month.padStart(2, '0')}.${best.year}`;
+      birthYearForFallback = best.year;
+    } else {
+      // tarih formatı hiç yakalanamazsa, makul aralıktaki tek başına bir yılı dene (gün/ay bilinmiyor)
+      const bareYears = [...text.matchAll(/\b(19\d{2}|20[0-3]\d)\b/g)]
+        .map(m => parseInt(m[1], 10))
+        .filter(y => y <= currentYear - 5);
+      if (bareYears.length) {
+        result.birthDate = `01.01.${Math.min(...bareYears)}`;
+        birthYearForFallback = Math.min(...bareYears);
+      }
+    }
+
+    // Zayıf FIN yedeği: kart üzerinde vəsiqə no ilə FIN yan yana aynı satırda basılı, bu yüzden
+    // OCR onları tek satır olarak okuyor. FIN'deki tək rəqəm bəzən hərflə səhv oxunur (5→S,
+    // 8→B kimi), bu zaman "hərf+rəqəm qarışığı" şərti heç vaxt ödənmir və yuxarıdakı ciddi
+    // axtarış heç nə tapmır. Doğum tarixinin tapıldığı sətir kartda FIN-ə ən yaxın etibarlı
+    // mövqedir, ona görə tapılmasa belə burada mövqeyə etibar edib zəif adayı qəbul edirik
+    if (!result.finCode && birthYearForFallback) {
+      const dateLineIndex = lines.findIndex(l => l.includes(String(birthYearForFallback)));
+      if (dateLineIndex !== -1) {
+        for (let i = dateLineIndex; i < Math.min(dateLineIndex + 2, lines.length); i++) {
+          const tokens = lines[i].split(/\s+/).filter(t => /^[A-Z0-9]{7}$/.test(t));
+          const cand = tokens.find(t => t !== result.cardNumber && !/^\d+$/.test(t));
+          if (cand) { result.finCode = cand; break; }
         }
       }
-
-      return result;
     }
 
-    async function saveItem(e) {
-      e.preventDefault();
-      const payload = {
-        first_name:    document.getElementById('fFirst').value.trim(),
-        last_name:     document.getElementById('fLast').value.trim(),
-        email:         document.getElementById('fEmail').value.trim(),
-        phone:         document.getElementById('fPhone').value.trim(),
-        birth_date:    ddmmyyyyToIso(document.getElementById('fBirth').value.trim()),
-        fin_code:      document.getElementById('fFin').value.trim(),
-        id_card_number: document.getElementById('fCardNo').value.trim(),
-      };
-      const url    = editingId ? `/api/clients/${editingId}` : '/api/clients';
-      const method = editingId ? 'PUT' : 'POST';
-      try {
-        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        if (res.ok) {
-          const saved = await res.json();
-          if (pendingDocumentFile) {
-            const formData = new FormData();
-            formData.append('document', pendingDocumentFile);
-            await fetch(`/api/clients/${saved.id}/document`, { method: 'POST', body: formData });
-          }
-          closeModal();
-          showToast('✓ ' + (editingId ? 'Müşteri güncellendi' : 'Müşteri eklendi'), 'success');
-          setTimeout(() => location.reload(), 700);
-        } else {
-          const err = await res.json();
-          showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'error');
+    const labelKeywords = /SOYAD|SURNAME|ADI|GIVEN|ATASI|PATRONYM|CINS|SEX|VETEN|NATIONAL|DOGUL|BIRTH|VESIQ|CARD|FERDI|PERSONAL|ETIBAR|EXPIRY|REPUBLIK|AZERBAIJAN|IDENTITY|SEXSIYYET/;
+    const knownConstants = /^(AZ[EO]RBAYCAN|AZERBAIJAN|REPUBLIC|IDENTITY CARD)$/;
+
+    // OCR bozukluklarından arınmış aday satır: harf/boşluk dışını temizleyip yeterince harf var mı bak
+    function cleanNameCandidate(line) {
+      let cleaned = line.replace(/[^A-ZÇƏĞİIÖŞÜ\s]/g, ' ').replace(/\s+/g, ' ').trim();
+      // komşu satırdan sızan tek harflik gürültü kelimeleri (ör. "K TOĞRUL") isme karışmasın
+      cleaned = cleaned.split(' ').filter(w => w.length >= 2).join(' ');
+      if (cleaned.length < 2) return '';
+      const folded = foldAz(cleaned);
+      if (labelKeywords.test(folded) || knownConstants.test(folded)) return '';
+      if (!/[A-ZÇƏĞİIÖŞÜ]{2,}/.test(cleaned)) return '';
+      return cleaned;
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      if (!result.lastName && /SOYAD|SURNAME/.test(lines[i])) {
+        for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+          const cand = cleanNameCandidate(lines[j]);
+          if (cand) { result.lastName = cand; break; }
         }
-      } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
+      }
+      if (!result.firstName && /GIVEN NAME/.test(lines[i]) && !/ATASI/.test(lines[i])) {
+        for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+          const cand = cleanNameCandidate(lines[j]);
+          if (cand) { result.firstName = cand; break; }
+        }
+      }
     }
 
-    async function deleteItem(id) {
-      if (!confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')) return;
-      try {
-        const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          showToast('✓ Müşteri silindi', 'success');
-          setTimeout(() => location.reload(), 700);
-        } else { showToast('✕ Silme işlemi başarısız', 'error'); }
-      } catch { showToast('✕ Sunucu bağlantı hatası', 'error'); }
+    // Yedek: OCR etiket satırlarını (SOYADI/SURNAME, ADI/GIVEN NAME) çoğu zaman tamamen
+    // atlıyor — üstteki etiket-bazlı arama bu durumda hiçbir şey bulamıyor, oysa isim
+    // değerleri metinde gerçekten var. Bu değerler her zaman kart başlığından hemen sonra,
+    // cinsiyet/uyruk/doğum bloğundan (rakam içeren ilk satır) önceki dar bir pencerede yer
+    // alıyor — o pencereyi konumsal olarak tarayıp ilk iki temiz aday satırı sırayla al
+    if (!result.lastName || !result.firstName) {
+      let start = -1;
+      for (let i = 0; i < lines.length; i++) {
+        if (/VESIQ|IDENTITY CARD|REPUBLIK|REPUBLIC OF AZERBAIJAN/.test(foldAz(lines[i]))) start = i;
+      }
+      // Başlık satırı hiç tanınmadıysa metnin en başından taramak güvenli değil —
+      // orası genelde logo/gürültü kalıntısı oluyor ve yanlış ama "temiz görünen" bir
+      // aday (ör. bozuk "AZERBAVHAN" gibi ülke adı) isim sanılabilir. Bu durumda alanı
+      // boş bırakmak (manuel giriş) yanlış otomatik doldurmaktan daha güvenli
+      if (start !== -1) {
+        let end = lines.length;
+        for (let i = start + 1; i < lines.length; i++) {
+          if (/\d/.test(lines[i]) || /CINS|SEX|VETEN|NATIONAL|ATASI|PATRONYM/.test(foldAz(lines[i]))) { end = i; break; }
+        }
+        const candidates = [];
+        for (let i = start + 1; i < end && candidates.length < 2; i++) {
+          const cand = cleanNameCandidate(lines[i]);
+          if (cand) candidates.push(cand);
+        }
+        if (!result.lastName && candidates[0]) result.lastName = candidates[0];
+        if (!result.firstName && candidates[1]) result.firstName = candidates[1];
+      }
     }
 
-    function showToast(msg, type) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.className = 'toast show ' + type;
-      setTimeout(() => el.classList.remove('show'), 2800);
-    }
-  </script>
+    return result;
+  }
+
+  async function saveItem(e) {
+    e.preventDefault();
+    const payload = {
+      first_name:    document.getElementById('fFirst').value.trim(),
+      last_name:     document.getElementById('fLast').value.trim(),
+      email:         document.getElementById('fEmail').value.trim(),
+      phone:         document.getElementById('fPhone').value.trim(),
+      birth_date:    ddmmyyyyToIso(document.getElementById('fBirth').value.trim()),
+      fin_code:      document.getElementById('fFin').value.trim(),
+      id_card_number: document.getElementById('fCardNo').value.trim(),
+    };
+    const url    = editingId ? `/api/clients/${editingId}` : '/api/clients';
+    const method = editingId ? 'PUT' : 'POST';
+    try {
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) {
+        const saved = await res.json();
+        if (pendingDocumentFile) {
+          const formData = new FormData();
+          formData.append('document', pendingDocumentFile);
+          await fetch(`/api/clients/${saved.id}/document`, { method: 'POST', body: formData });
+        }
+        clientModal.hide();
+        showToast('✓ ' + (editingId ? 'Müşteri güncellendi' : 'Müşteri eklendi'), 'success');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        const err = await res.json();
+        showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'danger');
+      }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  async function deleteItem(id) {
+    if (!confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')) return;
+    try {
+      const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('✓ Müşteri silindi', 'success');
+        setTimeout(() => location.reload(), 700);
+      } else { showToast('✕ Silme işlemi başarısız', 'danger'); }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'alert position-fixed d-flex align-items-center gap-2 alert-' + type;
+    el.style.top = '20px';
+    el.style.right = '20px';
+    el.style.zIndex = 1080;
+    el.style.minWidth = '260px';
+    setTimeout(() => el.classList.add('d-none'), 2800);
+  }
+</script>
 </body>
 </html>
