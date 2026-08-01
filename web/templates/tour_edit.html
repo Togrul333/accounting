@@ -67,6 +67,22 @@
                   {{end}}
                 </select>
               </div>
+              <div class="mb-3">
+                <label class="form-label">Uçuşlar <span class="text-danger">*</span></label>
+                <div class="border rounded-2 p-2 d-flex flex-column gap-1" style="max-height: 220px; overflow-y: auto;">
+                  {{if .flights}}
+                  {{range .flights}}
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="{{.ID}}" id="flight-{{.ID}}" {{if index $.selectedFlightIDs .ID}}checked{{end}}>
+                    <label class="form-check-label small" for="flight-{{.ID}}">{{.PNR}} — {{.DepartureTime.Format "02.01.2006 15:04"}}</label>
+                  </div>
+                  {{end}}
+                  {{else}}
+                  <p class="small text-secondary mb-0">Önce bir uçuş ekleyin</p>
+                  {{end}}
+                </div>
+                <div class="form-text">Birden fazla uçuş seçebilirsiniz.</div>
+              </div>
               <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Kaydet</button>
                 <a href="/tours" class="btn btn-outline-secondary">İptal</a>
@@ -88,12 +104,18 @@
 
   async function saveTour(e) {
     e.preventDefault();
+    const flightIds = Array.from(document.querySelectorAll('#editForm input[type=checkbox]:checked')).map(el => parseInt(el.value));
+    if (!flightIds.length) {
+      showToast('✕ En az bir uçuş seçmelisiniz', 'danger');
+      return;
+    }
     const payload = {
       code:             document.getElementById('fCode').value.trim(),
       start_date:       document.getElementById('fStart').value,
       end_date:         document.getElementById('fEnd').value,
       tour_category_id: parseInt(document.getElementById('fCategory').value),
       room_id:          parseInt(document.getElementById('fRoom').value),
+      flight_ids:       flightIds,
     };
     try {
       const res = await fetch(`/api/tours/${tourId}`, {

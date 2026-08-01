@@ -29,21 +29,27 @@
 
     <!-- Bilgi kartları — Satır 1 -->
     <div class="row g-3 mb-3">
-      <div class="col-lg-4 col-12">
+      <div class="col-lg-3 col-12">
         <div class="card p-4 h-100">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Kategori</p>
           <p class="fw-bold mb-0">{{.tour.TourCategoryName}}</p>
           <p class="small text-secondary mb-0 mt-1">{{printf "%.2f" .tour.TourCategoryPrice}} ₺</p>
         </div>
       </div>
-      <div class="col-lg-4 col-12">
+      <div class="col-lg-3 col-12">
         <div class="card p-4 h-100">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Oda</p>
           <p class="fw-bold mb-0 text-primary">{{printf "%.2f" .tour.RoomPrice}} ₺</p>
           <p class="small text-secondary mb-0 mt-1">{{.tour.RoomBedsCount}} yatak</p>
         </div>
       </div>
-      <div class="col-lg-4 col-12">
+      <div class="col-lg-3 col-12">
+        <div class="card p-4 h-100">
+          <p class="small text-secondary text-uppercase fw-semibold mb-2">Uçuş Sayısı</p>
+          <h3 class="fw-bold mb-0">{{len .tour.Flights}}</h3>
+        </div>
+      </div>
+      <div class="col-lg-3 col-12">
         <div class="card p-4 h-100">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Sipariş Sayısı</p>
           <h3 class="fw-bold mb-0">{{len .orders}}</h3>
@@ -182,6 +188,59 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- Uçuşlar tablosu -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge rounded-pill bg-primary">&nbsp;</span>
+          <h3 class="h6 mb-0">Uçuşlar</h3>
+          <span class="badge bg-primary-subtle text-primary-emphasis">{{len .tour.Flights}}</span>
+        </div>
+
+        <div class="card">
+          {{if .tour.Flights}}
+          <div class="table-responsive">
+            <table class="table mb-0 table-hover align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>#</th>
+                  <th>PNR</th>
+                  <th>Uçuş Zamanı</th>
+                  <th class="text-end">Fiyat</th>
+                  <th class="text-end">Depozit</th>
+                  <th class="text-end">Pax</th>
+                  <th>Aksiyon</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .tour.Flights}}
+                <tr>
+                  <td class="text-secondary">{{.ID}}</td>
+                  <td class="fw-semibold">{{.PNR}}</td>
+                  <td>{{.DepartureTime.Format "02.01.2006 15:04"}}</td>
+                  <td class="text-end">{{printf "%.2f" .Price}} ₺</td>
+                  <td class="text-end">{{printf "%.2f" .Deposit}} ₺</td>
+                  <td class="text-end">{{.PaxCount}}</td>
+                  <td>
+                    <a href="/flights/{{.ID}}" class="btn btn-icon btn-sm btn-light" title="Görüntüle">
+                      <i class="ti ti-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{else}}
+          <div class="card-body text-center py-6">
+            <p class="fw-semibold mb-1">Uçuş bulunamadı</p>
+            <p class="text-secondary mb-0">Bu tura henüz uçuş bağlanmamış</p>
+          </div>
+          {{end}}
+        </div>
+      </div>
     </div>
 
     <!-- Siparişler tablosu -->

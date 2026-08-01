@@ -30,6 +30,7 @@ type PageHandler struct {
 	expenseSvc          *service.ExpenseService
 	tourCategorySvc     *service.TourCategoryService
 	roomSvc             *service.RoomService
+	flightSvc           *service.FlightService
 	tourSvc             *service.TourService
 	clientSvc           *service.ClientService
 	settingSvc          *service.SettingService
@@ -48,6 +49,7 @@ func NewPageHandler(
 	expenseSvc *service.ExpenseService,
 	tourCategorySvc *service.TourCategoryService,
 	roomSvc *service.RoomService,
+	flightSvc *service.FlightService,
 	tourSvc *service.TourService,
 	clientSvc *service.ClientService,
 	settingSvc *service.SettingService,
@@ -65,6 +67,7 @@ func NewPageHandler(
 		expenseSvc:          expenseSvc,
 		tourCategorySvc:     tourCategorySvc,
 		roomSvc:             roomSvc,
+		flightSvc:           flightSvc,
 		tourSvc:             tourSvc,
 		clientSvc:           clientSvc,
 		settingSvc:          settingSvc,
@@ -530,11 +533,75 @@ func (h *PageHandler) Tours(c *gin.Context) {
 		rooms = []model.Room{}
 	}
 
+	flights, err := h.flightSvc.GetAll(ctx)
+	if err != nil {
+		flights = []model.Flight{}
+	}
+
 	c.HTML(http.StatusOK, "tours.html", gin.H{
 		"tours":      tours,
 		"categories": cats,
 		"rooms":      rooms,
+		"flights":    flights,
 		"active":     "tours",
+		"user":       h.currentUser(ctx),
+	})
+}
+
+func (h *PageHandler) Flights(c *gin.Context) {
+	ctx := c.Request.Context()
+	flights, err := h.flightSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("flights page error: %v", err)
+		flights = []model.Flight{}
+	}
+	if flights == nil {
+		flights = []model.Flight{}
+	}
+	c.HTML(http.StatusOK, "flights.html", gin.H{
+		"flights": flights,
+		"active":  "flights",
+		"user":    h.currentUser(ctx),
+	})
+}
+
+func (h *PageHandler) FlightShow(c *gin.Context) {
+	ctx := c.Request.Context()
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/flights")
+		return
+	}
+	flight, err := h.flightSvc.GetByID(ctx, id)
+	if err != nil {
+		log.Printf("flight show page error: %v", err)
+		c.Redirect(http.StatusFound, "/flights")
+		return
+	}
+	allTours, err := h.tourSvc.GetAll(ctx)
+	if err != nil {
+		allTours = []model.Tour{}
+	}
+	var tours []model.Tour
+	for _, t := range allTours {
+		for _, f := range t.Flights {
+			if f.ID == id {
+				tours = append(tours, t)
+				break
+			}
+		}
+	}
+	if tours == nil {
+		tours = []model.Tour{}
+	}
+	grossTotal := flight.Price * float64(flight.PaxCount)
+	remaining := grossTotal - flight.Deposit
+	c.HTML(http.StatusOK, "flight_show.html", gin.H{
+		"flight":     flight,
+		"tours":      tours,
+		"grossTotal": grossTotal,
+		"remaining":  remaining,
+		"active":     "flights",
 		"user":       h.currentUser(ctx),
 	})
 }
@@ -694,10 +761,20 @@ func (h *PageHandler) TourEdit(c *gin.Context) {
 	if err != nil {
 		rooms = []model.Room{}
 	}
+	flights, err := h.flightSvc.GetAll(ctx)
+	if err != nil {
+		flights = []model.Flight{}
+	}
+	selectedFlightIDs := make(map[int64]bool, len(tour.Flights))
+	for _, f := range tour.Flights {
+		selectedFlightIDs[f.ID] = true
+	}
 	c.HTML(http.StatusOK, "tour_edit.html", gin.H{
-		"tour":       tour,
-		"categories": cats,
-		"rooms":      rooms,
+		"tour":              tour,
+		"categories":        cats,
+		"rooms":             rooms,
+		"flights":           flights,
+		"selectedFlightIDs": selectedFlightIDs,
 		"active":     "tours",
 		"user":       h.currentUser(ctx),
 	})

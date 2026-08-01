@@ -53,22 +53,25 @@ type Tour struct {
 	RoomCode          string    `json:"room_code,omitempty" gorm:"<-:false"`
 	RoomPrice         float64   `json:"room_price,omitempty" gorm:"<-:false"`
 	RoomBedsCount     int       `json:"room_beds_count,omitempty" gorm:"<-:false"`
+	Flights           []Flight  `json:"flights" gorm:"-"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }
 
 type CreateTourRequest struct {
-	Code            string `json:"code"`
-	StartDate       string `json:"start_date"`
-	EndDate         string `json:"end_date"`
-	TourCategoryID  int64  `json:"tour_category_id"`
-	RoomID          int64  `json:"room_id"`
+	Code           string  `json:"code"`
+	StartDate      string  `json:"start_date"`
+	EndDate        string  `json:"end_date"`
+	TourCategoryID int64   `json:"tour_category_id"`
+	RoomID         int64   `json:"room_id"`
+	FlightIDs      []int64 `json:"flight_ids"`
 }
 
 type UpdateTourRequest struct {
-	Code            string `json:"code"`
-	StartDate       string `json:"start_date"`
-	EndDate         string `json:"end_date"`
-	TourCategoryID  int64  `json:"tour_category_id"`
-	RoomID          int64  `json:"room_id"`
+	Code           string  `json:"code"`
+	StartDate      string  `json:"start_date"`
+	EndDate        string  `json:"end_date"`
+	TourCategoryID int64   `json:"tour_category_id"`
+	RoomID         int64   `json:"room_id"`
+	FlightIDs      []int64 `json:"flight_ids"`
 }

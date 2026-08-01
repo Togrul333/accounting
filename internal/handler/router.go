@@ -15,6 +15,7 @@ func NewRouter(
 	expenses *ExpenseHandler,
 	tourCategories *TourCategoryHandler,
 	rooms *RoomHandler,
+	flights *FlightHandler,
 	tours *TourHandler,
 	clients *ClientHandler,
 	settings *SettingHandler,
@@ -49,6 +50,8 @@ func NewRouter(
 	r.GET("/tours/:id/edit", pages.TourEdit)
 	r.GET("/tour-categories", pages.TourCategories)
 	r.GET("/rooms", pages.Rooms)
+	r.GET("/flights", pages.Flights)
+	r.GET("/flights/:id", pages.FlightShow)
 	r.GET("/clients", pages.Clients)
 	r.GET("/discounts", pages.Discounts)
 	r.GET("/discount-categories", pages.DiscountCategories)
@@ -106,6 +109,12 @@ func NewRouter(
 		api.GET("/rooms/:id", rooms.GetByID)
 		api.PUT("/rooms/:id", rooms.Update)
 		api.DELETE("/rooms/:id", rooms.Delete)
+
+		api.GET("/flights", flights.GetAll)
+		api.POST("/flights", flights.Create)
+		api.GET("/flights/:id", flights.GetByID)
+		api.PUT("/flights/:id", flights.Update)
+		api.DELETE("/flights/:id", flights.Delete)
 
 		api.GET("/tours", tours.GetAll)
 		api.POST("/tours", tours.Create)

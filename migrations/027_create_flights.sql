@@ -1,0 +1,10 @@
+CREATE TABLE flights (
+    id             BIGINT        NOT NULL AUTO_INCREMENT,
+    pnr            VARCHAR(20)   NOT NULL,
+    departure_time DATETIME      NOT NULL,
+    price          DECIMAL(12,2) NOT NULL DEFAULT 0,
+    deposit        DECIMAL(12,2) NOT NULL DEFAULT 0,
+    created_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

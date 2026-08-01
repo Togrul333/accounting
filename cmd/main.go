@@ -76,6 +76,9 @@ func main() {
 	roomRepo := repository.NewRoomRepository(db)
 	roomSvc := service.NewRoomService(roomRepo)
 
+	flightRepo := repository.NewFlightRepository(db)
+	flightSvc := service.NewFlightService(flightRepo)
+
 	tourRepo := repository.NewTourRepository(db)
 	tourSvc := service.NewTourService(tourRepo)
 
@@ -115,6 +118,7 @@ func main() {
 	expenseHandler := handler.NewExpenseHandler(expenseSvc)
 	tourCategoryHandler := handler.NewTourCategoryHandler(tourCategorySvc)
 	roomHandler := handler.NewRoomHandler(roomSvc)
+	flightHandler := handler.NewFlightHandler(flightSvc)
 	tourHandler := handler.NewTourHandler(tourSvc)
 	clientHandler := handler.NewClientHandler(clientSvc)
 	settingHandler := handler.NewSettingHandler(settingSvc)
@@ -123,9 +127,9 @@ func main() {
 	discountHandler := handler.NewDiscountHandler(discountSvc)
 	orderHandler := handler.NewOrderHandler(orderSvc)
 	taskHandler := handler.NewTaskHandler(taskSvc)
-	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, tourSvc, clientSvc, settingSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc)
+	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, flightSvc, tourSvc, clientSvc, settingSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc)
 	sheetsImportHandler := handler.NewSheetsImportHandler(sheetsClient, sheetLinkSvc, tourSvc, clientSvc, orderSvc)
 
-	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, tmpl)
+	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, tmpl)
 	router.Run(":" + os.Getenv("PORT"))
 }

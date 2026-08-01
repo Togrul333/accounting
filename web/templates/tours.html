@@ -58,6 +58,7 @@
                   <th>Bitiş</th>
                   <th>Kategori</th>
                   <th>Oda</th>
+                  <th>Uçuş</th>
                   <th>Aksiyon</th>
                 </tr>
               </thead>
@@ -75,6 +76,20 @@
                   <td>
                     <span class="text-primary fw-semibold">{{printf "%.2f" .RoomPrice}} ₺</span>
                     <span class="text-secondary small ms-1">{{.RoomBedsCount}} yatak</span>
+                  </td>
+                  <td>
+                    {{if .Flights}}
+                    <div class="d-flex flex-column gap-1">
+                      {{range .Flights}}
+                      <div>
+                        <span class="badge bg-primary-subtle text-primary-emphasis fw-semibold">{{.PNR}}</span>
+                        <span class="text-secondary small ms-1">{{.DepartureTime.Format "02.01.2006 15:04"}}</span>
+                      </div>
+                      {{end}}
+                    </div>
+                    {{else}}
+                    <span class="text-secondary small">—</span>
+                    {{end}}
                   </td>
                   <td>
                     <div class="d-flex gap-1">
@@ -145,6 +160,11 @@
               <option value="">Seçin...</option>
             </select>
           </div>
+          <div class="mb-3">
+            <label class="form-label">Uçuşlar <span class="text-danger">*</span></label>
+            <div id="fFlightList" class="border rounded-2 p-2 d-flex flex-column gap-1" style="max-height: 220px; overflow-y: auto;"></div>
+            <div class="form-text">Birden fazla uçuş seçebilirsiniz.</div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
@@ -161,16 +181,19 @@
 <script>
   const categories = {{json .categories}};
   const rooms = {{json .rooms}};
+  const flights = {{json .flights}};
   let tourModal;
   document.addEventListener('DOMContentLoaded', () => {
     tourModal = new bootstrap.Modal(document.getElementById('tourModal'));
   });
 
   function populateSelects() {
-    const catEl  = document.getElementById('fCategory');
-    const roomEl = document.getElementById('fRoom');
+    const catEl      = document.getElementById('fCategory');
+    const roomEl     = document.getElementById('fRoom');
+    const flightList = document.getElementById('fFlightList');
     catEl.innerHTML  = '<option value="">Seçin...</option>';
     roomEl.innerHTML = '<option value="">Seçin...</option>';
+    flightList.innerHTML = '';
     (categories || []).forEach(c => {
       const o = document.createElement('option');
       o.value = c.id;
@@ -183,6 +206,20 @@
       o.textContent = `${r.price.toFixed(2)} ₺ / ${r.beds_count} yatak`;
       roomEl.appendChild(o);
     });
+    if (!flights || !flights.length) {
+      flightList.innerHTML = '<p class="small text-secondary mb-0">Önce bir uçuş ekleyin</p>';
+    } else {
+      flights.forEach(f => {
+        const id = `flight-${f.id}`;
+        const wrap = document.createElement('div');
+        wrap.className = 'form-check';
+        wrap.innerHTML = `
+          <input class="form-check-input" type="checkbox" value="${f.id}" id="${id}">
+          <label class="form-check-label small" for="${id}">${f.pnr} — ${(f.departure_time || '').replace('T', ' ').slice(0, 16)}</label>
+        `;
+        flightList.appendChild(wrap);
+      });
+    }
   }
 
   function openCreate() {
@@ -194,12 +231,18 @@
 
   async function saveItem(e) {
     e.preventDefault();
+    const flightIds = Array.from(document.querySelectorAll('#fFlightList input[type=checkbox]:checked')).map(el => parseInt(el.value));
+    if (!flightIds.length) {
+      showToast('✕ En az bir uçuş seçmelisiniz', 'danger');
+      return;
+    }
     const payload = {
       code:             document.getElementById('fCode').value.trim(),
       start_date:       document.getElementById('fStart').value,
       end_date:         document.getElementById('fEnd').value,
       tour_category_id: parseInt(document.getElementById('fCategory').value),
       room_id:          parseInt(document.getElementById('fRoom').value),
+      flight_ids:       flightIds,
     };
     try {
       const res = await fetch('/api/tours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });

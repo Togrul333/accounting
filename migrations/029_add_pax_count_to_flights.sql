@@ -1,0 +1,2 @@
+ALTER TABLE flights
+  ADD COLUMN pax_count INT NOT NULL DEFAULT 0;

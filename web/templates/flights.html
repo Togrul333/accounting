@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uçuşlar — Hisar Tour</title>
+  <link rel="stylesheet" href="/static/theme/assets/css/main.css">
+</head>
+<body>
+
+{{template "topbar_v2" .}}
+{{template "sidebar_v2" .}}
+
+<main id="content" class="content py-10">
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h1 class="fs-3 mb-1">Uçuşlar</h1>
+            <p class="mb-0 text-secondary">Uçuş bilgilerini yönetin</p>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="openCreate()">
+            <i class="ti ti-plus"></i> Uçuş Ekle
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-lg-3 col-12">
+        <div class="card p-4 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-2">
+          <div class="d-flex gap-3">
+            <div class="icon-shape icon-md bg-primary text-white rounded-2">
+              <i class="ti ti-plane fs-4"></i>
+            </div>
+            <div>
+              <h2 class="mb-3 fs-6">Toplam Uçuş</h2>
+              <h3 class="fw-bold mb-0">{{len .flights}}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          {{if .flights}}
+          <div class="table-responsive">
+            <table class="table mb-0 table-hover align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>#</th>
+                  <th>PNR</th>
+                  <th>Uçuş Zamanı</th>
+                  <th class="text-end">Fiyat</th>
+                  <th class="text-end">Depozit</th>
+                  <th class="text-end">Pax</th>
+                  <th>Aksiyon</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .flights}}
+                <tr>
+                  <td class="text-secondary">{{.ID}}</td>
+                  <td class="fw-semibold">{{.PNR}}</td>
+                  <td>{{.DepartureTime.Format "02.01.2006 15:04"}}</td>
+                  <td class="text-end fw-semibold text-primary">{{printf "%.2f" .Price}} ₺</td>
+                  <td class="text-end fw-semibold">{{printf "%.2f" .Deposit}} ₺</td>
+                  <td class="text-end fw-semibold">{{.PaxCount}}</td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <a href="/flights/{{.ID}}" class="btn btn-icon btn-sm btn-light" title="Görüntüle">
+                        <i class="ti ti-eye"></i>
+                      </a>
+                      <button type="button" class="btn btn-icon btn-sm btn-light" title="Düzenle" onclick='openEdit({{json .}})'>
+                        <i class="ti ti-edit"></i>
+                      </button>
+                      <button type="button" class="btn btn-icon btn-sm btn-light text-danger" title="Sil" onclick="deleteItem({{.ID}})">
+                        <i class="ti ti-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{else}}
+          <div class="card-body text-center py-8">
+            <i class="ti ti-plane fs-1 text-secondary"></i>
+            <p class="fw-semibold mt-3 mb-1">Uçuş bulunamadı</p>
+            <p class="text-secondary mb-4">İlk uçuşu ekleyin</p>
+            <button type="button" class="btn btn-primary" onclick="openCreate()"><i class="ti ti-plus"></i> Uçuş Ekle</button>
+          </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Uçuş Modalı -->
+<div class="modal fade" id="flightModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Yeni Uçuş</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <form id="flightForm" onsubmit="saveItem(event)">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">PNR <span class="text-danger">*</span></label>
+            <input id="fPnr" type="text" required placeholder="ABC123" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Uçuş Zamanı <span class="text-danger">*</span></label>
+            <input id="fDeparture" type="datetime-local" required class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Fiyat (₺) <span class="text-danger">*</span></label>
+            <input id="fPrice" type="number" step="0.01" min="0" required placeholder="0.00" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Depozit (₺)</label>
+            <input id="fDeposit" type="number" step="0.01" min="0" placeholder="0.00" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Pax Sayısı <span class="text-danger">*</span></label>
+            <input id="fPax" type="number" min="0" required placeholder="0" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="alert position-fixed d-none align-items-center gap-2" style="top:20px; right:20px; z-index:1080; min-width:260px;" role="alert"></div>
+
+<script src="/static/theme/assets/js/main.js" type="module"></script>
+<script>
+  let editingId = null;
+  let flightModal;
+  document.addEventListener('DOMContentLoaded', () => {
+    flightModal = new bootstrap.Modal(document.getElementById('flightModal'));
+  });
+
+  function openCreate() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = 'Yeni Uçuş';
+    document.getElementById('flightForm').reset();
+    flightModal.show();
+    setTimeout(() => document.getElementById('fPnr').focus(), 200);
+  }
+
+  function openEdit(flight) {
+    editingId = flight.id;
+    document.getElementById('modalTitle').textContent = 'Uçuşu Düzenle';
+    document.getElementById('fPnr').value = flight.pnr || '';
+    document.getElementById('fDeparture').value = (flight.departure_time || '').slice(0, 16);
+    document.getElementById('fPrice').value = flight.price;
+    document.getElementById('fDeposit').value = flight.deposit;
+    document.getElementById('fPax').value = flight.pax_count;
+    flightModal.show();
+  }
+
+  async function saveItem(e) {
+    e.preventDefault();
+    const payload = {
+      pnr:            document.getElementById('fPnr').value.trim(),
+      departure_time: document.getElementById('fDeparture').value,
+      price:          parseFloat(document.getElementById('fPrice').value),
+      deposit:        parseFloat(document.getElementById('fDeposit').value) || 0,
+      pax_count:      parseInt(document.getElementById('fPax').value) || 0,
+    };
+    const url    = editingId ? `/api/flights/${editingId}` : '/api/flights';
+    const method = editingId ? 'PUT' : 'POST';
+    try {
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) {
+        flightModal.hide();
+        showToast('✓ ' + (editingId ? 'Uçuş güncellendi' : 'Uçuş eklendi'), 'success');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        const err = await res.json();
+        showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'danger');
+      }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  async function deleteItem(id) {
+    if (!confirm('Bu uçuşu silmek istediğinizden emin misiniz?')) return;
+    try {
+      const res = await fetch(`/api/flights/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('✓ Uçuş silindi', 'success');
+        setTimeout(() => location.reload(), 700);
+      } else { showToast('✕ Silme işlemi başarısız', 'danger'); }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'alert position-fixed d-flex align-items-center gap-2 alert-' + type;
+    el.style.top = '20px';
+    el.style.right = '20px';
+    el.style.zIndex = 1080;
+    el.style.minWidth = '260px';
+    setTimeout(() => el.classList.add('d-none'), 2800);
+  }
+</script>
+</body>
+</html>
