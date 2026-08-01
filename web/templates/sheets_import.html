@@ -363,7 +363,7 @@
     }
 
     await loadLookups();
-    if (tourCodes.has(normKey(trimmedTitle))) {
+    if (tourCodes.has(normKey(trimmedTitle)) || trimmedTitle.toLowerCase() === 'genel liste') {
       await loadPassengerView(gid, trimmedTitle);
       document.getElementById('sheetMeta').textContent = '';
       return;
