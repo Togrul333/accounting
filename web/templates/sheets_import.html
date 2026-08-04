@@ -249,8 +249,11 @@
         resolved = true;
         confirmBtn.onclick = null;
         cancelBtn.onclick = null;
+        // Bootstrap's hide() animates out; resolving before it finishes lets a
+        // chained openModal() call show() while the previous one is still
+        // transitioning, which leaves the new modal stuck at display:none.
+        document.getElementById('dynamicModal').addEventListener('hidden.bs.modal', () => resolve(result), { once: true });
         dynamicModal.hide();
-        resolve(result);
       }
 
       confirmBtn.onclick = () => {
@@ -389,6 +392,9 @@
   let turlarTours = [];
   let roomsByCode = {};
   let categoriesByName = {};
+  let flightsList = [];
+  let lastFlightId = null;
+  const NEW_FLIGHT_VALUE = '__new__';
 
   function normKey(s) { return (s || '').trim().toLowerCase(); }
 
@@ -402,20 +408,91 @@
 
   async function loadLookups() {
     try {
-      const [roomsRes, catsRes, toursRes] = await Promise.all([
+      const [roomsRes, catsRes, toursRes, flightsRes] = await Promise.all([
         fetch('/api/rooms'),
         fetch('/api/tour-categories'),
         fetch('/api/tours'),
+        fetch('/api/flights'),
       ]);
       const rooms = await roomsRes.json();
       const cats = await catsRes.json();
       const tours = await toursRes.json();
+      const flights = await flightsRes.json();
       roomsByCode = {};
       (rooms || []).forEach(r => { if (r.code) roomsByCode[normKey(r.code)] = r; });
       categoriesByName = {};
       (cats || []).forEach(c => { categoriesByName[normKey(c.name)] = c; });
       tourCodes = new Set((tours || []).map(t => normKey(t.code)));
+      flightsList = flights || [];
     } catch {}
+  }
+
+  function flightLabel(f) {
+    const dep = (f.departure_time || '').replace('T', ' ').slice(0, 16);
+    return `${f.pnr || '—'} · ${dep}`;
+  }
+
+  async function createFlightViaModal() {
+    const result = await openModal({
+      title: 'Yeni uçuş yaradılsın?',
+      subtitle: 'Uçuş məlumatlarını daxil edin',
+      fields: [
+        { key: 'pnr', label: 'PNR', type: 'text', value: '' },
+        { key: 'departure_time', label: 'Uçuş Zamanı', type: 'datetime-local', value: '' },
+        { key: 'price', label: 'Fiyat (₺)', type: 'number', value: 0 },
+        { key: 'deposit', label: 'Depozit (₺)', type: 'number', value: 0 },
+        { key: 'pax_count', label: 'Pax Sayısı', type: 'number', value: 0 },
+      ],
+    });
+    if (!result || !result.pnr || !result.departure_time) return null;
+
+    const res = await fetch('/api/flights', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pnr: result.pnr,
+        departure_time: result.departure_time,
+        price: parseFloat(result.price) || 0,
+        deposit: parseFloat(result.deposit) || 0,
+        pax_count: parseInt(result.pax_count) || 0,
+      }),
+    });
+    if (!res.ok) { showToast('✕ Uçuş yaradıla bilmədi', 'danger'); return null; }
+    const flight = await res.json();
+    flightsList.push(flight);
+    return flight;
+  }
+
+  async function resolveFlightIds(tour) {
+    if (!flightsList.length) {
+      const flight = await createFlightViaModal();
+      if (!flight) return null;
+      lastFlightId = flight.id;
+      return [flight.id];
+    }
+
+    const options = flightsList.map(f => ({ value: f.id, label: flightLabel(f) }));
+    options.push({ value: NEW_FLIGHT_VALUE, label: '+ Yeni uçuş yarat' });
+
+    const result = await openModal({
+      title: 'Uçuş seçimi',
+      subtitle: `"${tour.code}" üçün uçuş seçin`,
+      fields: [
+        { key: 'flight_id', label: 'Uçuş', type: 'select', options, value: lastFlightId ?? options[0]?.value },
+      ],
+    });
+    if (!result) return null;
+
+    if (String(result.flight_id) === NEW_FLIGHT_VALUE) {
+      const flight = await createFlightViaModal();
+      if (!flight) return null;
+      lastFlightId = flight.id;
+      return [flight.id];
+    }
+
+    const flightId = parseInt(result.flight_id);
+    lastFlightId = flightId;
+    return [flightId];
   }
 
   async function loadTurlarView(gid) {
@@ -516,6 +593,13 @@
     const tour = turlarTours[idx];
     if (btn) { btn.disabled = true; btn.textContent = 'Yüklənir...'; }
 
+    const flightIds = await resolveFlightIds(tour);
+    if (!flightIds || !flightIds.length) {
+      if (btn) { btn.disabled = false; btn.textContent = 'İçe Aktar'; }
+      showToast(`✕ ${tour.code} — uçuş seçilmədi, idxal edilmədi`, 'danger');
+      return;
+    }
+
     let created = 0;
     for (const item of tour.items) {
       const roomId = await resolveRoomId(item);
@@ -531,6 +615,7 @@
           end_date: tour.end_date,
           tour_category_id: categoryId,
           room_id: roomId,
+          flight_ids: flightIds,
         }),
       });
       if (res.ok) created++;
