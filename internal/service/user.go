@@ -22,6 +22,17 @@ func (s *UserService) GetByID(ctx context.Context, id int64) (*model.User, error
 	return s.repo.GetByID(ctx, id)
 }
 
+func (s *UserService) Login(ctx context.Context, email, password string) (*model.User, error) {
+	user, err := s.repo.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, errors.New("e-posta veya şifre hatalı")
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		return nil, errors.New("e-posta veya şifre hatalı")
+	}
+	return user, nil
+}
+
 func (s *UserService) UpdateProfile(ctx context.Context, id int64, req model.UpdateProfileRequest) error {
 	if req.Name == "" || req.Email == "" {
 		return errors.New("ad ve e-posta zorunlu")

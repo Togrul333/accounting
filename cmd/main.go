@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"accounting/internal/auth"
 	"accounting/internal/googlesheets"
 	"accounting/internal/handler"
 	"accounting/internal/repository"
@@ -91,6 +92,8 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	userSvc := service.NewUserService(userRepo)
 
+	sessions := auth.NewStore()
+
 	discountCategoryRepo := repository.NewDiscountCategoryRepository(db)
 	discountCategorySvc := service.NewDiscountCategoryService(discountCategoryRepo)
 
@@ -123,6 +126,7 @@ func main() {
 	clientHandler := handler.NewClientHandler(clientSvc)
 	settingHandler := handler.NewSettingHandler(settingSvc)
 	userHandler := handler.NewUserHandler(userSvc)
+	authHandler := handler.NewAuthHandler(userSvc, sessions)
 	discountCategoryHandler := handler.NewDiscountCategoryHandler(discountCategorySvc)
 	discountHandler := handler.NewDiscountHandler(discountSvc)
 	orderHandler := handler.NewOrderHandler(orderSvc)
@@ -130,6 +134,6 @@ func main() {
 	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, flightSvc, tourSvc, clientSvc, settingSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc)
 	sheetsImportHandler := handler.NewSheetsImportHandler(sheetsClient, sheetLinkSvc, tourSvc, clientSvc, orderSvc)
 
-	router := handler.NewRouter(accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, tmpl)
+	router := handler.NewRouter(authHandler, sessions, accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, tmpl)
 	router.Run(":" + os.Getenv("PORT"))
 }

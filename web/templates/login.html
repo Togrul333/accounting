@@ -68,14 +68,18 @@
           <h2 class="fs-4 fw-bold mb-1">Hoş geldiniz</h2>
           <p class="text-secondary mb-4">Muhasebe sistemine giriş yapın</p>
 
-          <form action="/accounts" method="GET">
+          {{if .error}}
+          <div class="alert alert-danger py-2 px-3 small mb-3">{{.error}}</div>
+          {{end}}
+
+          <form action="/login" method="POST">
             <div class="mb-3">
               <label class="form-label">E-posta</label>
-              <input type="email" placeholder="admin@hisartour.az" class="form-control">
+              <input type="email" name="email" placeholder="admin@hisartour.az" class="form-control" required>
             </div>
             <div class="mb-4">
               <label class="form-label">Şifre</label>
-              <input type="password" placeholder="••••••••" class="form-control">
+              <input type="password" name="password" placeholder="••••••••" class="form-control" required>
             </div>
             <button type="submit" class="btn btn-primary w-100">Giriş yap</button>
           </form>

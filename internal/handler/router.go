@@ -2,12 +2,15 @@ package handler
 
 import (
 	"html/template"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"accounting/internal/auth"
 )
 
 func NewRouter(
+	authHandler *AuthHandler,
+	sessions *auth.Store,
 	accounts *AccountHandler,
 	incomeCategories *IncomeCategoryHandler,
 	incomes *IncomeHandler,
@@ -31,12 +34,14 @@ func NewRouter(
 	r := gin.Default()
 	r.SetHTMLTemplate(tmpl)
 	r.Static("/static", "web/static")
+	r.Use(AuthMiddleware(sessions))
 
 	r.GET("/", pages.Dashboard)
 	r.GET("/login", pages.Login)
+	r.POST("/login", authHandler.Login)
 	r.GET("/profile", pages.Profile)
 	r.GET("/settings", pages.Settings)
-	r.POST("/logout", func(c *gin.Context) { c.Redirect(http.StatusFound, "/login") })
+	r.POST("/logout", authHandler.Logout)
 	r.GET("/accounts", pages.Accounts)
 	r.GET("/accounts/:id/edit", pages.AccountEdit)
 	r.GET("/accounts/:id/incomes", pages.AccountIncomes)
