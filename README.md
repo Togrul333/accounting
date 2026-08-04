@@ -88,7 +88,7 @@ mysql -u root -p accounting < migrations/002_create_users.sql
 DB_USER=root DB_PASSWORD=secret DB_NAME=accounting go run ./cmd/seed
 ```
 
-#### Тестовый пользователь
+#### Тестовый пользователь 
 
 | Поле    | Значение              |
 |---------|-----------------------|
