@@ -30,6 +30,7 @@ func NewRouter(
 	discounts *DiscountHandler,
 	orders *OrderHandler,
 	tasks *TaskHandler,
+	taskComments *TaskCommentHandler,
 	pages *PageHandler,
 	sheetsImport *SheetsImportHandler,
 	metaAds *MetaAdsHandler,
@@ -194,6 +195,10 @@ func NewRouter(
 		api.PUT("/tasks/:id", tasks.Update)
 		api.PUT("/tasks/:id/status", tasks.UpdateStatus)
 		api.DELETE("/tasks/:id", tasks.Delete)
+		api.GET("/tasks/:id/comments", taskComments.GetByTask)
+		api.POST("/tasks/:id/comments", taskComments.Create)
+		api.PUT("/task-comments/:id", taskComments.Update)
+		api.DELETE("/task-comments/:id", taskComments.Delete)
 
 		api.GET("/sheets-import/links", sheetsImport.Links)
 		api.POST("/sheets-import/tabs", sheetsImport.Tabs)

@@ -1081,14 +1081,10 @@ func (h *PageHandler) Expenses(c *gin.Context) {
 	})
 }
 
+// Tasks — Jira benzeri görev panosu. Pano tarayıcıda çizildiği için
+// görevler ve tüm bağlantı seçenekleri JSON olarak şablona verilir.
 func (h *PageHandler) Tasks(c *gin.Context) {
 	ctx := c.Request.Context()
-
-	user, err := h.userSvc.GetByID(ctx, 1)
-	if err != nil {
-		log.Printf("tasks page user error: %v", err)
-		user = &model.User{Name: "Kullanıcı"}
-	}
 
 	tasks, err := h.taskSvc.GetAll(ctx)
 	if err != nil {
@@ -1097,11 +1093,6 @@ func (h *PageHandler) Tasks(c *gin.Context) {
 	}
 	if tasks == nil {
 		tasks = []model.Task{}
-	}
-
-	grouped := map[string][]model.Task{"todo": {}, "in_progress": {}, "done": {}}
-	for _, t := range tasks {
-		grouped[t.Status] = append(grouped[t.Status], t)
 	}
 
 	hocaUsers, err := h.hocaUserSvc.GetAll(ctx)
@@ -1116,14 +1107,25 @@ func (h *PageHandler) Tasks(c *gin.Context) {
 		tours = []model.Tour{}
 	}
 
+	orders, err := h.orderSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("tasks page orders error: %v", err)
+		orders = []model.Order{}
+	}
+
+	clients, err := h.clientSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("tasks page clients error: %v", err)
+		clients = []model.Client{}
+	}
+
 	c.HTML(http.StatusOK, "tasks.html", gin.H{
-		"todoTasks":       grouped["todo"],
-		"inProgressTasks": grouped["in_progress"],
-		"doneTasks":       grouped["done"],
-		"taskCount":       len(tasks),
-		"hocaUsers":       hocaUsers,
-		"tours":           tours,
-		"active":          "tasks",
-		"user":            user,
+		"tasks":     tasks,
+		"hocaUsers": hocaUsers,
+		"tours":     tours,
+		"orders":    orders,
+		"clients":   clients,
+		"active":    "tasks",
+		"user":      h.currentUser(ctx),
 	})
 }

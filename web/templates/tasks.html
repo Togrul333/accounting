@@ -6,10 +6,104 @@
   <title>Görevler — Hisar Tour</title>
   <link rel="stylesheet" href="/static/theme/assets/css/main.css">
   <style>
-    .kanban-card { cursor: grab; }
-    .kanban-card.dragging { opacity: .4; }
-    .kanban-col { min-height: 120px; transition: background-color .15s, box-shadow .15s; border-radius: var(--bs-border-radius); }
-    .kanban-col.drag-over { background-color: var(--bs-primary-bg-subtle); box-shadow: inset 0 0 0 2px var(--bs-primary); }
+    /* ——— Pano ——— */
+    .board { display: flex; gap: 1rem; align-items: stretch; overflow-x: auto; padding-bottom: .5rem; height: calc(100vh - 200px); min-height: 380px; }
+    .board-col {
+      flex: 1 1 0; min-width: 300px;
+      background: var(--bs-gray-100);
+      border: 1px solid var(--bs-border-color);
+      border-radius: 14px;
+      display: flex; flex-direction: column;
+      transition: background-color .15s, box-shadow .15s;
+    }
+    .board-col.drag-over { background: var(--bs-primary-bg-subtle); box-shadow: inset 0 0 0 2px var(--bs-primary); }
+    .board-col-head { display: flex; align-items: center; gap: .5rem; padding: .85rem 1rem .6rem; }
+    .board-col-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+    .board-col-title { font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--bs-gray-600); margin: 0; }
+    .board-col-count { font-size: .75rem; font-weight: 600; color: var(--bs-gray-600); background: var(--bs-gray-200); border-radius: 20px; padding: .05rem .5rem; }
+    .board-col-body {
+      flex: 1 1 auto;
+      display: flex; flex-direction: column; gap: .5rem;
+      padding: 0 .6rem .6rem; overflow-y: auto;
+      min-height: 90px;
+    }
+    .board-col-empty { text-align: center; color: var(--bs-gray-500); font-size: .82rem; padding: 1.6rem 0; border: 1px dashed var(--bs-border-color); border-radius: 10px; }
+
+    /* ——— Kart ——— */
+    .task-card {
+      background: #fff; border: 1px solid var(--bs-border-color); border-radius: 10px;
+      padding: .7rem .8rem; cursor: pointer; position: relative;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+      transition: box-shadow .15s, transform .15s, border-color .15s;
+    }
+    .task-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.09); border-color: var(--bs-gray-300); transform: translateY(-1px); }
+    .task-card:active { cursor: grabbing; }
+    .task-card.dragging { opacity: .45; transform: rotate(1.5deg); }
+    .task-card::before { content: ""; position: absolute; left: 0; top: .8rem; bottom: .8rem; width: 3px; border-radius: 3px; }
+    .task-card.prio-urgent::before { background: var(--bs-danger); }
+    .task-card.prio-high::before   { background: var(--bs-orange); }
+    .task-card.prio-medium::before { background: var(--bs-warning); }
+    .task-card.prio-low::before    { background: var(--bs-gray-400); }
+    .task-card-title { font-size: .9rem; font-weight: 500; line-height: 1.35; margin: 0 0 .45rem; color: var(--bs-gray-900); }
+    .task-card.is-done .task-card-title { color: var(--bs-gray-500); text-decoration: line-through; }
+    .task-chips { display: flex; flex-wrap: wrap; gap: .25rem; margin-bottom: .5rem; }
+    .chip {
+      display: inline-flex; align-items: center; gap: .2rem;
+      font-size: .7rem; font-weight: 500; line-height: 1;
+      padding: .25rem .45rem; border-radius: 6px; text-decoration: none; max-width: 100%;
+    }
+    .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chip-tour   { background: var(--bs-info-bg-subtle);      color: var(--bs-info-text-emphasis); }
+    .chip-order  { background: var(--bs-primary-bg-subtle);   color: var(--bs-primary-text-emphasis); }
+    .chip-client { background: var(--bs-success-bg-subtle);   color: var(--bs-success-text-emphasis); }
+    a.chip:hover { filter: brightness(.95); }
+    .task-card-foot { display: flex; align-items: center; gap: .6rem; font-size: .72rem; color: var(--bs-gray-600); }
+    .task-key { font-weight: 600; letter-spacing: .02em; color: var(--bs-gray-500); }
+    .task-due { display: inline-flex; align-items: center; gap: .2rem; }
+    .task-due.overdue { color: var(--bs-danger); font-weight: 600; }
+    .task-meta-right { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+
+    /* ——— Avatar ——— */
+    .avatar {
+      width: 26px; height: 26px; border-radius: 50%; flex: 0 0 auto;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: .68rem; font-weight: 700; color: #fff; letter-spacing: .02em;
+    }
+    .avatar-lg { width: 34px; height: 34px; font-size: .8rem; }
+    .avatar-empty { background: var(--bs-gray-200); color: var(--bs-gray-500); }
+
+    /* ——— Detay penceresi ——— */
+    .detail-main { padding: 1.5rem 2rem; overflow-y: auto; }
+    .detail-side { padding: 1.5rem; border-left: 1px solid var(--bs-border-color); background: var(--bs-gray-100); overflow-y: auto; }
+    @media (max-width: 991.98px) { .detail-side { border-left: 0; border-top: 1px solid var(--bs-border-color); } }
+    .detail-title {
+      font-size: 1.35rem; font-weight: 600; line-height: 1.3; width: 100%;
+      border: 1px solid transparent; border-radius: 8px; padding: .3rem .5rem; margin-left: -.5rem;
+      background: transparent;
+    }
+    .detail-title:hover { background: var(--bs-gray-100); }
+    .detail-title:focus { background: #fff; border-color: var(--bs-primary); outline: none; }
+    .detail-desc {
+      min-height: 84px; border: 1px solid transparent; border-radius: 8px;
+      padding: .5rem; margin-left: -.5rem; white-space: pre-wrap; cursor: text; font-size: .9rem; line-height: 1.6;
+    }
+    .detail-desc:hover { background: var(--bs-gray-100); }
+    .side-label { font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--bs-gray-500); margin-bottom: .3rem; }
+    .side-block { margin-bottom: 1rem; }
+    .side-card { background: #fff; border: 1px solid var(--bs-border-color); border-radius: 12px; padding: 1rem; }
+
+    /* ——— Yorumlar ——— */
+    .comment { display: flex; gap: .7rem; padding: .8rem 0; border-top: 1px solid var(--bs-border-color); }
+    .comment-body { flex: 1; min-width: 0; }
+    .comment-head { display: flex; align-items: baseline; gap: .5rem; margin-bottom: .15rem; }
+    .comment-author { font-weight: 600; font-size: .85rem; }
+    .comment-time { font-size: .72rem; color: var(--bs-gray-500); }
+    .comment-text { font-size: .875rem; line-height: 1.55; white-space: pre-wrap; margin: 0; }
+    .comment-actions { display: flex; gap: .75rem; margin-top: .3rem; }
+    .comment-actions button { border: 0; background: none; padding: 0; font-size: .75rem; font-weight: 600; color: var(--bs-gray-600); }
+    .comment-actions button:hover { color: var(--bs-primary); text-decoration: underline; }
+
+    .status-pill { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border-radius: 6px; padding: .25rem .5rem; }
   </style>
 </head>
 <body>
@@ -20,137 +114,221 @@
 <main id="content" class="content py-10">
   <div class="container-fluid">
 
-    <div class="row">
-      <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h1 class="fs-3 mb-1">Görevler</h1>
-            <p class="mb-0 text-secondary">{{.taskCount}} görev</p>
-          </div>
-          <button type="button" class="btn btn-primary" onclick="openCreate()">
-            <i class="ti ti-plus"></i> Görev Ekle
-          </button>
+    <!-- Başlık + filtreler -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+      <div>
+        <h1 class="fs-3 mb-1">Görevler</h1>
+        <p class="mb-0 text-secondary small" id="boardSummary"></p>
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="position-relative">
+          <i class="ti ti-search position-absolute text-secondary" style="left:10px; top:50%; transform:translateY(-50%);"></i>
+          <input id="fltSearch" type="search" class="form-control form-control-sm ps-5" placeholder="Görev ara…" style="min-width:220px;" oninput="renderBoard()">
         </div>
+        <select id="fltAssignee" class="form-select form-select-sm" style="width:auto;" onchange="renderBoard()">
+          <option value="">Tüm kişiler</option>
+          <option value="none">— Atanmamış —</option>
+          {{range .hocaUsers}}<option value="{{.ID}}">{{.FirstName}} {{.LastName}}</option>{{end}}
+        </select>
+        <select id="fltPriority" class="form-select form-select-sm" style="width:auto;" onchange="renderBoard()">
+          <option value="">Tüm öncelikler</option>
+          <option value="urgent">Acil</option>
+          <option value="high">Yüksek</option>
+          <option value="medium">Orta</option>
+          <option value="low">Düşük</option>
+        </select>
+        <button type="button" class="btn btn-sm btn-light" id="fltOverdue" onclick="toggleOverdue()">
+          <i class="ti ti-alarm"></i> Geciken
+        </button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="openCreate()">
+          <i class="ti ti-plus"></i> Görev Ekle
+        </button>
       </div>
     </div>
 
-    <div class="row g-3">
+    <div id="board" class="board"></div>
 
-      <!-- Yapılacak -->
-      <div class="col-lg-4 col-12">
-        <div class="card h-100">
-          <div class="card-header bg-transparent d-flex align-items-center gap-2 px-4 py-3">
-            <span class="badge rounded-pill bg-secondary">&nbsp;</span>
-            <h3 class="h6 mb-0">Yapılacak</h3>
-            <span class="badge bg-secondary-subtle text-secondary-emphasis ms-auto">{{len .todoTasks}}</span>
-          </div>
-          <div class="card-body kanban-col p-3" data-status="todo" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
-            <div id="col-todo" class="d-flex flex-column gap-2">
-              {{range .todoTasks}}
-                {{template "taskCard" .}}
-              {{else}}
-              <div class="text-center text-secondary small py-4">Görev yok</div>
-              {{end}}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Devam Ediyor -->
-      <div class="col-lg-4 col-12">
-        <div class="card h-100">
-          <div class="card-header bg-transparent d-flex align-items-center gap-2 px-4 py-3">
-            <span class="badge rounded-pill bg-warning">&nbsp;</span>
-            <h3 class="h6 mb-0">Devam Ediyor</h3>
-            <span class="badge bg-warning-subtle text-warning-emphasis ms-auto">{{len .inProgressTasks}}</span>
-          </div>
-          <div class="card-body kanban-col p-3" data-status="in_progress" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
-            <div id="col-in_progress" class="d-flex flex-column gap-2">
-              {{range .inProgressTasks}}
-                {{template "taskCard" .}}
-              {{else}}
-              <div class="text-center text-secondary small py-4">Görev yok</div>
-              {{end}}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tamamlandı -->
-      <div class="col-lg-4 col-12">
-        <div class="card h-100">
-          <div class="card-header bg-transparent d-flex align-items-center gap-2 px-4 py-3">
-            <span class="badge rounded-pill bg-success">&nbsp;</span>
-            <h3 class="h6 mb-0">Tamamlandı</h3>
-            <span class="badge bg-success-subtle text-success-emphasis ms-auto">{{len .doneTasks}}</span>
-          </div>
-          <div class="card-body kanban-col p-3" data-status="done" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
-            <div id="col-done" class="d-flex flex-column gap-2">
-              {{range .doneTasks}}
-                {{template "taskCard" .}}
-              {{else}}
-              <div class="text-center text-secondary small py-4">Görev yok</div>
-              {{end}}
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
   </div>
 </main>
 
-<!-- Görev Modalı -->
-<div class="modal fade" id="taskModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+<!-- Görev detayı — tam ekran popup -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content">
+      <div class="modal-header align-items-center gap-2">
+        <span class="task-key" id="dKey"></span>
+        <span class="status-pill" id="dStatusPill"></span>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-sm btn-light text-danger" onclick="deleteTask(currentTaskId)">
+            <i class="ti ti-trash"></i> Sil
+          </button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+      </div>
+      <div class="modal-body p-0">
+        <div class="row g-0 h-100">
+
+          <!-- Sol: başlık, açıklama, yorumlar -->
+          <div class="col-lg-8 detail-main" style="max-height: calc(100vh - 62px);">
+            <input id="dTitle" class="detail-title mb-2" onblur="saveTitle()"
+                   onkeydown="if(event.key==='Enter'){this.blur();} if(event.key==='Escape'){this.value=TASKS_BY_ID[currentTaskId].title; this.blur();}">
+
+            <div class="mb-4">
+              <div class="side-label">Açıklama</div>
+              <div id="dDescView" class="detail-desc text-secondary" onclick="editDesc()"></div>
+              <div id="dDescEdit" class="d-none">
+                <textarea id="dDescInput" class="form-control" rows="5" placeholder="Görev açıklaması…"></textarea>
+                <div class="d-flex gap-2 mt-2">
+                  <button type="button" class="btn btn-sm btn-primary" onclick="saveDesc()">Kaydet</button>
+                  <button type="button" class="btn btn-sm btn-light" onclick="cancelDesc()">İptal</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="side-label mb-2">Yorumlar <span id="dCommentCount" class="text-secondary"></span></div>
+
+            <div class="d-flex gap-2 mb-2">
+              <div class="avatar avatar-lg" style="background: var(--bs-primary);">{{printf "%.1s" .user.Name}}</div>
+              <div class="flex-fill">
+                <textarea id="dNewComment" class="form-control" rows="2" placeholder="Yorum yaz…"
+                          onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey))addComment()"></textarea>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                  <button type="button" class="btn btn-sm btn-primary" onclick="addComment()">Yorum Ekle</button>
+                  <span class="text-secondary small">⌘/Ctrl + Enter</span>
+                </div>
+              </div>
+            </div>
+
+            <div id="dComments"></div>
+          </div>
+
+          <!-- Sağ: alanlar -->
+          <div class="col-lg-4 detail-side" style="max-height: calc(100vh - 62px);">
+            <div class="side-card">
+              <div class="side-block">
+                <div class="side-label">Durum</div>
+                <select id="dStatus" class="form-select form-select-sm" onchange="saveField()">
+                  <option value="todo">Yapılacak</option>
+                  <option value="in_progress">Devam Ediyor</option>
+                  <option value="done">Tamamlandı</option>
+                </select>
+              </div>
+              <div class="side-block">
+                <div class="side-label">Öncelik</div>
+                <select id="dPriority" class="form-select form-select-sm" onchange="saveField()">
+                  <option value="urgent">Acil</option>
+                  <option value="high">Yüksek</option>
+                  <option value="medium">Orta</option>
+                  <option value="low">Düşük</option>
+                </select>
+              </div>
+              <div class="side-block">
+                <div class="side-label">Atanan Kişi</div>
+                <select id="dHocaUserID" class="form-select form-select-sm" onchange="saveField()">
+                  <option value="">— Atanmadı —</option>
+                  {{range .hocaUsers}}<option value="{{.ID}}">{{.FirstName}} {{.LastName}}</option>{{end}}
+                </select>
+              </div>
+              <div class="side-block mb-0">
+                <div class="side-label">Bitiş Tarihi</div>
+                <input id="dDueDate" type="date" class="form-control form-control-sm" onchange="saveField()">
+              </div>
+            </div>
+
+            <div class="side-card mt-3">
+              <div class="side-label mb-2">Bağlantılar</div>
+              <div class="side-block">
+                <div class="side-label">Tur</div>
+                <select id="dTourID" class="form-select form-select-sm" onchange="saveField()">
+                  <option value="">— Tur yok —</option>
+                  {{range .tours}}<option value="{{.ID}}">{{.Code}}</option>{{end}}
+                </select>
+                <a id="dTourLink" class="small d-none" target="_blank"><i class="ti ti-external-link"></i> Tura git</a>
+              </div>
+              <div class="side-block">
+                <div class="side-label">Sipariş</div>
+                <select id="dOrderID" class="form-select form-select-sm" onchange="saveField()"></select>
+                <a id="dOrderLink" class="small d-none" target="_blank"><i class="ti ti-external-link"></i> Siparişe git</a>
+              </div>
+              <div class="side-block mb-0">
+                <div class="side-label">Müşteri</div>
+                <select id="dClientID" class="form-select form-select-sm" onchange="saveField()"></select>
+              </div>
+            </div>
+
+            <p class="text-secondary small mt-3 mb-0" id="dTimestamps"></p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Yeni görev -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="modalTitle">Yeni Görev</h5>
+        <h5 class="modal-title">Yeni Görev</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
       </div>
-      <form id="taskForm" onsubmit="saveTask(event)">
+      <form id="createForm" onsubmit="createTask(event)">
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label">Başlık <span class="text-danger">*</span></label>
-            <input id="fTitle" type="text" required placeholder="Görev başlığı" class="form-control">
+            <input id="cTitle" type="text" required placeholder="Görev başlığı" class="form-control">
           </div>
           <div class="mb-3">
             <label class="form-label">Açıklama</label>
-            <textarea id="fDescription" placeholder="Görev açıklaması (isteğe bağlı)" class="form-control" rows="3"></textarea>
+            <textarea id="cDescription" placeholder="Görev açıklaması (isteğe bağlı)" class="form-control" rows="3"></textarea>
           </div>
           <div class="row g-3">
-            <div class="col-6">
+            <div class="col-md-4">
               <label class="form-label">Durum</label>
-              <select id="fStatus" class="form-select">
+              <select id="cStatus" class="form-select">
                 <option value="todo">Yapılacak</option>
                 <option value="in_progress">Devam Ediyor</option>
                 <option value="done">Tamamlandı</option>
               </select>
             </div>
-            <div class="col-6">
-              <label class="form-label">Bitiş Tarihi</label>
-              <input id="fDueDate" type="date" class="form-control">
+            <div class="col-md-4">
+              <label class="form-label">Öncelik</label>
+              <select id="cPriority" class="form-select">
+                <option value="urgent">Acil</option>
+                <option value="high">Yüksek</option>
+                <option value="medium" selected>Orta</option>
+                <option value="low">Düşük</option>
+              </select>
             </div>
-            <div class="col-6">
+            <div class="col-md-4">
+              <label class="form-label">Bitiş Tarihi</label>
+              <input id="cDueDate" type="date" class="form-control">
+            </div>
+            <div class="col-md-6">
               <label class="form-label">Atanan Kişi</label>
-              <select id="fHocaUserID" class="form-select">
+              <select id="cHocaUserID" class="form-select">
                 <option value="">— Atanmadı —</option>
-                {{range .hocaUsers}}
-                <option value="{{.ID}}">{{.FirstName}} {{.LastName}}</option>
-                {{end}}
+                {{range .hocaUsers}}<option value="{{.ID}}">{{.FirstName}} {{.LastName}}</option>{{end}}
               </select>
               {{if not .hocaUsers}}
               <div class="form-text">Personel listesi boş — <a href="/settings">Ayarlar</a> sayfasından hoca ekleyin.</div>
               {{end}}
             </div>
-            <div class="col-6">
+            <div class="col-md-6">
               <label class="form-label">Tur</label>
-              <select id="fTourID" class="form-select">
+              <select id="cTourID" class="form-select">
                 <option value="">— Tur yok —</option>
-                {{range .tours}}
-                <option value="{{.ID}}">{{.Code}}</option>
-                {{end}}
+                {{range .tours}}<option value="{{.ID}}">{{.Code}}</option>{{end}}
               </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Sipariş</label>
+              <select id="cOrderID" class="form-select"></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Müşteri</label>
+              <select id="cClientID" class="form-select"></select>
             </div>
           </div>
         </div>
@@ -163,71 +341,526 @@
   </div>
 </div>
 
-<div id="toast" class="alert position-fixed d-none align-items-center gap-2" style="top:20px; right:20px; z-index:1080; min-width:260px;" role="alert"></div>
+<div id="toast" class="alert position-fixed d-none align-items-center gap-2" style="top:20px; right:20px; z-index:1090; min-width:260px;" role="alert"></div>
 
 <script src="/static/theme/assets/js/main.js" type="module"></script>
 <script>
-  let editingId = null;
-  let taskModal;
-  document.addEventListener('DOMContentLoaded', () => {
-    taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
+  // ——— Sunucudan gelen veriler ———
+  let TASKS   = {{json .tasks}};
+  const TOURS   = {{json .tours}};
+  const ORDERS  = {{json .orders}};
+  const CLIENTS = {{json .clients}};
+
+  let TASKS_BY_ID = {};
+  function reindex() { TASKS_BY_ID = Object.fromEntries(TASKS.map(t => [t.id, t])); }
+  reindex();
+
+  const COLUMNS = [
+    { key: 'todo',        title: 'Yapılacak',     color: 'var(--bs-gray-400)' },
+    { key: 'in_progress', title: 'Devam Ediyor',  color: 'var(--bs-warning)' },
+    { key: 'done',        title: 'Tamamlandı',    color: 'var(--bs-success)' },
+  ];
+
+  const PRIORITY = {
+    urgent: { label: 'Acil',   icon: 'ti-alert-triangle', color: 'var(--bs-danger)' },
+    high:   { label: 'Yüksek', icon: 'ti-chevron-up',     color: 'var(--bs-orange)' },
+    medium: { label: 'Orta',   icon: 'ti-equal',          color: 'var(--bs-warning)' },
+    low:    { label: 'Düşük',  icon: 'ti-chevron-down',   color: 'var(--bs-gray-500)' },
+  };
+
+  const STATUS_PILL = {
+    todo:        { label: 'Yapılacak',    cls: 'bg-secondary-subtle text-secondary-emphasis' },
+    in_progress: { label: 'Devam Ediyor', cls: 'bg-warning-subtle text-warning-emphasis' },
+    done:        { label: 'Tamamlandı',   cls: 'bg-success-subtle text-success-emphasis' },
+  };
+
+  const AVATAR_COLORS = ['#E66239', '#00B8DB', '#00C951', '#6f42c1', '#d63384', '#F0B100', '#0d6efd', '#20c997'];
+
+  let detailModal, createModal, currentTaskId = null, onlyOverdue = false;
+
+  // ——— Yardımcılar ———
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const prio = t => PRIORITY[t.priority] || PRIORITY.medium;
+
+  function taskKey(id) { return 'GRV-' + id; }
+
+  function initials(name) {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+  }
+
+  function avatarColor(name) {
+    let h = 0;
+    for (const ch of String(name || '')) h = (h * 31 + ch.charCodeAt(0)) % 9973;
+    return AVATAR_COLORS[h % AVATAR_COLORS.length];
+  }
+
+  function avatarHTML(name, extraClass) {
+    if (!name) return '<span class="avatar avatar-empty ' + (extraClass || '') + '" title="Atanmadı"><i class="ti ti-user"></i></span>';
+    return '<span class="avatar ' + (extraClass || '') + '" style="background:' + avatarColor(name) + '" title="' + esc(name) + '">' + esc(initials(name)) + '</span>';
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
+  }
+
+  function isOverdue(t) {
+    if (!t.due_date || t.status === 'done') return false;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return new Date(t.due_date) < today;
+  }
+
+  function relTime(iso) {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return 'az önce';
+    if (diff < 3600) return Math.floor(diff / 60) + ' dk önce';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' sa önce';
+    if (diff < 604800) return Math.floor(diff / 86400) + ' gün önce';
+    return fmtDate(iso);
+  }
+
+  function orderLabel(o) {
+    const parts = ['#' + o.id];
+    if (o.client_name) parts.push(o.client_name);
+    if (o.tour_code) parts.push(o.tour_code);
+    return parts.join(' · ');
+  }
+
+  function clientLabel(c) { return (c.first_name + ' ' + c.last_name).trim(); }
+
+  // Sipariş/müşteri listeleri uzun olabilir — seçenekleri JS ile dolduruyoruz.
+  function fillLinkSelects(prefix) {
+    const orderSel = document.getElementById(prefix + 'OrderID');
+    orderSel.innerHTML = '<option value="">— Sipariş yok —</option>' +
+      ORDERS.map(o => '<option value="' + o.id + '">' + esc(orderLabel(o)) + '</option>').join('');
+    const clientSel = document.getElementById(prefix + 'ClientID');
+    clientSel.innerHTML = '<option value="">— Müşteri yok —</option>' +
+      CLIENTS.map(c => '<option value="' + c.id + '">' + esc(clientLabel(c)) + '</option>').join('');
+  }
+
+  // ——— Pano ———
+  function matchesFilters(t) {
+    const q = document.getElementById('fltSearch').value.trim().toLowerCase();
+    if (q) {
+      const hay = [t.title, t.description, t.hoca_user_name, t.tour_code, t.order_label, t.client_name, taskKey(t.id)]
+        .filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    const assignee = document.getElementById('fltAssignee').value;
+    if (assignee === 'none' && t.hoca_user_id) return false;
+    if (assignee && assignee !== 'none' && String(t.hoca_user_id || '') !== assignee) return false;
+
+    const p = document.getElementById('fltPriority').value;
+    if (p && t.priority !== p) return false;
+
+    if (onlyOverdue && !isOverdue(t)) return false;
+    return true;
+  }
+
+  function cardHTML(t) {
+    const p = prio(t);
+    const chips = [];
+    if (t.tour_code) {
+      chips.push('<a class="chip chip-tour" href="/tours/' + t.tour_id + '" onclick="event.stopPropagation()">' +
+        '<i class="ti ti-plane"></i><span>' + esc(t.tour_code) + '</span></a>');
+    }
+    if (t.order_id) {
+      chips.push('<a class="chip chip-order" href="/orders/' + t.order_id + '" onclick="event.stopPropagation()">' +
+        '<i class="ti ti-clipboard-list"></i><span>' + esc(t.order_label || ('#' + t.order_id)) + '</span></a>');
+    }
+    if (t.client_name) {
+      chips.push('<a class="chip chip-client" href="/clients" onclick="event.stopPropagation()">' +
+        '<i class="ti ti-user-circle"></i><span>' + esc(t.client_name) + '</span></a>');
+    }
+
+    const due = t.due_date
+      ? '<span class="task-due' + (isOverdue(t) ? ' overdue' : '') + '"><i class="ti ti-calendar-event"></i>' + fmtDate(t.due_date) + '</span>'
+      : '';
+    const comments = t.comment_count > 0
+      ? '<span class="task-due"><i class="ti ti-message-circle"></i>' + t.comment_count + '</span>'
+      : '';
+
+    return '<article class="task-card prio-' + esc(t.priority || 'medium') + (t.status === 'done' ? ' is-done' : '') + '"' +
+      ' draggable="true" data-id="' + t.id + '" onclick="openDetail(' + t.id + ')">' +
+      '<p class="task-card-title">' + esc(t.title) + '</p>' +
+      (chips.length ? '<div class="task-chips">' + chips.join('') + '</div>' : '') +
+      '<div class="task-card-foot">' +
+        '<i class="ti ' + p.icon + '" style="color:' + p.color + '" title="' + p.label + '"></i>' +
+        '<span class="task-key">' + taskKey(t.id) + '</span>' +
+        due + comments +
+        '<span class="task-meta-right">' + avatarHTML(t.hoca_user_name) + '</span>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function renderBoard() {
+    const visible = TASKS.filter(matchesFilters);
+    document.getElementById('board').innerHTML = COLUMNS.map(col => {
+      const items = visible.filter(t => t.status === col.key);
+      const all = TASKS.filter(t => t.status === col.key).length;
+      return '<section class="board-col" data-status="' + col.key + '">' +
+        '<div class="board-col-head">' +
+          '<span class="board-col-dot" style="background:' + col.color + '"></span>' +
+          '<h2 class="board-col-title">' + col.title + '</h2>' +
+          '<span class="board-col-count">' + items.length + (items.length !== all ? ' / ' + all : '') + '</span>' +
+          '<button type="button" class="btn btn-icon btn-sm btn-light ms-auto" title="Bu sütuna görev ekle" onclick="openCreate(\'' + col.key + '\')">' +
+            '<i class="ti ti-plus"></i></button>' +
+        '</div>' +
+        '<div class="board-col-body">' +
+          (items.length ? items.map(cardHTML).join('') : '<div class="board-col-empty">Görev yok</div>') +
+        '</div>' +
+      '</section>';
+    }).join('');
+
+    const overdue = TASKS.filter(isOverdue).length;
+    document.getElementById('boardSummary').textContent =
+      TASKS.length + ' görev' + (overdue ? ' · ' + overdue + ' geciken' : '');
+  }
+
+  function toggleOverdue() {
+    onlyOverdue = !onlyOverdue;
+    const btn = document.getElementById('fltOverdue');
+    btn.classList.toggle('btn-light', !onlyOverdue);
+    btn.classList.toggle('btn-danger', onlyOverdue);
+    renderBoard();
+  }
+
+  // ——— Sürükle-bırak ———
+  let draggedId = null;
+
+  document.addEventListener('dragstart', e => {
+    const card = e.target.closest('.task-card');
+    if (!card) return;
+    draggedId = Number(card.dataset.id);
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', card.dataset.id);
   });
 
-  function openCreate() {
-    editingId = null;
-    document.getElementById('modalTitle').textContent = 'Yeni Görev';
-    document.getElementById('taskForm').reset();
-    taskModal.show();
-    setTimeout(() => document.getElementById('fTitle').focus(), 200);
-  }
+  document.addEventListener('dragend', e => {
+    const card = e.target.closest('.task-card');
+    if (card) card.classList.remove('dragging');
+    document.querySelectorAll('.board-col.drag-over').forEach(c => c.classList.remove('drag-over'));
+  });
 
-  function openEdit(t) {
-    editingId = t.id;
-    document.getElementById('modalTitle').textContent = 'Görevi Düzenle';
-    document.getElementById('fTitle').value = t.title;
-    document.getElementById('fDescription').value = t.description || '';
-    document.getElementById('fStatus').value = t.status;
-    document.getElementById('fDueDate').value = t.due_date ? t.due_date.slice(0, 10) : '';
-    document.getElementById('fHocaUserID').value = t.hoca_user_id ? String(t.hoca_user_id) : '';
-    document.getElementById('fTourID').value = t.tour_id ? String(t.tour_id) : '';
-    taskModal.show();
-  }
-
-  async function saveTask(e) {
+  document.addEventListener('dragover', e => {
+    const col = e.target.closest('.board-col');
+    if (!col || draggedId === null) return;
     e.preventDefault();
-    const payload = {
-      title:       document.getElementById('fTitle').value,
-      description: document.getElementById('fDescription').value,
-      status:      document.getElementById('fStatus').value,
-      due_date:    document.getElementById('fDueDate').value,
-      hoca_user_id: document.getElementById('fHocaUserID').value
-        ? parseInt(document.getElementById('fHocaUserID').value, 10)
-        : null,
-      tour_id: document.getElementById('fTourID').value
-        ? parseInt(document.getElementById('fTourID').value, 10)
-        : null,
-    };
-    const url    = editingId ? `/api/tasks/${editingId}` : '/api/tasks';
-    const method = editingId ? 'PUT' : 'POST';
+    e.dataTransfer.dropEffect = 'move';
+    col.classList.add('drag-over');
+  });
+
+  document.addEventListener('dragleave', e => {
+    const col = e.target.closest('.board-col');
+    if (col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+  });
+
+  document.addEventListener('drop', async e => {
+    const col = e.target.closest('.board-col');
+    if (!col || draggedId === null) return;
+    e.preventDefault();
+    col.classList.remove('drag-over');
+    const id = draggedId, status = col.dataset.status;
+    draggedId = null;
+    if (TASKS_BY_ID[id] && TASKS_BY_ID[id].status === status) return;
+    await patchStatus(id, status);
+  });
+
+  async function patchStatus(id, status) {
     try {
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch('/api/tasks/' + id + '/status', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) { showToast('✕ Durum güncellenemedi', 'danger'); return; }
+      applyTask(await res.json());
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  // Sunucudan dönen görevi listeye yazar ve ekranı tazeler.
+  function applyTask(task) {
+    const i = TASKS.findIndex(t => t.id === task.id);
+    if (i >= 0) TASKS[i] = task; else TASKS.push(task);
+    reindex();
+    renderBoard();
+    if (currentTaskId === task.id) fillDetail(task);
+  }
+
+  // ——— Detay popup ———
+  function openDetail(id) {
+    const t = TASKS_BY_ID[id];
+    if (!t) return;
+    currentTaskId = id;
+    fillDetail(t);
+    loadComments(id);
+    detailModal.show();
+  }
+
+  function fillDetail(t) {
+    document.getElementById('dKey').textContent = taskKey(t.id);
+
+    const pill = STATUS_PILL[t.status] || STATUS_PILL.todo;
+    const pillEl = document.getElementById('dStatusPill');
+    pillEl.textContent = pill.label;
+    pillEl.className = 'status-pill ' + pill.cls;
+
+    document.getElementById('dTitle').value = t.title;
+
+    const desc = document.getElementById('dDescView');
+    desc.textContent = t.description || 'Açıklama eklemek için tıklayın…';
+    desc.classList.toggle('text-secondary', !t.description);
+    document.getElementById('dDescView').classList.remove('d-none');
+    document.getElementById('dDescEdit').classList.add('d-none');
+
+    document.getElementById('dStatus').value     = t.status;
+    document.getElementById('dPriority').value   = t.priority || 'medium';
+    document.getElementById('dHocaUserID').value = t.hoca_user_id ? String(t.hoca_user_id) : '';
+    document.getElementById('dDueDate').value    = t.due_date ? t.due_date.slice(0, 10) : '';
+    document.getElementById('dTourID').value     = t.tour_id ? String(t.tour_id) : '';
+    document.getElementById('dOrderID').value    = t.order_id ? String(t.order_id) : '';
+    document.getElementById('dClientID').value   = t.client_id ? String(t.client_id) : '';
+
+    const tourLink = document.getElementById('dTourLink');
+    tourLink.href = '/tours/' + t.tour_id;
+    tourLink.classList.toggle('d-none', !t.tour_id);
+
+    const orderLink = document.getElementById('dOrderLink');
+    orderLink.href = '/orders/' + t.order_id;
+    orderLink.classList.toggle('d-none', !t.order_id);
+
+    document.getElementById('dTimestamps').innerHTML =
+      'Oluşturuldu: ' + fmtDate(t.created_at) + '<br>Güncellendi: ' + fmtDate(t.updated_at);
+  }
+
+  // Detaydaki her alan değişikliği görevi anında kaydeder.
+  async function saveField() {
+    const t = TASKS_BY_ID[currentTaskId];
+    if (!t) return;
+    const num = id => {
+      const v = document.getElementById(id).value;
+      return v ? parseInt(v, 10) : null;
+    };
+    const payload = {
+      title:        document.getElementById('dTitle').value.trim() || t.title,
+      description:  t.description,
+      status:       document.getElementById('dStatus').value,
+      priority:     document.getElementById('dPriority').value,
+      due_date:     document.getElementById('dDueDate').value,
+      hoca_user_id: num('dHocaUserID'),
+      tour_id:      num('dTourID'),
+      order_id:     num('dOrderID'),
+      client_id:    num('dClientID'),
+    };
+    try {
+      const res = await fetch('/api/tasks/' + currentTaskId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) { showToast('✕ Görev güncellenemedi', 'danger'); return; }
+      applyTask(await res.json());
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  function saveTitle() {
+    const t = TASKS_BY_ID[currentTaskId];
+    const el = document.getElementById('dTitle');
+    const value = el.value.trim();
+    if (!t) return;
+    if (!value) { el.value = t.title; return; }
+    if (value === t.title) return;
+    saveField();
+  }
+
+  function editDesc() {
+    const t = TASKS_BY_ID[currentTaskId];
+    document.getElementById('dDescInput').value = t ? (t.description || '') : '';
+    document.getElementById('dDescView').classList.add('d-none');
+    document.getElementById('dDescEdit').classList.remove('d-none');
+    document.getElementById('dDescInput').focus();
+  }
+
+  function cancelDesc() {
+    document.getElementById('dDescEdit').classList.add('d-none');
+    document.getElementById('dDescView').classList.remove('d-none');
+  }
+
+  async function saveDesc() {
+    const t = TASKS_BY_ID[currentTaskId];
+    if (!t) return;
+    t.description = document.getElementById('dDescInput').value;
+    cancelDesc();
+    await saveField();
+  }
+
+  // ——— Yorumlar ———
+  async function loadComments(taskId) {
+    const box = document.getElementById('dComments');
+    box.innerHTML = '<div class="text-secondary small py-3">Yükleniyor…</div>';
+    document.getElementById('dNewComment').value = '';
+    try {
+      const res = await fetch('/api/tasks/' + taskId + '/comments');
+      if (!res.ok) { box.innerHTML = '<div class="text-danger small py-3">Yorumlar yüklenemedi</div>'; return; }
+      renderComments(await res.json());
+    } catch { box.innerHTML = '<div class="text-danger small py-3">Sunucu bağlantı hatası</div>'; }
+  }
+
+  function renderComments(comments) {
+    document.getElementById('dCommentCount').textContent = comments.length ? '(' + comments.length + ')' : '';
+    const box = document.getElementById('dComments');
+    if (!comments.length) {
+      box.innerHTML = '<div class="text-secondary small py-3">Henüz yorum yok.</div>';
+      return;
+    }
+    box.innerHTML = comments.map(c => {
+      const name = c.user_name || 'Kullanıcı';
+      const edited = c.updated_at && c.updated_at !== c.created_at ? ' <span class="comment-time">(düzenlendi)</span>' : '';
+      return '<div class="comment" data-id="' + c.id + '">' +
+        avatarHTML(name, 'avatar-lg') +
+        '<div class="comment-body">' +
+          '<div class="comment-head"><span class="comment-author">' + esc(name) + '</span>' +
+            '<span class="comment-time">' + relTime(c.created_at) + '</span>' + edited + '</div>' +
+          '<p class="comment-text">' + esc(c.body) + '</p>' +
+          '<div class="comment-actions">' +
+            '<button type="button" onclick="editComment(' + c.id + ')">Düzenle</button>' +
+            '<button type="button" class="text-danger" onclick="deleteComment(' + c.id + ')">Sil</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function addComment() {
+    const input = document.getElementById('dNewComment');
+    const body = input.value.trim();
+    if (!body) return;
+    try {
+      const res = await fetch('/api/tasks/' + currentTaskId + '/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body }),
+      });
+      if (!res.ok) { showToast('✕ Yorum eklenemedi', 'danger'); return; }
+      input.value = '';
+      await refreshComments();
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  function editComment(id) {
+    const el = document.querySelector('.comment[data-id="' + id + '"]');
+    const textEl = el.querySelector('.comment-text');
+    if (el.querySelector('textarea')) return;
+    const current = textEl.textContent;
+    textEl.insertAdjacentHTML('afterend',
+      '<div class="mt-2"><textarea class="form-control form-control-sm" rows="3"></textarea>' +
+      '<div class="d-flex gap-2 mt-2">' +
+        '<button type="button" class="btn btn-sm btn-primary" onclick="saveComment(' + id + ')">Kaydet</button>' +
+        '<button type="button" class="btn btn-sm btn-light" onclick="refreshComments()">İptal</button>' +
+      '</div></div>');
+    textEl.classList.add('d-none');
+    const ta = el.querySelector('textarea');
+    ta.value = current;
+    ta.focus();
+  }
+
+  async function saveComment(id) {
+    const el = document.querySelector('.comment[data-id="' + id + '"]');
+    const body = el.querySelector('textarea').value.trim();
+    if (!body) return;
+    try {
+      const res = await fetch('/api/task-comments/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body }),
+      });
+      if (!res.ok) { showToast('✕ Yorum güncellenemedi', 'danger'); return; }
+      await refreshComments();
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  async function deleteComment(id) {
+    if (!confirm('Bu yorumu silmek istediğinizden emin misiniz?')) return;
+    try {
+      const res = await fetch('/api/task-comments/' + id, { method: 'DELETE' });
+      if (!res.ok) { showToast('✕ Yorum silinemedi', 'danger'); return; }
+      await refreshComments();
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  // Yorum sayısı kartta göründüğü için görev de tazelenir.
+  async function refreshComments() {
+    await loadComments(currentTaskId);
+    try {
+      const res = await fetch('/api/tasks/' + currentTaskId);
       if (res.ok) {
-        taskModal.hide();
-        showToast('✓ ' + (editingId ? 'Görev güncellendi' : 'Görev eklendi'), 'success');
-        setTimeout(() => location.reload(), 700);
-      } else {
-        const err = await res.json();
-        showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'danger');
+        const task = await res.json();
+        const i = TASKS.findIndex(t => t.id === task.id);
+        if (i >= 0) TASKS[i] = task;
+        reindex();
+        renderBoard();
       }
+    } catch { /* pano sayacı bir sonraki yenilemede güncellenir */ }
+  }
+
+  // ——— Oluşturma / silme ———
+  function openCreate(status) {
+    document.getElementById('createForm').reset();
+    document.getElementById('cStatus').value = status || 'todo';
+    document.getElementById('cPriority').value = 'medium';
+    createModal.show();
+    setTimeout(() => document.getElementById('cTitle').focus(), 200);
+  }
+
+  async function createTask(e) {
+    e.preventDefault();
+    const num = id => {
+      const v = document.getElementById(id).value;
+      return v ? parseInt(v, 10) : null;
+    };
+    const payload = {
+      title:        document.getElementById('cTitle').value,
+      description:  document.getElementById('cDescription').value,
+      status:       document.getElementById('cStatus').value,
+      priority:     document.getElementById('cPriority').value,
+      due_date:     document.getElementById('cDueDate').value,
+      hoca_user_id: num('cHocaUserID'),
+      tour_id:      num('cTourID'),
+      order_id:     num('cOrderID'),
+      client_id:    num('cClientID'),
+    };
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'danger');
+        return;
+      }
+      createModal.hide();
+      applyTask(await res.json());
+      showToast('✓ Görev eklendi', 'success');
     } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
   }
 
   async function deleteTask(id) {
     if (!confirm('Bu görevi silmek istediğinizden emin misiniz?')) return;
     try {
-      const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
-      if (res.ok) { showToast('✓ Görev silindi', 'success'); setTimeout(() => location.reload(), 700); }
-      else { showToast('✕ Silme işlemi başarısız', 'danger'); }
+      const res = await fetch('/api/tasks/' + id, { method: 'DELETE' });
+      if (!res.ok) { showToast('✕ Silme işlemi başarısız', 'danger'); return; }
+      TASKS = TASKS.filter(t => t.id !== id);
+      reindex();
+      renderBoard();
+      if (currentTaskId === id) { detailModal.hide(); currentTaskId = null; }
+      showToast('✓ Görev silindi', 'success');
     } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
   }
 
@@ -237,84 +870,19 @@
     el.className = 'alert position-fixed d-flex align-items-center gap-2 alert-' + type;
     el.style.top = '20px';
     el.style.right = '20px';
-    el.style.zIndex = 1080;
+    el.style.zIndex = 1090;
     el.style.minWidth = '260px';
     setTimeout(() => el.classList.add('d-none'), 2800);
   }
 
-  // Sürükle-bırak ile durum değiştirme
-  let draggedId = null;
-
-  function dragStart(e, id) {
-    draggedId = id;
-    e.currentTarget.classList.add('dragging');
-    e.dataTransfer.setData('text/plain', id);
-    e.dataTransfer.effectAllowed = 'move';
-  }
-
-  function dragEnd(e) { e.currentTarget.classList.remove('dragging'); }
-
-  function allowDrop(e) {
-    e.preventDefault();
-    e.currentTarget.classList.add('drag-over');
-  }
-
-  function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-
-  async function drop(e) {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
-    const status = e.currentTarget.dataset.status;
-    const id = draggedId || e.dataTransfer.getData('text/plain');
-    if (!id) return;
-    try {
-      const res = await fetch(`/api/tasks/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
-      if (res.ok) location.reload();
-      else showToast('✕ Durum güncellenemedi', 'danger');
-    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
-  }
+  document.addEventListener('DOMContentLoaded', () => {
+    detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+    createModal = new bootstrap.Modal(document.getElementById('createModal'));
+    document.getElementById('detailModal').addEventListener('hidden.bs.modal', () => { currentTaskId = null; });
+    fillLinkSelects('d');
+    fillLinkSelects('c');
+    renderBoard();
+  });
 </script>
 </body>
 </html>
-
-{{define "taskCard"}}
-<div class="card kanban-card border-start border-4 {{if eq .Status "todo"}}border-secondary{{else if eq .Status "in_progress"}}border-warning{{else}}border-success{{end}}"
-     draggable="true"
-     ondragstart="dragStart(event, {{.ID}})" ondragend="dragEnd(event)">
-  <div class="card-body p-3">
-    <p class="fw-semibold mb-0">{{.Title}}</p>
-    {{if .Description}}<p class="text-secondary small mb-0 mt-1">{{.Description}}</p>{{end}}
-    {{if or .HocaUserName .TourCode}}
-    <div class="d-flex flex-wrap gap-1 mt-2">
-      {{if .HocaUserName}}
-      <span class="badge bg-primary-subtle text-primary-emphasis">
-        <i class="ti ti-user"></i> {{.HocaUserName}}
-      </span>
-      {{end}}
-      {{if .TourCode}}
-      <a href="/tours/{{.TourID}}" class="badge bg-info-subtle text-info-emphasis text-decoration-none">
-        <i class="ti ti-plane"></i> {{.TourCode}}
-      </a>
-      {{end}}
-    </div>
-    {{end}}
-    <div class="d-flex align-items-center justify-content-between mt-2">
-      <span class="small {{if and .DueDate (ne .Status "done") (.DueDate.Before now)}}text-danger fw-semibold{{else}}text-secondary{{end}}">
-        {{if .DueDate}}{{.DueDate.Format "02.01.2006"}}{{end}}
-      </span>
-      <div class="d-flex gap-1">
-        <button type="button" class="btn btn-icon btn-sm btn-light" title="Düzenle" onclick='openEdit({{json .}})'>
-          <i class="ti ti-edit"></i>
-        </button>
-        <button type="button" class="btn btn-icon btn-sm btn-light text-danger" title="Sil" onclick="deleteTask({{.ID}})">
-          <i class="ti ti-trash"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-{{end}}
