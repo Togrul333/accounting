@@ -23,6 +23,8 @@ func NewRouter(
 	clients *ClientHandler,
 	settings *SettingHandler,
 	referansUsers *ReferansUserHandler,
+	hocaUsers *HocaUserHandler,
+	defaultTasks *DefaultTaskHandler,
 	users *UserHandler,
 	discountCategories *DiscountCategoryHandler,
 	discounts *DiscountHandler,
@@ -150,6 +152,18 @@ func NewRouter(
 		api.GET("/referans-users/:id/orders", referansUsers.Referrals)
 		api.POST("/referans-users/:id/orders", referansUsers.AddReferral)
 		api.DELETE("/referans-users/:id/orders/:order_id", referansUsers.RemoveReferral)
+
+		api.GET("/hoca-users", hocaUsers.GetAll)
+		api.POST("/hoca-users", hocaUsers.Create)
+		api.GET("/hoca-users/:id", hocaUsers.GetByID)
+		api.PUT("/hoca-users/:id", hocaUsers.Update)
+		api.DELETE("/hoca-users/:id", hocaUsers.Delete)
+
+		api.GET("/default-tasks", defaultTasks.GetAll)
+		api.POST("/default-tasks", defaultTasks.Create)
+		api.GET("/default-tasks/:id", defaultTasks.GetByID)
+		api.PUT("/default-tasks/:id", defaultTasks.Update)
+		api.DELETE("/default-tasks/:id", defaultTasks.Delete)
 
 		api.PUT("/profile", users.UpdateProfile)
 		api.PUT("/profile/password", users.UpdatePassword)

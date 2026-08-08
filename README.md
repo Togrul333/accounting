@@ -179,7 +179,7 @@ curl -G "https://graph.facebook.com/v23.0/act_ВАШ_ID/insights" \
 ## Referans kullanıcıları (рефереры)
 
 Люди, которые приводят клиентов. Хранится минимум: имя, фамилия, телефон.
-Управление — карточка **Referans Kullanıcıları** на странице `/settings`.
+Управление — вкладка **Referanslar** на странице `/settings`.
 
 ```bash
 # Миграции
@@ -207,6 +207,44 @@ mysql -u root -p accounting < migrations/039_create_referans_user_orders.sql
 | `DELETE` | `/:id/orders/:order_id` | снять подтверждение |
 
 Поля JSON реферера: `first_name` (обязательное), `last_name`, `phone`.
+
+## Hocalar (персонал агентства)
+
+Сотрудники агентства: имя, фамилия, телефон. На них назначаются задачи.
+Управление — вкладка **Hocalar** на странице `/settings`.
+
+```bash
+# Миграция (создаёт hoca_users и добавляет tasks.hoca_user_id)
+mysql -u root -p accounting < migrations/040_create_hoca_users.sql
+```
+
+Эндпоинты `/api/hoca-users`: `GET` список, `POST` создать, `GET /:id`, `PUT /:id`, `DELETE /:id`.
+Поля JSON: `first_name` (обязательное), `last_name`, `phone`.
+
+**Задачи:** в модалке создания/редактирования на `/tasks` есть селекты «Atanan Kişi» и «Tur».
+В запросах `POST`/`PUT /api/tasks` за это отвечают `hoca_user_id` и `tour_id` (`null` — не выбрано),
+в ответе дополнительно приходят `hoca_user_name` и `tour_code`, оба выводятся бейджами на карточке.
+При удалении сотрудника задачи сохраняются, назначение обнуляется (`ON DELETE SET NULL`);
+при удалении тура его задачи удаляются вместе с ним (`ON DELETE CASCADE`).
+
+## Varsayılan görevler (шаблоны задач тура)
+
+Задачи, которые автоматически создаются при создании тура и привязываются к нему.
+Управление — вкладка **Varsayılan Görevler** на странице `/settings`.
+
+```bash
+# Миграция (создаёт default_tasks и добавляет tasks.tour_id)
+mysql -u root -p accounting < migrations/041_create_default_tasks.sql
+```
+
+Поля шаблона: `title` (обязательное), `description`, `days_before_start`, `hoca_user_id`.
+При `POST /api/tours` из каждого шаблона создаётся задача со статусом `todo`,
+`tour_id` нового тура, унаследованным исполнителем и сроком
+**`due_date = start_date − days_before_start`** (0 — день старта тура).
+Ошибка при создании задач пишется в лог и не отменяет создание тура.
+
+Эндпоинты `/api/default-tasks`: `GET` список, `POST` создать, `GET /:id`, `PUT /:id`, `DELETE /:id`.
+Удаление шаблона не трогает уже созданные задачи.
 
 ## API — Банковские счета
 

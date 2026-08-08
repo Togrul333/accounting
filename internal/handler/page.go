@@ -35,6 +35,8 @@ type PageHandler struct {
 	clientSvc           *service.ClientService
 	settingSvc          *service.SettingService
 	referansUserSvc     *service.ReferansUserService
+	hocaUserSvc         *service.HocaUserService
+	defaultTaskSvc      *service.DefaultTaskService
 	userSvc             *service.UserService
 	discountCategorySvc *service.DiscountCategoryService
 	discountSvc         *service.DiscountService
@@ -56,6 +58,8 @@ func NewPageHandler(
 	clientSvc *service.ClientService,
 	settingSvc *service.SettingService,
 	referansUserSvc *service.ReferansUserService,
+	hocaUserSvc *service.HocaUserService,
+	defaultTaskSvc *service.DefaultTaskService,
 	userSvc *service.UserService,
 	discountCategorySvc *service.DiscountCategoryService,
 	discountSvc *service.DiscountService,
@@ -76,6 +80,8 @@ func NewPageHandler(
 		clientSvc:           clientSvc,
 		settingSvc:          settingSvc,
 		referansUserSvc:     referansUserSvc,
+		hocaUserSvc:         hocaUserSvc,
+		defaultTaskSvc:      defaultTaskSvc,
 		userSvc:             userSvc,
 		discountCategorySvc: discountCategorySvc,
 		discountSvc:         discountSvc,
@@ -162,11 +168,23 @@ func (h *PageHandler) Settings(c *gin.Context) {
 		log.Printf("settings referans users error: %v", err)
 		referansUsers = []model.ReferansUser{}
 	}
+	hocaUsers, err := h.hocaUserSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("settings hoca users error: %v", err)
+		hocaUsers = []model.HocaUser{}
+	}
+	defaultTasks, err := h.defaultTaskSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("settings default tasks error: %v", err)
+		defaultTasks = []model.DefaultTask{}
+	}
 	c.HTML(http.StatusOK, "settings.html", gin.H{
 		"active":         "settings",
 		"user":           h.currentUser(ctx),
 		"rates":          rates,
 		"referans_users": referansUsers,
+		"hoca_users":     hocaUsers,
+		"default_tasks":  defaultTasks,
 	})
 }
 
@@ -1086,11 +1104,25 @@ func (h *PageHandler) Tasks(c *gin.Context) {
 		grouped[t.Status] = append(grouped[t.Status], t)
 	}
 
+	hocaUsers, err := h.hocaUserSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("tasks page hoca users error: %v", err)
+		hocaUsers = []model.HocaUser{}
+	}
+
+	tours, err := h.tourSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("tasks page tours error: %v", err)
+		tours = []model.Tour{}
+	}
+
 	c.HTML(http.StatusOK, "tasks.html", gin.H{
 		"todoTasks":       grouped["todo"],
 		"inProgressTasks": grouped["in_progress"],
 		"doneTasks":       grouped["done"],
 		"taskCount":       len(tasks),
+		"hocaUsers":       hocaUsers,
+		"tours":           tours,
 		"active":          "tasks",
 		"user":            user,
 	})

@@ -5,6 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ayarlar — Hisar Tour</title>
   <link rel="stylesheet" href="/static/theme/assets/css/main.css">
+  <style>
+    /* Sol taraftaki ayar menüsü */
+    .settings-nav .list-group-item {
+      border: 0;
+      border-left: 3px solid transparent;
+      padding: .875rem 1rem;
+      background: transparent;
+      color: inherit;
+    }
+    .settings-nav .list-group-item:hover { background: var(--bs-secondary-bg); }
+    .settings-nav .list-group-item.active {
+      background: var(--bs-primary-bg-subtle);
+      border-left-color: var(--bs-primary);
+      color: inherit;
+    }
+    .settings-nav .list-group-item.active .settings-nav-icon {
+      background: var(--bs-primary);
+      color: #fff;
+    }
+    .settings-nav-icon {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--bs-border-radius);
+      background: var(--bs-secondary-bg);
+      flex-shrink: 0;
+    }
+    @media (min-width: 992px) { .settings-nav { position: sticky; top: 1.5rem; } }
+  </style>
 </head>
 <body>
 
@@ -18,13 +46,67 @@
       <div class="col-12">
         <div class="mb-4">
           <h1 class="fs-3 mb-1">Ayarlar</h1>
-          <p class="mb-0 text-secondary">Döviz kurları ve referans kullanıcıları</p>
+          <p class="mb-0 text-secondary">Döviz kurları, referanslar ve acente personeli</p>
         </div>
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-xl-6 col-12">
+    <div class="row g-4">
+
+      <!-- Sol menü -->
+      <div class="col-lg-3 col-12">
+        <div class="card settings-nav overflow-hidden">
+          <div class="list-group list-group-flush" role="tablist">
+
+            <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-3 active"
+                    data-bs-toggle="pill" data-bs-target="#pane-rates" role="tab">
+              <span class="settings-nav-icon"><i class="ti ti-currency-lira"></i></span>
+              <span class="flex-grow-1 text-start">
+                <span class="d-block fw-semibold">Döviz Kurları</span>
+                <span class="d-block small text-secondary">USD · EUR · GBP</span>
+              </span>
+            </button>
+
+            <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-3"
+                    data-bs-toggle="pill" data-bs-target="#pane-referans" role="tab">
+              <span class="settings-nav-icon"><i class="ti ti-users"></i></span>
+              <span class="flex-grow-1 text-start">
+                <span class="d-block fw-semibold">Referanslar</span>
+                <span class="d-block small text-secondary">Müşteri getiren kişiler</span>
+              </span>
+              <span class="badge bg-secondary-subtle text-secondary-emphasis">{{len .referans_users}}</span>
+            </button>
+
+            <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-3"
+                    data-bs-toggle="pill" data-bs-target="#pane-hoca" role="tab">
+              <span class="settings-nav-icon"><i class="ti ti-briefcase"></i></span>
+              <span class="flex-grow-1 text-start">
+                <span class="d-block fw-semibold">Hocalar</span>
+                <span class="d-block small text-secondary">Acente personeli</span>
+              </span>
+              <span class="badge bg-secondary-subtle text-secondary-emphasis">{{len .hoca_users}}</span>
+            </button>
+
+            <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-3"
+                    data-bs-toggle="pill" data-bs-target="#pane-default-tasks" role="tab">
+              <span class="settings-nav-icon"><i class="ti ti-checklist"></i></span>
+              <span class="flex-grow-1 text-start">
+                <span class="d-block fw-semibold">Varsayılan Görevler</span>
+                <span class="d-block small text-secondary">Yeni turda otomatik açılır</span>
+              </span>
+              <span class="badge bg-secondary-subtle text-secondary-emphasis">{{len .default_tasks}}</span>
+            </button>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- İçerik -->
+      <div class="col-lg-9 col-12">
+        <div class="tab-content">
+
+        <!-- Döviz kurları -->
+        <div class="tab-pane fade show active" id="pane-rates" role="tabpanel">
         <div class="card">
           <div class="card-header bg-transparent px-4 py-3">
             <h3 class="h6 mb-0">Döviz Kurları</h3>
@@ -32,42 +114,46 @@
           </div>
           <div class="card-body">
 
-            <div class="d-flex align-items-center gap-3 mb-3">
-              <div class="d-flex align-items-center justify-content-center rounded-2 bg-primary bg-opacity-10 text-primary fw-bold" style="width:40px;height:40px;">$</div>
-              <div class="flex-grow-1">
-                <label class="form-label mb-1">USD → TRY</label>
-                <input type="number" step="0.01" min="0" id="rate-usd" class="form-control" placeholder="0.00" value="{{printf "%.4f" .rates.USD}}">
+            <div class="row g-3">
+              <div class="col-md-4 col-12">
+                <label class="form-label">USD → TRY</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-primary bg-opacity-10 text-primary fw-bold">$</span>
+                  <input type="number" step="0.01" min="0" id="rate-usd" class="form-control" placeholder="0.00" value="{{printf "%.4f" .rates.USD}}">
+                </div>
+              </div>
+              <div class="col-md-4 col-12">
+                <label class="form-label">EUR → TRY</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-info bg-opacity-10 text-info fw-bold">€</span>
+                  <input type="number" step="0.01" min="0" id="rate-eur" class="form-control" placeholder="0.00" value="{{printf "%.4f" .rates.EUR}}">
+                </div>
+              </div>
+              <div class="col-md-4 col-12">
+                <label class="form-label">GBP → TRY</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-warning bg-opacity-10 text-warning fw-bold">£</span>
+                  <input type="number" step="0.01" min="0" id="rate-gbp" class="form-control" placeholder="0.00" value="{{printf "%.4f" .rates.GBP}}">
+                </div>
               </div>
             </div>
 
-            <div class="d-flex align-items-center gap-3 mb-3">
-              <div class="d-flex align-items-center justify-content-center rounded-2 bg-primary bg-opacity-10 text-primary fw-bold" style="width:40px;height:40px;">€</div>
-              <div class="flex-grow-1">
-                <label class="form-label mb-1">EUR → TRY</label>
-                <input type="number" step="0.01" min="0" id="rate-eur" class="form-control" placeholder="0.00" value="{{printf "%.4f" .rates.EUR}}">
-              </div>
-            </div>
-
-            <div class="d-flex align-items-center gap-3 mb-4">
-              <div class="d-flex align-items-center justify-content-center rounded-2 bg-warning bg-opacity-10 text-warning fw-bold" style="width:40px;height:40px;">£</div>
-              <div class="flex-grow-1">
-                <label class="form-label mb-1">GBP → TRY</label>
-                <input type="number" step="0.01" min="0" id="rate-gbp" class="form-control" placeholder="0.00" value="{{printf "%.4f" .rates.GBP}}">
-              </div>
-            </div>
-
+          </div>
+          <div class="card-footer bg-transparent px-4 py-3 d-flex align-items-center gap-3">
             <button type="button" class="btn btn-primary" onclick="saveRates()">
               <i class="ti ti-check"></i> Kaydet
             </button>
+            <span class="small text-secondary">Kurlar gelir ve gider hesaplamalarında kullanılır.</span>
           </div>
         </div>
-      </div>
+        </div>
 
-      <div class="col-xl-6 col-12">
+        <!-- Referanslar -->
+        <div class="tab-pane fade" id="pane-referans" role="tabpanel">
         <div class="card">
           <div class="card-header bg-transparent px-4 py-3 d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="h6 mb-0">Referans Kullanıcıları</h3>
+              <h3 class="h6 mb-0">Referanslar</h3>
               <p class="small text-secondary mb-0 mt-1">Müşteri getiren kişiler ({{len .referans_users}})</p>
             </div>
             <button type="button" class="btn btn-sm btn-primary" onclick="openRefCreate()">
@@ -117,9 +203,136 @@
             <i class="ti ti-users fs-1 text-secondary"></i>
             <p class="fw-semibold mt-3 mb-1">Referans kullanıcısı bulunamadı</p>
             <p class="text-secondary mb-4">İlk referans kullanıcısını ekleyin</p>
-            <button type="button" class="btn btn-primary" onclick="openRefCreate()"><i class="ti ti-plus"></i> Kullanıcı Ekle</button>
+            <button type="button" class="btn btn-primary" onclick="openRefCreate()"><i class="ti ti-plus"></i> Referans Ekle</button>
           </div>
           {{end}}
+        </div>
+        </div>
+
+        <!-- Hocalar -->
+        <div class="tab-pane fade" id="pane-hoca" role="tabpanel">
+        <div class="card">
+          <div class="card-header bg-transparent px-4 py-3 d-flex justify-content-between align-items-center">
+            <div>
+              <h3 class="h6 mb-0">Hocalar</h3>
+              <p class="small text-secondary mb-0 mt-1">Acente personeli ({{len .hoca_users}}) — görev atanabilir</p>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" onclick="openHocaCreate()">
+              <i class="ti ti-plus"></i> Ekle
+            </button>
+          </div>
+
+          {{if .hoca_users}}
+          <div class="table-responsive">
+            <table class="table mb-0 table-hover align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>#</th>
+                  <th>Ad</th>
+                  <th>Soyad</th>
+                  <th>Telefon</th>
+                  <th>Aksiyon</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .hoca_users}}
+                <tr>
+                  <td class="text-secondary">{{.ID}}</td>
+                  <td class="fw-semibold">{{.FirstName}}</td>
+                  <td>{{.LastName}}</td>
+                  <td>{{if .Phone}}<a href="tel:{{.Phone}}" class="text-decoration-none">{{.Phone}}</a>{{else}}<span class="text-secondary">—</span>{{end}}</td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <button type="button" class="btn btn-icon btn-sm btn-light" title="Düzenle" onclick='openHocaEdit({{json .}})'>
+                        <i class="ti ti-edit"></i>
+                      </button>
+                      <button type="button" class="btn btn-icon btn-sm btn-light text-danger" title="Sil" onclick="deleteHoca({{.ID}})">
+                        <i class="ti ti-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{else}}
+          <div class="card-body text-center py-8">
+            <i class="ti ti-briefcase fs-1 text-secondary"></i>
+            <p class="fw-semibold mt-3 mb-1">Hoca bulunamadı</p>
+            <p class="text-secondary mb-4">İlk personeli ekleyin</p>
+            <button type="button" class="btn btn-primary" onclick="openHocaCreate()"><i class="ti ti-plus"></i> Hoca Ekle</button>
+          </div>
+          {{end}}
+        </div>
+        </div>
+
+        <!-- Varsayılan görevler -->
+        <div class="tab-pane fade" id="pane-default-tasks" role="tabpanel">
+        <div class="card">
+          <div class="card-header bg-transparent px-4 py-3 d-flex justify-content-between align-items-center">
+            <div>
+              <h3 class="h6 mb-0">Varsayılan Görevler</h3>
+              <p class="small text-secondary mb-0 mt-1">Yeni tur oluşturulduğunda bu görevler otomatik açılır ve tura bağlanır</p>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" onclick="openDtCreate()">
+              <i class="ti ti-plus"></i> Ekle
+            </button>
+          </div>
+
+          {{if .default_tasks}}
+          <div class="table-responsive">
+            <table class="table mb-0 table-hover align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>#</th>
+                  <th>Başlık</th>
+                  <th>Açıklama</th>
+                  <th>Termin</th>
+                  <th>Atanan</th>
+                  <th>Aksiyon</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .default_tasks}}
+                <tr>
+                  <td class="text-secondary">{{.ID}}</td>
+                  <td class="fw-semibold">{{.Title}}</td>
+                  <td class="text-secondary">{{if .Description}}{{.Description}}{{else}}—{{end}}</td>
+                  <td>
+                    {{if gt .DaysBeforeStart 0}}
+                      <span class="badge bg-info-subtle text-info-emphasis">Turdan {{.DaysBeforeStart}} gün önce</span>
+                    {{else}}
+                      <span class="badge bg-secondary-subtle text-secondary-emphasis">Tur başlangıcı</span>
+                    {{end}}
+                  </td>
+                  <td>{{if .HocaUserName}}{{.HocaUserName}}{{else}}<span class="text-secondary">—</span>{{end}}</td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <button type="button" class="btn btn-icon btn-sm btn-light" title="Düzenle" onclick='openDtEdit({{json .}})'>
+                        <i class="ti ti-edit"></i>
+                      </button>
+                      <button type="button" class="btn btn-icon btn-sm btn-light text-danger" title="Sil" onclick="deleteDt({{.ID}})">
+                        <i class="ti ti-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{else}}
+          <div class="card-body text-center py-8">
+            <i class="ti ti-checklist fs-1 text-secondary"></i>
+            <p class="fw-semibold mt-3 mb-1">Varsayılan görev yok</p>
+            <p class="text-secondary mb-4">Her yeni turda otomatik açılacak görevleri tanımlayın</p>
+            <button type="button" class="btn btn-primary" onclick="openDtCreate()"><i class="ti ti-plus"></i> Görev Ekle</button>
+          </div>
+          {{end}}
+        </div>
+        </div>
+
         </div>
       </div>
     </div>
@@ -159,14 +372,109 @@
   </div>
 </div>
 
+<!-- Hoca Modalı -->
+<div class="modal fade" id="hocaModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="hocaModalTitle">Yeni Hoca</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <form id="hocaForm" onsubmit="saveHoca(event)">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Ad <span class="text-danger">*</span></label>
+            <input id="fHocaFirstName" type="text" required placeholder="Mehmet" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Soyad</label>
+            <input id="fHocaLastName" type="text" placeholder="Demir" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Telefon</label>
+            <input id="fHocaPhone" type="tel" placeholder="+90 5xx xxx xx xx" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Varsayılan Görev Modalı -->
+<div class="modal fade" id="dtModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="dtModalTitle">Yeni Varsayılan Görev</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <form id="dtForm" onsubmit="saveDt(event)">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Başlık <span class="text-danger">*</span></label>
+            <input id="fDtTitle" type="text" required placeholder="Otel rezervasyonunu onayla" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Açıklama</label>
+            <textarea id="fDtDescription" rows="3" placeholder="İsteğe bağlı" class="form-control"></textarea>
+          </div>
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">Kaç gün önce</label>
+              <div class="input-group">
+                <input id="fDtDays" type="number" min="0" step="1" value="0" class="form-control">
+                <span class="input-group-text">gün</span>
+              </div>
+              <div class="form-text">Bitiş tarihi = tur başlangıcı − bu gün sayısı</div>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Atanan Kişi</label>
+              <select id="fDtHoca" class="form-select">
+                <option value="">— Atanmadı —</option>
+                {{range .hoca_users}}
+                <option value="{{.ID}}">{{.FirstName}} {{.LastName}}</option>
+                {{end}}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="alert position-fixed d-none align-items-center gap-2" style="top:20px; right:20px; z-index:1080; min-width:260px;" role="alert"></div>
 
 <script src="/static/theme/assets/js/main.js" type="module"></script>
 <script>
 let editingRefId = null;
-let refModal;
+let editingHocaId = null;
+let editingDtId = null;
+let refModal, hocaModal, dtModal;
 document.addEventListener('DOMContentLoaded', () => {
   refModal = new bootstrap.Modal(document.getElementById('refModal'));
+  hocaModal = new bootstrap.Modal(document.getElementById('hocaModal'));
+  dtModal = new bootstrap.Modal(document.getElementById('dtModal'));
+
+  // Sekme durumunu adres çubuğunda tut — yenilemede aynı bölüm açık kalsın.
+  document.querySelectorAll('[data-bs-toggle="pill"]').forEach(btn => {
+    btn.addEventListener('shown.bs.tab', e => {
+      history.replaceState(null, '', e.target.dataset.bsTarget.replace('#pane-', '#'));
+    });
+  });
+  const hash = location.hash.replace('#', '');
+  if (hash) {
+    const btn = document.querySelector(`[data-bs-target="#pane-${hash}"]`);
+    if (btn) bootstrap.Tab.getOrCreateInstance(btn).show();
+  }
 });
 
 function openRefCreate() {
@@ -214,6 +522,114 @@ async function deleteRef(id) {
     const res = await fetch(`/api/referans-users/${id}`, { method: 'DELETE' });
     if (res.ok) {
       showToast('✓ Kullanıcı silindi', 'success');
+      setTimeout(() => location.reload(), 700);
+    } else { showToast('✕ Silme işlemi başarısız', 'danger'); }
+  } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+}
+
+// --- Hocalar ---
+
+function openHocaCreate() {
+  editingHocaId = null;
+  document.getElementById('hocaModalTitle').textContent = 'Yeni Hoca';
+  document.getElementById('hocaForm').reset();
+  hocaModal.show();
+  setTimeout(() => document.getElementById('fHocaFirstName').focus(), 200);
+}
+
+function openHocaEdit(u) {
+  editingHocaId = u.id;
+  document.getElementById('hocaModalTitle').textContent = 'Hocayı Düzenle';
+  document.getElementById('fHocaFirstName').value = u.first_name || '';
+  document.getElementById('fHocaLastName').value = u.last_name || '';
+  document.getElementById('fHocaPhone').value = u.phone || '';
+  hocaModal.show();
+}
+
+async function saveHoca(e) {
+  e.preventDefault();
+  const payload = {
+    first_name: document.getElementById('fHocaFirstName').value.trim(),
+    last_name:  document.getElementById('fHocaLastName').value.trim(),
+    phone:      document.getElementById('fHocaPhone').value.trim()
+  };
+  const url    = editingHocaId ? `/api/hoca-users/${editingHocaId}` : '/api/hoca-users';
+  const method = editingHocaId ? 'PUT' : 'POST';
+  try {
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (res.ok) {
+      hocaModal.hide();
+      showToast('✓ ' + (editingHocaId ? 'Hoca güncellendi' : 'Hoca eklendi'), 'success');
+      setTimeout(() => location.reload(), 700);
+    } else {
+      const err = await res.json();
+      showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'danger');
+    }
+  } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+}
+
+async function deleteHoca(id) {
+  if (!confirm('Bu hocayı silmek istediğinizden emin misiniz? Atanmış görevler atamasız kalır.')) return;
+  try {
+    const res = await fetch(`/api/hoca-users/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('✓ Hoca silindi', 'success');
+      setTimeout(() => location.reload(), 700);
+    } else { showToast('✕ Silme işlemi başarısız', 'danger'); }
+  } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+}
+
+// --- Varsayılan görevler ---
+
+function openDtCreate() {
+  editingDtId = null;
+  document.getElementById('dtModalTitle').textContent = 'Yeni Varsayılan Görev';
+  document.getElementById('dtForm').reset();
+  document.getElementById('fDtDays').value = 0;
+  dtModal.show();
+  setTimeout(() => document.getElementById('fDtTitle').focus(), 200);
+}
+
+function openDtEdit(t) {
+  editingDtId = t.id;
+  document.getElementById('dtModalTitle').textContent = 'Varsayılan Görevi Düzenle';
+  document.getElementById('fDtTitle').value = t.title || '';
+  document.getElementById('fDtDescription').value = t.description || '';
+  document.getElementById('fDtDays').value = t.days_before_start || 0;
+  document.getElementById('fDtHoca').value = t.hoca_user_id ? String(t.hoca_user_id) : '';
+  dtModal.show();
+}
+
+async function saveDt(e) {
+  e.preventDefault();
+  const hoca = document.getElementById('fDtHoca').value;
+  const payload = {
+    title:             document.getElementById('fDtTitle').value.trim(),
+    description:       document.getElementById('fDtDescription').value.trim(),
+    days_before_start: parseInt(document.getElementById('fDtDays').value, 10) || 0,
+    hoca_user_id:      hoca ? parseInt(hoca, 10) : null
+  };
+  const url    = editingDtId ? `/api/default-tasks/${editingDtId}` : '/api/default-tasks';
+  const method = editingDtId ? 'PUT' : 'POST';
+  try {
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (res.ok) {
+      dtModal.hide();
+      showToast('✓ ' + (editingDtId ? 'Görev güncellendi' : 'Görev eklendi'), 'success');
+      setTimeout(() => location.reload(), 700);
+    } else {
+      const err = await res.json();
+      showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'danger');
+    }
+  } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+}
+
+async function deleteDt(id) {
+  if (!confirm('Bu varsayılan görevi silmek istediğinizden emin misiniz? Daha önce oluşturulmuş görevler etkilenmez.')) return;
+  try {
+    const res = await fetch(`/api/default-tasks/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('✓ Görev silindi', 'success');
       setTimeout(() => location.reload(), 700);
     } else { showToast('✕ Silme işlemi başarısız', 'danger'); }
   } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }

@@ -37,9 +37,27 @@ func parseTaskDueDate(s string) (*time.Time, error) {
 	return &d, nil
 }
 
+// taskBaseQuery — задачи вместе с именем назначенного сотрудника (hoca_users).
+const taskBaseQuery = `
+	SELECT t.id, t.title, t.description, t.status, t.due_date, t.hoca_user_id,
+	       TRIM(CONCAT(h.first_name, ' ', h.last_name)) AS hoca_user_name,
+	       t.tour_id, tr.code AS tour_code,
+	       t.created_at, t.updated_at
+	FROM tasks t
+	LEFT JOIN hoca_users h ON h.id = t.hoca_user_id
+	LEFT JOIN tours tr     ON tr.id = t.tour_id`
+
+// normalizeNullableID — 0 или nil из формы означают «не выбрано».
+func normalizeNullableID(id *int64) *int64 {
+	if id == nil || *id <= 0 {
+		return nil
+	}
+	return id
+}
+
 func (r *taskRepo) GetAll(ctx context.Context) ([]model.Task, error) {
 	var tasks []model.Task
-	err := r.db.WithContext(ctx).Order("id DESC").Find(&tasks).Error
+	err := r.db.WithContext(ctx).Raw(taskBaseQuery + ` ORDER BY t.id DESC`).Scan(&tasks).Error
 	if tasks == nil {
 		tasks = []model.Task{}
 	}
@@ -48,8 +66,12 @@ func (r *taskRepo) GetAll(ctx context.Context) ([]model.Task, error) {
 
 func (r *taskRepo) GetByID(ctx context.Context, id int64) (*model.Task, error) {
 	var t model.Task
-	if err := r.db.WithContext(ctx).First(&t, id).Error; err != nil {
-		return nil, err
+	result := r.db.WithContext(ctx).Raw(taskBaseQuery+` WHERE t.id = ?`, id).Scan(&t)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	return &t, nil
 }
@@ -68,6 +90,8 @@ func (r *taskRepo) Create(ctx context.Context, req model.CreateTaskRequest) (*mo
 		Description: req.Description,
 		Status:      status,
 		DueDate:     dueDate,
+		HocaUserID:  normalizeNullableID(req.HocaUserID),
+		TourID:      normalizeNullableID(req.TourID),
 	}
 	if err := r.db.WithContext(ctx).Create(&t).Error; err != nil {
 		return nil, err
@@ -81,16 +105,21 @@ func (r *taskRepo) Update(ctx context.Context, id int64, req model.UpdateTaskReq
 		return nil, err
 	}
 	result := r.db.WithContext(ctx).Model(&model.Task{}).Where("id = ?", id).Updates(map[string]any{
-		"title":       req.Title,
-		"description": req.Description,
-		"status":      req.Status,
-		"due_date":    dueDate,
+		"title":        req.Title,
+		"description":  req.Description,
+		"status":       req.Status,
+		"due_date":     dueDate,
+		"hoca_user_id": normalizeNullableID(req.HocaUserID),
+		"tour_id":      normalizeNullableID(req.TourID),
 	})
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
+		// Значения могли не измениться — проверяем существование записи.
+		if _, err := r.GetByID(ctx, id); err != nil {
+			return nil, err
+		}
 	}
 	return r.GetByID(ctx, id)
 }
@@ -101,7 +130,10 @@ func (r *taskRepo) UpdateStatus(ctx context.Context, id int64, status string) (*
 		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
+		// Статус мог не измениться (перенос в ту же колонку) — это не 404.
+		if _, err := r.GetByID(ctx, id); err != nil {
+			return nil, err
+		}
 	}
 	return r.GetByID(ctx, id)
 }

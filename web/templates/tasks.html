@@ -131,6 +131,27 @@
               <label class="form-label">Bitiş Tarihi</label>
               <input id="fDueDate" type="date" class="form-control">
             </div>
+            <div class="col-6">
+              <label class="form-label">Atanan Kişi</label>
+              <select id="fHocaUserID" class="form-select">
+                <option value="">— Atanmadı —</option>
+                {{range .hocaUsers}}
+                <option value="{{.ID}}">{{.FirstName}} {{.LastName}}</option>
+                {{end}}
+              </select>
+              {{if not .hocaUsers}}
+              <div class="form-text">Personel listesi boş — <a href="/settings">Ayarlar</a> sayfasından hoca ekleyin.</div>
+              {{end}}
+            </div>
+            <div class="col-6">
+              <label class="form-label">Tur</label>
+              <select id="fTourID" class="form-select">
+                <option value="">— Tur yok —</option>
+                {{range .tours}}
+                <option value="{{.ID}}">{{.Code}}</option>
+                {{end}}
+              </select>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -167,6 +188,8 @@
     document.getElementById('fDescription').value = t.description || '';
     document.getElementById('fStatus').value = t.status;
     document.getElementById('fDueDate').value = t.due_date ? t.due_date.slice(0, 10) : '';
+    document.getElementById('fHocaUserID').value = t.hoca_user_id ? String(t.hoca_user_id) : '';
+    document.getElementById('fTourID').value = t.tour_id ? String(t.tour_id) : '';
     taskModal.show();
   }
 
@@ -177,6 +200,12 @@
       description: document.getElementById('fDescription').value,
       status:      document.getElementById('fStatus').value,
       due_date:    document.getElementById('fDueDate').value,
+      hoca_user_id: document.getElementById('fHocaUserID').value
+        ? parseInt(document.getElementById('fHocaUserID').value, 10)
+        : null,
+      tour_id: document.getElementById('fTourID').value
+        ? parseInt(document.getElementById('fTourID').value, 10)
+        : null,
     };
     const url    = editingId ? `/api/tasks/${editingId}` : '/api/tasks';
     const method = editingId ? 'PUT' : 'POST';
@@ -259,6 +288,20 @@
   <div class="card-body p-3">
     <p class="fw-semibold mb-0">{{.Title}}</p>
     {{if .Description}}<p class="text-secondary small mb-0 mt-1">{{.Description}}</p>{{end}}
+    {{if or .HocaUserName .TourCode}}
+    <div class="d-flex flex-wrap gap-1 mt-2">
+      {{if .HocaUserName}}
+      <span class="badge bg-primary-subtle text-primary-emphasis">
+        <i class="ti ti-user"></i> {{.HocaUserName}}
+      </span>
+      {{end}}
+      {{if .TourCode}}
+      <a href="/tours/{{.TourID}}" class="badge bg-info-subtle text-info-emphasis text-decoration-none">
+        <i class="ti ti-plane"></i> {{.TourCode}}
+      </a>
+      {{end}}
+    </div>
+    {{end}}
     <div class="d-flex align-items-center justify-content-between mt-2">
       <span class="small {{if and .DueDate (ne .Status "done") (.DueDate.Before now)}}text-danger fw-semibold{{else}}text-secondary{{end}}">
         {{if .DueDate}}{{.DueDate.Format "02.01.2006"}}{{end}}

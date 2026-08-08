@@ -80,8 +80,14 @@ func main() {
 	flightRepo := repository.NewFlightRepository(db)
 	flightSvc := service.NewFlightService(flightRepo)
 
+	defaultTaskRepo := repository.NewDefaultTaskRepository(db)
+	defaultTaskSvc := service.NewDefaultTaskService(defaultTaskRepo)
+
+	taskRepo := repository.NewTaskRepository(db)
+	taskSvc := service.NewTaskService(taskRepo)
+
 	tourRepo := repository.NewTourRepository(db)
-	tourSvc := service.NewTourService(tourRepo)
+	tourSvc := service.NewTourService(tourRepo, defaultTaskRepo, taskRepo)
 
 	clientRepo := repository.NewClientRepository(db)
 	clientSvc := service.NewClientService(clientRepo)
@@ -91,6 +97,9 @@ func main() {
 
 	referansUserRepo := repository.NewReferansUserRepository(db)
 	referansUserSvc := service.NewReferansUserService(referansUserRepo)
+
+	hocaUserRepo := repository.NewHocaUserRepository(db)
+	hocaUserSvc := service.NewHocaUserService(hocaUserRepo)
 
 	userRepo := repository.NewUserRepository(db)
 	userSvc := service.NewUserService(userRepo)
@@ -105,9 +114,6 @@ func main() {
 
 	orderRepo := repository.NewOrderRepository(db)
 	orderSvc := service.NewOrderService(orderRepo, incomeRepo, discountRepo, tourRepo)
-
-	taskRepo := repository.NewTaskRepository(db)
-	taskSvc := service.NewTaskService(taskRepo)
 
 	sheetsClient, err := googlesheets.NewClient(context.Background(), googlesheets.CredentialsPath())
 	if err != nil {
@@ -133,16 +139,18 @@ func main() {
 	clientHandler := handler.NewClientHandler(clientSvc)
 	settingHandler := handler.NewSettingHandler(settingSvc)
 	referansUserHandler := handler.NewReferansUserHandler(referansUserSvc)
+	hocaUserHandler := handler.NewHocaUserHandler(hocaUserSvc)
+	defaultTaskHandler := handler.NewDefaultTaskHandler(defaultTaskSvc)
 	userHandler := handler.NewUserHandler(userSvc)
 	authHandler := handler.NewAuthHandler(userSvc, sessions)
 	discountCategoryHandler := handler.NewDiscountCategoryHandler(discountCategorySvc)
 	discountHandler := handler.NewDiscountHandler(discountSvc)
 	orderHandler := handler.NewOrderHandler(orderSvc)
 	taskHandler := handler.NewTaskHandler(taskSvc)
-	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, flightSvc, tourSvc, clientSvc, settingSvc, referansUserSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc, metaAdsSvc)
+	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, flightSvc, tourSvc, clientSvc, settingSvc, referansUserSvc, hocaUserSvc, defaultTaskSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc, metaAdsSvc)
 	sheetsImportHandler := handler.NewSheetsImportHandler(sheetsClient, sheetLinkSvc, tourSvc, clientSvc, orderSvc)
 	metaAdsHandler := handler.NewMetaAdsHandler(metaAdsSvc)
 
-	router := handler.NewRouter(authHandler, sessions, accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, referansUserHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, metaAdsHandler, tmpl)
+	router := handler.NewRouter(authHandler, sessions, accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, referansUserHandler, hocaUserHandler, defaultTaskHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, metaAdsHandler, tmpl)
 	router.Run(":" + os.Getenv("PORT"))
 }
