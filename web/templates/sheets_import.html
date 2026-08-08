@@ -763,6 +763,9 @@
           first_name: result.first_name, last_name: result.last_name,
           birth_date: ddmmyyyyToIso(result.birth_date), phone: result.phone, email: result.email,
         };
+        if (!clientOverride.first_name || !clientOverride.last_name || !clientOverride.birth_date) {
+          return { status: 'cancel', msg: `${who} — Ad/Soyad/Doğum tarixi (GG.AA.YYYY) doldurulmadı, ötürüldü` };
+        }
       }
       if (needsIncomeChoice) {
         lastIncomeAccountId = result.income_account_id;
@@ -789,7 +792,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(clientPayload),
       });
-      if (!res.ok) return { status: 'error', msg: `${who} — müştəri yaradıla bilmədi` };
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { status: 'error', msg: `${who} — müştəri yaradıla bilmədi${err.error ? ': ' + err.error : ''}` };
+      }
       const client = await res.json();
       clientId = client.id;
       p.client_match = { id: client.id, first_name: client.first_name, last_name: client.last_name };
@@ -800,7 +806,10 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ client_id: clientId, tour_id: p.tour_match, incomes: [] }),
     });
-    if (!res.ok) return { status: 'error', msg: `${who} — sifariş yaradıla bilmədi` };
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { status: 'error', msg: `${who} — sifariş yaradıla bilmədi${err.error ? ': ' + err.error : ''}` };
+    }
     const order = await res.json();
 
     p.has_order = true;
