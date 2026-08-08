@@ -176,6 +176,38 @@ curl -G "https://graph.facebook.com/v23.0/act_ВАШ_ID/insights" \
 и сроком действия **«Никогда»**. App Review не нужен, пока читаем свой кабинет.
 Хранится либо в `META_ACCESS_TOKEN`, либо в БД (таблица `meta_ad_accounts`, вводится через UI).
 
+## Referans kullanıcıları (рефереры)
+
+Люди, которые приводят клиентов. Хранится минимум: имя, фамилия, телефон.
+Управление — карточка **Referans Kullanıcıları** на странице `/settings`.
+
+```bash
+# Миграции
+mysql -u root -p accounting < migrations/038_create_referans_users.sql
+mysql -u root -p accounting < migrations/039_create_referans_user_orders.sql
+```
+
+Детальная страница — `/referans-users/:id` (кнопка с глазом рядом с карандашом в списке):
+данные реферера, заказы-кандидаты, поиск по всем заказам и список подтверждённых рефералов.
+
+**Кандидаты** подбираются автоматически: `clients.reference_name` содержит имя или фамилию
+реферера (`LIKE`, части короче 3 символов игнорируются). По умолчанию — последние 10.
+Само подтверждение ручное и хранится в таблице `referans_user_orders`.
+
+Эндпоинты (`/api/referans-users`):
+
+| Метод | Путь | Описание |
+|---|---|---|
+| `GET` / `POST` | `/` | список / создать |
+| `GET` / `PUT` / `DELETE` | `/:id` | карточка реферера |
+| `GET` | `/:id/candidates?limit=10` | заказы-кандидаты (`limit=all` — все) |
+| `GET` | `/:id/order-search?q=&limit=30` | поиск по всем заказам (клиент, референс, телефон, код тура, номер заказа) |
+| `GET` | `/:id/orders` | подтверждённые рефералы |
+| `POST` | `/:id/orders` | подтвердить (`{"order_id": 9}`), идемпотентно |
+| `DELETE` | `/:id/orders/:order_id` | снять подтверждение |
+
+Поля JSON реферера: `first_name` (обязательное), `last_name`, `phone`.
+
 ## API — Банковские счета
 
 Base URL: `/api/accounts`

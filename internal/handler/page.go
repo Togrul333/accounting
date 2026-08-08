@@ -34,6 +34,7 @@ type PageHandler struct {
 	tourSvc             *service.TourService
 	clientSvc           *service.ClientService
 	settingSvc          *service.SettingService
+	referansUserSvc     *service.ReferansUserService
 	userSvc             *service.UserService
 	discountCategorySvc *service.DiscountCategoryService
 	discountSvc         *service.DiscountService
@@ -54,6 +55,7 @@ func NewPageHandler(
 	tourSvc *service.TourService,
 	clientSvc *service.ClientService,
 	settingSvc *service.SettingService,
+	referansUserSvc *service.ReferansUserService,
 	userSvc *service.UserService,
 	discountCategorySvc *service.DiscountCategoryService,
 	discountSvc *service.DiscountService,
@@ -73,6 +75,7 @@ func NewPageHandler(
 		tourSvc:             tourSvc,
 		clientSvc:           clientSvc,
 		settingSvc:          settingSvc,
+		referansUserSvc:     referansUserSvc,
 		userSvc:             userSvc,
 		discountCategorySvc: discountCategorySvc,
 		discountSvc:         discountSvc,
@@ -154,10 +157,53 @@ func (h *PageHandler) Settings(c *gin.Context) {
 	if err != nil {
 		rates = model.ExchangeRates{}
 	}
+	referansUsers, err := h.referansUserSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("settings referans users error: %v", err)
+		referansUsers = []model.ReferansUser{}
+	}
 	c.HTML(http.StatusOK, "settings.html", gin.H{
-		"active": "settings",
-		"user":   h.currentUser(ctx),
-		"rates":  rates,
+		"active":         "settings",
+		"user":           h.currentUser(ctx),
+		"rates":          rates,
+		"referans_users": referansUsers,
+	})
+}
+
+// ReferansUserShow — детальная страница реферера: его данные, заказы-кандидаты
+// (совпадение с reference_name клиента) и подтверждённые рефералы.
+func (h *PageHandler) ReferansUserShow(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/settings")
+		return
+	}
+	refUser, err := h.referansUserSvc.GetByID(ctx, id)
+	if err != nil {
+		log.Printf("referans user page error: %v", err)
+		c.Redirect(http.StatusFound, "/settings")
+		return
+	}
+
+	candidates, err := h.referansUserSvc.Candidates(ctx, id, 10)
+	if err != nil {
+		log.Printf("referans user candidates error: %v", err)
+		candidates = []model.ReferansOrder{}
+	}
+	referrals, err := h.referansUserSvc.Referrals(ctx, id)
+	if err != nil {
+		log.Printf("referans user referrals error: %v", err)
+		referrals = []model.ReferansOrder{}
+	}
+
+	c.HTML(http.StatusOK, "referans_user_show.html", gin.H{
+		"active":       "settings",
+		"user":         h.currentUser(ctx),
+		"referansUser": refUser,
+		"candidates":   candidates,
+		"referrals":    referrals,
 	})
 }
 

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.referansUser.FirstName}} {{.referansUser.LastName}} — Hisar Tour</title>
+  <link rel="stylesheet" href="/static/theme/assets/css/main.css">
+</head>
+<body>
+
+{{template "topbar_v2" .}}
+{{template "sidebar_v2" .}}
+
+<main id="content" class="content py-10">
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <a href="/settings" class="btn btn-icon btn-sm btn-light"><i class="ti ti-arrow-left"></i></a>
+          <div class="flex-grow-1">
+            <h1 class="fs-3 mb-1">{{.referansUser.FirstName}} {{.referansUser.LastName}}</h1>
+            <p class="mb-0 text-secondary">Referans kullanıcısı</p>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="openRefEdit()"><i class="ti ti-edit"></i> Düzenle</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bilgi kartları -->
+    <div class="row g-3 mb-3">
+      <div class="col-lg-3 col-6">
+        <div class="card p-4 h-100">
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-md bg-primary bg-opacity-10 text-primary rounded-2"><i class="ti ti-user fs-4"></i></div>
+            <div>
+              <p class="small text-secondary text-uppercase fw-semibold mb-1">Ad</p>
+              <p class="fw-bold mb-0">{{.referansUser.FirstName}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="card p-4 h-100">
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-md bg-info bg-opacity-10 text-info rounded-2"><i class="ti ti-id fs-4"></i></div>
+            <div>
+              <p class="small text-secondary text-uppercase fw-semibold mb-1">Soyad</p>
+              <p class="fw-bold mb-0">{{if .referansUser.LastName}}{{.referansUser.LastName}}{{else}}—{{end}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="card p-4 h-100">
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-md bg-success bg-opacity-10 text-success rounded-2"><i class="ti ti-phone fs-4"></i></div>
+            <div>
+              <p class="small text-secondary text-uppercase fw-semibold mb-1">Telefon</p>
+              <p class="fw-bold mb-0">{{if .referansUser.Phone}}<a href="tel:{{.referansUser.Phone}}" class="text-decoration-none">{{.referansUser.Phone}}</a>{{else}}—{{end}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="card p-4 h-100">
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-shape icon-md bg-warning bg-opacity-10 text-warning rounded-2"><i class="ti ti-users fs-4"></i></div>
+            <div>
+              <p class="small text-secondary text-uppercase fw-semibold mb-1">Referansları</p>
+              <p class="fw-bold mb-0" id="referralCount">{{len .referrals}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aday siparişler -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-transparent px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h3 class="h6 mb-0">Aday Siparişler</h3>
+              <p class="small text-secondary mb-0 mt-1">Müşterinin referans adı bu kişinin adı veya soyadı ile eşleşen siparişler (son 10)</p>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="allCandidatesBtn" onclick="loadCandidates('all')">
+              <i class="ti ti-list"></i> Tümünü göster
+            </button>
+          </div>
+          <div id="candidatesBox">
+            <div class="card-body text-center py-6 text-secondary">Yükleniyor…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tüm siparişlerde arama -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-transparent px-4 py-3">
+            <h3 class="h6 mb-0">Sipariş Ara</h3>
+            <p class="small text-secondary mb-0 mt-1">Tüm siparişler arasında ara ve referans olarak onayla</p>
+          </div>
+          <div class="card-body pb-0">
+            <div class="input-group mb-3">
+              <span class="input-group-text bg-transparent"><i class="ti ti-search"></i></span>
+              <input type="text" id="orderSearch" class="form-control" placeholder="Müşteri adı, referans adı, telefon, tur kodu veya sipariş no" oninput="onSearchInput()">
+            </div>
+          </div>
+          <div id="searchBox">
+            <div class="card-body text-center py-6 text-secondary">Aramak için yazmaya başlayın</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onaylanmış referanslar -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-transparent px-4 py-3">
+            <h3 class="h6 mb-0">Onaylanmış Referanslar</h3>
+            <p class="small text-secondary mb-0 mt-1">Bu kişinin getirdiği tüm siparişler</p>
+          </div>
+          <div id="referralsBox">
+            <div class="card-body text-center py-6 text-secondary">Yükleniyor…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Referans Kullanıcı Modalı -->
+<div class="modal fade" id="refModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Referans Kullanıcıyı Düzenle</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <form id="refForm" onsubmit="saveRef(event)">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Ad <span class="text-danger">*</span></label>
+            <input id="fRefFirstName" type="text" required class="form-control" value="{{.referansUser.FirstName}}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Soyad</label>
+            <input id="fRefLastName" type="text" class="form-control" value="{{.referansUser.LastName}}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Telefon</label>
+            <input id="fRefPhone" type="tel" class="form-control" value="{{.referansUser.Phone}}">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="alert position-fixed d-none align-items-center gap-2" style="top:20px; right:20px; z-index:1080; min-width:260px;" role="alert"></div>
+
+<script src="/static/theme/assets/js/main.js" type="module"></script>
+<script>
+  const refUserId = {{.referansUser.ID}};
+  // Первый рендер — из данных, отданных сервером, без лишнего запроса.
+  const initialCandidates = {{json .candidates}};
+  const initialReferrals  = {{json .referrals}};
+  let refModal;
+  let searchTimer = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    refModal = new bootstrap.Modal(document.getElementById('refModal'));
+    document.getElementById('candidatesBox').innerHTML = orderTable(initialCandidates, 'Eşleşen sipariş bulunamadı');
+    document.getElementById('referralsBox').innerHTML = orderTable(initialReferrals, 'Henüz onaylanmış referans yok');
+  });
+
+  function openRefEdit() { refModal.show(); }
+
+  async function saveRef(e) {
+    e.preventDefault();
+    const payload = {
+      first_name: document.getElementById('fRefFirstName').value.trim(),
+      last_name:  document.getElementById('fRefLastName').value.trim(),
+      phone:      document.getElementById('fRefPhone').value.trim()
+    };
+    try {
+      const res = await fetch(`/api/referans-users/${refUserId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        refModal.hide();
+        showToast('✓ Kullanıcı güncellendi', 'success');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        const err = await res.json();
+        showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'danger');
+      }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  // --- Sipariş listeleri ---
+
+  function money(v) {
+    return (v || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[ch]);
+  }
+
+  function fmtDate(s) {
+    if (!s) return '—';
+    const d = new Date(s);
+    return isNaN(d) ? '—' : d.toLocaleDateString('tr-TR');
+  }
+
+  function orderTable(orders, emptyText) {
+    if (!orders.length) {
+      return `<div class="card-body text-center py-6">
+                <i class="ti ti-shopping-cart-off fs-1 text-secondary"></i>
+                <p class="text-secondary mt-3 mb-0">${esc(emptyText)}</p>
+              </div>`;
+    }
+    const rows = orders.map(o => `
+      <tr>
+        <td style="width:56px;">
+          ${o.confirmed
+            ? `<button type="button" class="btn btn-icon btn-sm btn-success" title="Referans onayı kaldır" onclick="removeReferral(${o.id})"><i class="ti ti-check"></i></button>`
+            : `<button type="button" class="btn btn-icon btn-sm btn-outline-primary" title="Referans olarak onayla" onclick="addReferral(${o.id})"><i class="ti ti-plus"></i></button>`}
+        </td>
+        <td class="text-secondary">#${o.id}</td>
+        <td class="fw-semibold"><a href="/orders/${o.id}" class="text-decoration-none">${esc(o.client_name)}</a></td>
+        <td>${esc(o.reference_name) || '<span class="text-secondary">—</span>'}</td>
+        <td>${esc(o.tour_code)}</td>
+        <td class="text-end">${money(o.income_total)}</td>
+        <td class="text-secondary">${fmtDate(o.created_at)}</td>
+      </tr>`).join('');
+    return `<div class="table-responsive">
+      <table class="table mb-0 table-hover align-middle">
+        <thead class="table-light border-light">
+          <tr>
+            <th>Onay</th>
+            <th>Sipariş</th>
+            <th>Müşteri</th>
+            <th>Referans Adı</th>
+            <th>Tur</th>
+            <th class="text-end">Ödenen</th>
+            <th>Tarih</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  async function loadCandidates(limit) {
+    const box = document.getElementById('candidatesBox');
+    try {
+      const res = await fetch(`/api/referans-users/${refUserId}/candidates?limit=${limit}`);
+      const orders = await res.json();
+      box.innerHTML = orderTable(orders, 'Eşleşen sipariş bulunamadı');
+      const btn = document.getElementById('allCandidatesBtn');
+      if (limit === 'all') {
+        btn.innerHTML = '<i class="ti ti-arrow-up"></i> Son 10 sipariş';
+        btn.setAttribute('onclick', 'loadCandidates(10)');
+      } else {
+        btn.innerHTML = '<i class="ti ti-list"></i> Tümünü göster';
+        btn.setAttribute('onclick', "loadCandidates('all')");
+      }
+    } catch { box.innerHTML = '<div class="card-body text-center py-6 text-danger">Liste yüklenemedi</div>'; }
+  }
+
+  async function loadReferrals() {
+    const box = document.getElementById('referralsBox');
+    try {
+      const res = await fetch(`/api/referans-users/${refUserId}/orders`);
+      const orders = await res.json();
+      box.innerHTML = orderTable(orders, 'Henüz onaylanmış referans yok');
+      document.getElementById('referralCount').textContent = orders.length;
+    } catch { box.innerHTML = '<div class="card-body text-center py-6 text-danger">Liste yüklenemedi</div>'; }
+  }
+
+  function onSearchInput() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(runSearch, 300);
+  }
+
+  async function runSearch() {
+    const q = document.getElementById('orderSearch').value.trim();
+    const box = document.getElementById('searchBox');
+    if (!q) {
+      box.innerHTML = '<div class="card-body text-center py-6 text-secondary">Aramak için yazmaya başlayın</div>';
+      return;
+    }
+    try {
+      const res = await fetch(`/api/referans-users/${refUserId}/order-search?q=${encodeURIComponent(q)}&limit=30`);
+      const orders = await res.json();
+      box.innerHTML = orderTable(orders, 'Sipariş bulunamadı');
+    } catch { box.innerHTML = '<div class="card-body text-center py-6 text-danger">Arama başarısız</div>'; }
+  }
+
+  async function addReferral(orderId) {
+    try {
+      const res = await fetch(`/api/referans-users/${refUserId}/orders`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: orderId })
+      });
+      if (res.ok) { showToast('✓ Referans onaylandı', 'success'); refreshLists(); }
+      else { showToast('✕ İşlem başarısız', 'danger'); }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  async function removeReferral(orderId) {
+    if (!confirm('Bu siparişin referans onayını kaldırmak istediğinizden emin misiniz?')) return;
+    try {
+      const res = await fetch(`/api/referans-users/${refUserId}/orders/${orderId}`, { method: 'DELETE' });
+      if (res.ok) { showToast('✓ Onay kaldırıldı', 'success'); refreshLists(); }
+      else { showToast('✕ İşlem başarısız', 'danger'); }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  function refreshLists() {
+    const btn = document.getElementById('allCandidatesBtn');
+    loadCandidates(btn.getAttribute('onclick').includes("'all'") ? 10 : 'all');
+    loadReferrals();
+    if (document.getElementById('orderSearch').value.trim()) runSearch();
+  }
+
+  function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'alert position-fixed d-flex align-items-center gap-2 alert-' + type;
+    el.style.top = '20px';
+    el.style.right = '20px';
+    el.style.zIndex = 1080;
+    el.style.minWidth = '260px';
+    el.classList.remove('d-none');
+    setTimeout(() => el.classList.add('d-none'), 2800);
+  }
+</script>
+</body>
+</html>

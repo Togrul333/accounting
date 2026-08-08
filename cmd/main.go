@@ -89,6 +89,9 @@ func main() {
 	settingRepo := repository.NewSettingRepository(db)
 	settingSvc := service.NewSettingService(settingRepo)
 
+	referansUserRepo := repository.NewReferansUserRepository(db)
+	referansUserSvc := service.NewReferansUserService(referansUserRepo)
+
 	userRepo := repository.NewUserRepository(db)
 	userSvc := service.NewUserService(userRepo)
 
@@ -129,16 +132,17 @@ func main() {
 	tourHandler := handler.NewTourHandler(tourSvc)
 	clientHandler := handler.NewClientHandler(clientSvc)
 	settingHandler := handler.NewSettingHandler(settingSvc)
+	referansUserHandler := handler.NewReferansUserHandler(referansUserSvc)
 	userHandler := handler.NewUserHandler(userSvc)
 	authHandler := handler.NewAuthHandler(userSvc, sessions)
 	discountCategoryHandler := handler.NewDiscountCategoryHandler(discountCategorySvc)
 	discountHandler := handler.NewDiscountHandler(discountSvc)
 	orderHandler := handler.NewOrderHandler(orderSvc)
 	taskHandler := handler.NewTaskHandler(taskSvc)
-	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, flightSvc, tourSvc, clientSvc, settingSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc, metaAdsSvc)
+	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, flightSvc, tourSvc, clientSvc, settingSvc, referansUserSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc, metaAdsSvc)
 	sheetsImportHandler := handler.NewSheetsImportHandler(sheetsClient, sheetLinkSvc, tourSvc, clientSvc, orderSvc)
 	metaAdsHandler := handler.NewMetaAdsHandler(metaAdsSvc)
 
-	router := handler.NewRouter(authHandler, sessions, accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, metaAdsHandler, tmpl)
+	router := handler.NewRouter(authHandler, sessions, accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, referansUserHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, metaAdsHandler, tmpl)
 	router.Run(":" + os.Getenv("PORT"))
 }

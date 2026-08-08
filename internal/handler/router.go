@@ -22,6 +22,7 @@ func NewRouter(
 	tours *TourHandler,
 	clients *ClientHandler,
 	settings *SettingHandler,
+	referansUsers *ReferansUserHandler,
 	users *UserHandler,
 	discountCategories *DiscountCategoryHandler,
 	discounts *DiscountHandler,
@@ -42,6 +43,7 @@ func NewRouter(
 	r.POST("/login", authHandler.Login)
 	r.GET("/profile", pages.Profile)
 	r.GET("/settings", pages.Settings)
+	r.GET("/referans-users/:id", pages.ReferansUserShow)
 	r.POST("/logout", authHandler.Logout)
 	r.GET("/accounts", pages.Accounts)
 	r.GET("/accounts/:id/edit", pages.AccountEdit)
@@ -137,6 +139,17 @@ func NewRouter(
 		api.POST("/clients/:id/document", clients.UploadDocument)
 
 		api.PUT("/settings/rates", settings.UpdateRates)
+
+		api.GET("/referans-users", referansUsers.GetAll)
+		api.POST("/referans-users", referansUsers.Create)
+		api.GET("/referans-users/:id", referansUsers.GetByID)
+		api.PUT("/referans-users/:id", referansUsers.Update)
+		api.DELETE("/referans-users/:id", referansUsers.Delete)
+		api.GET("/referans-users/:id/candidates", referansUsers.Candidates)
+		api.GET("/referans-users/:id/order-search", referansUsers.SearchOrders)
+		api.GET("/referans-users/:id/orders", referansUsers.Referrals)
+		api.POST("/referans-users/:id/orders", referansUsers.AddReferral)
+		api.DELETE("/referans-users/:id/orders/:order_id", referansUsers.RemoveReferral)
 
 		api.PUT("/profile", users.UpdateProfile)
 		api.PUT("/profile/password", users.UpdatePassword)
