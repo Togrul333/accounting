@@ -39,6 +39,7 @@ type PageHandler struct {
 	discountSvc         *service.DiscountService
 	orderSvc            *service.OrderService
 	taskSvc             *service.TaskService
+	metaAdsSvc          *service.MetaAdsService
 }
 
 func NewPageHandler(
@@ -58,6 +59,7 @@ func NewPageHandler(
 	discountSvc *service.DiscountService,
 	orderSvc *service.OrderService,
 	taskSvc *service.TaskService,
+	metaAdsSvc *service.MetaAdsService,
 ) *PageHandler {
 	return &PageHandler{
 		accountSvc:          accountSvc,
@@ -76,7 +78,37 @@ func NewPageHandler(
 		discountSvc:         discountSvc,
 		orderSvc:            orderSvc,
 		taskSvc:             taskSvc,
+		metaAdsSvc:          metaAdsSvc,
 	}
+}
+
+// MetaAds — страница интеграции с Meta Ads: список кабинетов и отчёт по кампаниям.
+func (h *PageHandler) MetaAds(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	adAccounts, err := h.metaAdsSvc.GetAccounts(ctx)
+	if err != nil {
+		log.Printf("meta ads page error: %v", err)
+		adAccounts = []model.MetaAdAccount{}
+	}
+
+	cats, err := h.expenseCategorySvc.GetAll(ctx)
+	if err != nil {
+		cats = []model.ExpenseCategory{}
+	}
+
+	accounts, err := h.accountSvc.GetAll(ctx)
+	if err != nil {
+		accounts = []model.Account{}
+	}
+
+	c.HTML(http.StatusOK, "meta_ads.html", gin.H{
+		"adAccounts": adAccounts,
+		"categories": cats,
+		"accounts":   accounts,
+		"active":     "meta-ads",
+		"user":       h.currentUser(ctx),
+	})
 }
 
 // currentUser üst menüde (topbar) gösterilecek aktif kullanıcıyı döner —

@@ -140,6 +140,9 @@ DB_USER=root DB_PASSWORD=secret DB_NAME=accounting go run ./cmd/api
 | `DB_NAME`     | `accounting`  | Название БД       |
 | `PORT`        | `8080`        | Порт HTTP сервера |
 | `GOOGLE_CREDENTIALS_PATH` | `./credentials.json` | Путь к JSON-ключу сервисного аккаунта Google (для импорта из Google Sheets) |
+| `META_ACCESS_TOKEN` | _(пусто)_ | System user token Meta Ads (fallback, если у кабинета не задан свой) |
+| `META_AD_ACCOUNT_ID` | _(пусто)_ | Рекламный кабинет Meta по умолчанию, формат `act_1234567890` |
+| `META_API_VERSION` | `v23.0` | Версия Graph API |
 
 ## Импорт из Google Sheets
 
@@ -148,6 +151,30 @@ Service Account для чтения таблиц: `sheets-import@liquid-journal-
 Чтобы дать доступ к новой таблице — открыть её в Google Sheets → **Share** → добавить этот email с правами **Viewer**.
 
 JSON-ключ сервисного аккаунта лежит в `credentials.json` в корне проекта (в `.gitignore`, не коммитится). Если нужно перевыпустить ключ — Google Cloud Console → проект `liquid-journal-454008-b1` → APIs & Services → Credentials → Service Accounts → `sheets-import` → Keys → Add Key.
+
+## Meta Ads (Facebook / Instagram)
+
+Чтение расходов по рекламным кампаниям и автоматическое создание записей в `expenses`.
+Страница — `/meta-ads` (в меню `Araçlar → Meta Reklamlar`).
+
+Полная инструкция (как создать приложение, system user и бессрочный токен, схема
+таблиц, список эндпоинтов): **[docs/meta-ads-integration.md](docs/meta-ads-integration.md)**
+
+Коротко:
+
+```bash
+# 1. Миграция
+mysql -u root -p accounting < migrations/037_create_meta_ads.sql
+
+# 2. Проверить токен (до настройки в UI)
+curl -G "https://graph.facebook.com/v23.0/act_ВАШ_ID/insights" \
+  -d "fields=campaign_name,spend" -d "date_preset=last_30d" \
+  -d "level=campaign" -d "access_token=ВАШ_ТОКЕН"
+```
+
+Токен — **system user token** из Business Manager с правами `ads_read` + `read_insights`
+и сроком действия **«Никогда»**. App Review не нужен, пока читаем свой кабинет.
+Хранится либо в `META_ACCESS_TOKEN`, либо в БД (таблица `meta_ad_accounts`, вводится через UI).
 
 ## API — Банковские счета
 

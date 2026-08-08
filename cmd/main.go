@@ -114,6 +114,10 @@ func main() {
 	sheetLinkRepo := repository.NewSheetLinkRepository(db)
 	sheetLinkSvc := service.NewSheetLinkService(sheetLinkRepo)
 
+	metaAdAccountRepo := repository.NewMetaAdAccountRepository(db)
+	metaAdSpendRepo := repository.NewMetaAdSpendRepository(db)
+	metaAdsSvc := service.NewMetaAdsService(metaAdAccountRepo, metaAdSpendRepo, expenseRepo)
+
 	accountHandler := handler.NewAccountHandler(accountSvc, incomeSvc, expenseSvc, orderSvc)
 	incomeCategoryHandler := handler.NewIncomeCategoryHandler(incomeCategorySvc)
 	incomeHandler := handler.NewIncomeHandler(incomeSvc)
@@ -131,9 +135,10 @@ func main() {
 	discountHandler := handler.NewDiscountHandler(discountSvc)
 	orderHandler := handler.NewOrderHandler(orderSvc)
 	taskHandler := handler.NewTaskHandler(taskSvc)
-	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, flightSvc, tourSvc, clientSvc, settingSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc)
+	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, flightSvc, tourSvc, clientSvc, settingSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc, metaAdsSvc)
 	sheetsImportHandler := handler.NewSheetsImportHandler(sheetsClient, sheetLinkSvc, tourSvc, clientSvc, orderSvc)
+	metaAdsHandler := handler.NewMetaAdsHandler(metaAdsSvc)
 
-	router := handler.NewRouter(authHandler, sessions, accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, tmpl)
+	router := handler.NewRouter(authHandler, sessions, accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, pageHandler, sheetsImportHandler, metaAdsHandler, tmpl)
 	router.Run(":" + os.Getenv("PORT"))
 }

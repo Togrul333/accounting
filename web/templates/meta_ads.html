@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meta Reklamlar — Hisar Tour</title>
+  <link rel="stylesheet" href="/static/theme/assets/css/main.css">
+  <style>
+    .spinner-sm { width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; display:inline-block; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .acc-item { cursor: pointer; transition: all .15s; }
+    .acc-item.active { background: var(--bs-primary-bg-subtle) !important; border-color: var(--bs-primary) !important; }
+    .token-mask { font-family: monospace; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+
+{{template "topbar_v2" .}}
+{{template "sidebar_v2" .}}
+
+<main id="content" class="content py-10">
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-12">
+        <div class="mb-4 d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <h1 class="fs-3 mb-1">Meta Reklamlar</h1>
+            <p class="mb-0 text-secondary">Facebook / Instagram reklam harcamalarını çekin ve giderlere aktarın</p>
+          </div>
+          <button class="btn btn-primary" onclick="openCreate()">
+            <i class="ti ti-plus me-1"></i> Reklam Hesabı Ekle
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- Kabinetler -->
+      <div class="col-12 col-xl-4">
+        <div class="card">
+          <div class="card-header"><h5 class="mb-0">Reklam Hesapları</h5></div>
+          <div class="card-body d-flex flex-column gap-2" id="accountList">
+            {{range .adAccounts}}
+            <div class="border rounded p-3 acc-item" data-id="{{.ID}}" data-ad-account-id="{{.AdAccountID}}" onclick="selectAccount({{.ID}}, '{{.AdAccountID}}')">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <div class="fw-semibold">{{if .Name}}{{.Name}}{{else}}{{.AdAccountID}}{{end}}</div>
+                  <div class="small text-secondary token-mask">{{.AdAccountID}}</div>
+                </div>
+                <div class="text-end">
+                  {{if .HasToken}}
+                    <span class="badge bg-success-subtle text-success">Token var</span>
+                  {{else}}
+                    <span class="badge bg-danger-subtle text-danger">Token yok</span>
+                  {{end}}
+                </div>
+              </div>
+              <div class="small text-secondary mt-2">
+                {{if .Currency}}<span class="me-2">{{.Currency}}</span>{{end}}
+                {{if .AutoExpense}}<span class="badge bg-primary-subtle text-primary">Otomatik gider</span>{{end}}
+              </div>
+              <div class="small text-secondary mt-1">
+                Kategori: {{if .ExpenseCategoryName}}{{.ExpenseCategoryName}}{{else}}—{{end}} ·
+                Hesap: {{if .AccountName}}{{.AccountName}}{{else}}—{{end}}
+              </div>
+              <div class="d-flex gap-1 mt-3">
+                <button class="btn btn-sm btn-light" onclick="event.stopPropagation(); verifyAccount({{.ID}})">Test Et</button>
+                <button class="btn btn-sm btn-light" onclick="event.stopPropagation(); openEdit({{json .}})">Düzenle</button>
+                <button class="btn btn-sm btn-light text-danger" onclick="event.stopPropagation(); deleteAccount({{.ID}})">Sil</button>
+              </div>
+            </div>
+            {{else}}
+            <p class="text-secondary mb-0">Henüz reklam hesabı eklenmedi.</p>
+            {{end}}
+          </div>
+        </div>
+      </div>
+
+      <!-- Senkronizasyon ve rapor -->
+      <div class="col-12 col-xl-8">
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="row g-2 align-items-end">
+              <div class="col-6 col-md-3">
+                <label class="form-label">Başlangıç</label>
+                <input id="since" type="date" class="form-control">
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label">Bitiş</label>
+                <input id="until" type="date" class="form-control">
+              </div>
+              <div class="col-12 col-md-6 d-flex gap-2">
+                <button id="syncBtn" class="btn btn-primary" onclick="sync()">
+                  <span id="syncLabel"><i class="ti ti-refresh me-1"></i> Meta'dan Çek</span>
+                </button>
+                <button class="btn btn-light" onclick="loadReport()">Raporu Yenile</button>
+              </div>
+            </div>
+            <div id="syncResult" class="mt-3"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Kampanya Raporu</h5>
+            <span id="totalSpend" class="text-secondary small"></span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Kampanya</th>
+                  <th class="text-end">Harcama</th>
+                  <th class="text-end">Gösterim</th>
+                  <th class="text-end">Tıklama</th>
+                  <th class="text-end">CPC</th>
+                  <th class="text-end">CTR</th>
+                  <th class="text-end">Gün</th>
+                </tr>
+              </thead>
+              <tbody id="reportBody">
+                <tr><td colspan="7" class="text-center text-secondary py-4">Bir reklam hesabı seçin</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Reklam hesabı modalı -->
+<div class="modal fade" id="accountModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Reklam Hesabı Ekle</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body d-flex flex-column gap-3">
+        <input type="hidden" id="accId">
+        <div>
+          <label class="form-label">Reklam Hesabı ID</label>
+          <input id="accAdAccountId" type="text" class="form-control" placeholder="act_1234567890">
+          <div class="form-text">Meta Ads Manager → hesap numarası. <code>act_</code> öneki otomatik eklenir.</div>
+        </div>
+        <div>
+          <label class="form-label">Ad</label>
+          <input id="accName" type="text" class="form-control" placeholder="Hisar Tour Reklam">
+        </div>
+        <div>
+          <label class="form-label">Access Token</label>
+          <input id="accToken" type="password" class="form-control" placeholder="EAAG...">
+          <div class="form-text">System user token (süresiz). Boş bırakılırsa <code>META_ACCESS_TOKEN</code> kullanılır.</div>
+        </div>
+        <div>
+          <label class="form-label">Gider Kategorisi</label>
+          <select id="accCategory" class="form-select">
+            <option value="">— seçilmedi —</option>
+            {{range .categories}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Hesap</label>
+          <select id="accAccount" class="form-select">
+            <option value="">— seçilmedi —</option>
+            {{range .accounts}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+          </select>
+        </div>
+        <div class="form-check">
+          <input id="accAuto" type="checkbox" class="form-check-input">
+          <label class="form-check-label" for="accAuto">Harcamaları otomatik olarak giderlere aktar</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+        <button class="btn btn-primary" onclick="saveAccount()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="alert position-fixed d-none align-items-center gap-2" style="top:20px; right:20px; z-index:1080; min-width:260px;" role="alert"></div>
+
+<script src="/static/theme/assets/js/main.js" type="module"></script>
+<script>
+let selectedId = null;
+let selectedAdAccountId = null;
+let accountModal;
+
+document.addEventListener('DOMContentLoaded', () => {
+  accountModal = new bootstrap.Modal(document.getElementById('accountModal'));
+
+  // Начальный период — последние 30 дней.
+  const today = new Date();
+  const from = new Date();
+  from.setDate(today.getDate() - 29);
+  document.getElementById('until').value = today.toISOString().slice(0, 10);
+  document.getElementById('since').value = from.toISOString().slice(0, 10);
+
+  const first = document.querySelector('.acc-item');
+  if (first) selectAccount(Number(first.dataset.id), first.dataset.adAccountId);
+});
+
+function selectAccount(id, adAccountId) {
+  selectedId = id;
+  selectedAdAccountId = adAccountId;
+  document.querySelectorAll('.acc-item').forEach(el => {
+    el.classList.toggle('active', Number(el.dataset.id) === id);
+  });
+  loadReport();
+}
+
+function money(v, currency) {
+  return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v || 0) + ' ' + (currency || '');
+}
+
+function alertBox(type, text) {
+  return '<div class="alert alert-' + type + ' mb-0">' + text + '</div>';
+}
+
+async function loadReport() {
+  if (!selectedAdAccountId) return;
+  const q = new URLSearchParams({
+    ad_account_id: selectedAdAccountId,
+    since: document.getElementById('since').value,
+    until: document.getElementById('until').value,
+  });
+  const res = await fetch('/api/meta-ads/summary?' + q);
+  const body = document.getElementById('reportBody');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    body.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + (err.error || 'Rapor alınamadı') + '</td></tr>';
+    return;
+  }
+  const rows = await res.json();
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-4">Bu dönem için veri yok. Önce «Meta\'dan Çek» deyin.</td></tr>';
+    document.getElementById('totalSpend').textContent = '';
+    return;
+  }
+  let total = 0, currency = '';
+  body.innerHTML = rows.map(r => {
+    total += r.spend;
+    currency = r.currency || currency;
+    return '<tr>' +
+      '<td>' + (r.campaign_name || r.campaign_id) + '</td>' +
+      '<td class="text-end fw-semibold">' + money(r.spend, r.currency) + '</td>' +
+      '<td class="text-end">' + (r.impressions || 0).toLocaleString('tr-TR') + '</td>' +
+      '<td class="text-end">' + (r.clicks || 0).toLocaleString('tr-TR') + '</td>' +
+      '<td class="text-end">' + money(r.cpc, r.currency) + '</td>' +
+      '<td class="text-end">' + (r.ctr || 0).toFixed(2) + '%</td>' +
+      '<td class="text-end">' + (r.days || 0) + '</td>' +
+    '</tr>';
+  }).join('');
+  document.getElementById('totalSpend').textContent = 'Toplam: ' + money(total, currency);
+}
+
+async function sync() {
+  if (!selectedId) { alert('Önce bir reklam hesabı seçin'); return; }
+  const btn = document.getElementById('syncBtn');
+  const label = document.getElementById('syncLabel');
+  btn.disabled = true;
+  label.innerHTML = '<span class="spinner-sm"></span> Çekiliyor...';
+
+  try {
+    const res = await fetch('/api/meta-ads/accounts/' + selectedId + '/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        since: document.getElementById('since').value,
+        until: document.getElementById('until').value,
+      }),
+    });
+    const data = await res.json();
+    const box = document.getElementById('syncResult');
+    if (!res.ok) {
+      box.innerHTML = alertBox('danger', data.error || 'Senkronizasyon başarısız');
+      return;
+    }
+    box.innerHTML = alertBox('success',
+      '<b>' + data.rows_saved + '</b> satır kaydedildi · toplam <b>' + money(data.total_spend, data.currency) + '</b>' +
+      (data.expenses_created ? ' · <b>' + data.expenses_created + '</b> gider oluşturuldu' : ''));
+    loadReport();
+  } finally {
+    btn.disabled = false;
+    label.innerHTML = '<i class="ti ti-refresh me-1"></i> Meta\'dan Çek';
+  }
+}
+
+async function verifyAccount(id) {
+  const res = await fetch('/api/meta-ads/accounts/' + id + '/verify', { method: 'POST' });
+  const data = await res.json();
+  const box = document.getElementById('syncResult');
+  if (!res.ok) {
+    box.innerHTML = alertBox('danger', data.error || 'Bağlantı başarısız');
+    return;
+  }
+  box.innerHTML = alertBox('success', 'Bağlantı başarılı: <b>' + (data.name || data.id) + '</b> · ' + (data.currency || ''));
+  setTimeout(() => location.reload(), 1200);
+}
+
+function openCreate() {
+  document.getElementById('modalTitle').textContent = 'Reklam Hesabı Ekle';
+  document.getElementById('accId').value = '';
+  document.getElementById('accAdAccountId').value = '';
+  document.getElementById('accAdAccountId').disabled = false;
+  document.getElementById('accName').value = '';
+  document.getElementById('accToken').value = '';
+  document.getElementById('accCategory').value = '';
+  document.getElementById('accAccount').value = '';
+  document.getElementById('accAuto').checked = false;
+  accountModal.show();
+}
+
+function openEdit(acc) {
+  document.getElementById('modalTitle').textContent = 'Reklam Hesabını Düzenle';
+  document.getElementById('accId').value = acc.id;
+  document.getElementById('accAdAccountId').value = acc.ad_account_id;
+  document.getElementById('accAdAccountId').disabled = true;
+  document.getElementById('accName').value = acc.name || '';
+  document.getElementById('accToken').value = '';
+  document.getElementById('accCategory').value = acc.expense_category_id || '';
+  document.getElementById('accAccount').value = acc.account_id || '';
+  document.getElementById('accAuto').checked = !!acc.auto_expense;
+  accountModal.show();
+}
+
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'alert position-fixed d-flex align-items-center gap-2 alert-' + type;
+  el.style.top = '20px';
+  el.style.right = '20px';
+  el.style.zIndex = 1080;
+  el.style.minWidth = '260px';
+  setTimeout(() => el.classList.add('d-none'), 2800);
+}
+
+async function saveAccount() {
+  const id = document.getElementById('accId').value;
+  const num = v => v ? Number(v) : null;
+  const payload = {
+    ad_account_id: document.getElementById('accAdAccountId').value.trim(),
+    name: document.getElementById('accName').value.trim(),
+    access_token: document.getElementById('accToken').value.trim(),
+    expense_category_id: num(document.getElementById('accCategory').value),
+    account_id: num(document.getElementById('accAccount').value),
+    auto_expense: document.getElementById('accAuto').checked,
+  };
+
+  const res = await fetch(id ? '/api/meta-ads/accounts/' + id : '/api/meta-ads/accounts', {
+    method: id ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    showToast('✕ ' + (err.error || 'Kaydedilemedi'), 'danger');
+    return;
+  }
+  accountModal.hide();
+  showToast('✓ Reklam hesabı kaydedildi', 'success');
+  setTimeout(() => location.reload(), 700);
+}
+
+async function deleteAccount(id) {
+  if (!confirm('Reklam hesabı silinsin mi? Çekilmiş istatistikler kalır.')) return;
+  const res = await fetch('/api/meta-ads/accounts/' + id, { method: 'DELETE' });
+  if (!res.ok) { showToast('✕ Silme işlemi başarısız', 'danger'); return; }
+  showToast('✓ Reklam hesabı silindi', 'success');
+  setTimeout(() => location.reload(), 700);
+}
+</script>
+</body>
+</html>

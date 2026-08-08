@@ -29,6 +29,7 @@ func NewRouter(
 	tasks *TaskHandler,
 	pages *PageHandler,
 	sheetsImport *SheetsImportHandler,
+	metaAds *MetaAdsHandler,
 	tmpl *template.Template,
 ) *gin.Engine {
 	r := gin.Default()
@@ -64,6 +65,7 @@ func NewRouter(
 	r.GET("/orders/:id", pages.OrderShow)
 	r.GET("/orders/:id/edit", pages.OrderEdit)
 	r.GET("/sheets-import", pages.SheetsImport)
+	r.GET("/meta-ads", pages.MetaAds)
 	r.GET("/tasks", pages.Tasks)
 
 	api := r.Group("/api")
@@ -171,6 +173,17 @@ func NewRouter(
 		api.POST("/sheets-import/preview", sheetsImport.Preview)
 		api.POST("/sheets-import/turlar-candidates", sheetsImport.TurlarCandidates)
 		api.POST("/sheets-import/passenger-candidates", sheetsImport.PassengerCandidates)
+
+		api.GET("/meta-ads/accounts", metaAds.GetAccounts)
+		api.POST("/meta-ads/accounts", metaAds.CreateAccount)
+		api.GET("/meta-ads/accounts/:id", metaAds.GetAccount)
+		api.PUT("/meta-ads/accounts/:id", metaAds.UpdateAccount)
+		api.DELETE("/meta-ads/accounts/:id", metaAds.DeleteAccount)
+		api.POST("/meta-ads/accounts/:id/verify", metaAds.Verify)
+		api.POST("/meta-ads/accounts/:id/sync", metaAds.Sync)
+		api.GET("/meta-ads/spend", metaAds.Spend)
+		api.GET("/meta-ads/summary", metaAds.Summary)
+		api.PUT("/meta-ads/spend/:id/tour", metaAds.SetTour)
 	}
 
 	return r
