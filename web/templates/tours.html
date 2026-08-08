@@ -57,7 +57,6 @@
                   <th>Başlangıç</th>
                   <th>Bitiş</th>
                   <th>Kategori</th>
-                  <th>Oda</th>
                   <th>Uçuş</th>
                   <th>Aksiyon</th>
                 </tr>
@@ -72,10 +71,6 @@
                   <td>
                     {{.TourCategoryName}}
                     <span class="text-secondary small ms-1">{{printf "%.2f" .TourCategoryPrice}} ₺</span>
-                  </td>
-                  <td>
-                    <span class="text-primary fw-semibold">{{printf "%.2f" .RoomPrice}} ₺</span>
-                    <span class="text-secondary small ms-1">{{.RoomBedsCount}} yatak</span>
                   </td>
                   <td>
                     {{if .Flights}}
@@ -155,10 +150,19 @@
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label">Oda <span class="text-danger">*</span></label>
-            <select id="fRoom" required class="form-select">
-              <option value="">Seçin...</option>
-            </select>
+            <label class="form-label">Odalar <span class="text-danger">*</span></label>
+            <div id="fRoomList" class="border rounded-2 p-2 d-flex flex-column gap-2" style="max-height: 220px; overflow-y: auto;"></div>
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="toggleNewRoom()">
+              <i class="ti ti-plus"></i> Yeni Oda
+            </button>
+            <div id="newRoomForm" class="border rounded-2 p-2 mt-2 d-none">
+              <div class="row g-2 align-items-center">
+                <div class="col-5"><input id="nrCode" type="text" class="form-control form-control-sm" placeholder="Kod (DBL)"></div>
+                <div class="col-4"><input id="nrBeds" type="number" min="1" class="form-control form-control-sm" placeholder="Yatak"></div>
+                <div class="col-3"><button type="button" class="btn btn-sm btn-primary w-100" onclick="createRoom()">Ekle</button></div>
+              </div>
+            </div>
+            <div class="form-text">Birden fazla oda seçip her biri için tur fiyatını girin.</div>
           </div>
           <div class="mb-3">
             <label class="form-label">Uçuşlar <span class="text-danger">*</span></label>
@@ -180,19 +184,96 @@
 <script src="/static/theme/assets/js/main.js" type="module"></script>
 <script>
   const categories = {{json .categories}};
-  const rooms = {{json .rooms}};
+  let rooms = {{json .rooms}};
   const flights = {{json .flights}};
   let tourModal;
+
+  function roomLabel(r) {
+    return r.code ? `${r.code} — ${r.beds_count} yatak` : `${r.beds_count} yatak`;
+  }
+
+  // Цена берётся из пивота, поэтому поле активно только у отмеченных комнат.
+  function roomRow(r) {
+    const wrap = document.createElement('div');
+    wrap.className = 'd-flex align-items-center gap-2';
+    wrap.innerHTML = `
+      <input class="form-check-input mt-0 room-check" type="checkbox" value="${r.id}" id="room-${r.id}" onchange="syncRoomPrice(${r.id})">
+      <label class="form-label mb-0 small flex-grow-1" for="room-${r.id}">${roomLabel(r)}</label>
+      <input id="roomPrice-${r.id}" type="number" step="0.01" min="0" class="form-control form-control-sm" style="max-width:120px;" placeholder="₺" disabled>
+    `;
+    return wrap;
+  }
+
+  function syncRoomPrice(roomId) {
+    const check = document.getElementById(`room-${roomId}`);
+    const price = document.getElementById(`roomPrice-${roomId}`);
+    price.disabled = !check.checked;
+    if (check.checked) price.focus();
+    else price.value = '';
+  }
+
+  // Собирает отмеченные комнаты с ценами. null — если выбор пуст или цена не заполнена.
+  function collectRooms() {
+    const checked = Array.from(document.querySelectorAll('#fRoomList .room-check:checked'));
+    if (!checked.length) {
+      showToast('✕ En az bir oda seçmelisiniz', 'danger');
+      return null;
+    }
+    const result = [];
+    for (const el of checked) {
+      const id = parseInt(el.value);
+      const price = parseFloat(document.getElementById(`roomPrice-${id}`).value);
+      if (isNaN(price) || price < 0) {
+        showToast('✕ Seçilen her oda için fiyat girin', 'danger');
+        return null;
+      }
+      result.push({ room_id: id, price });
+    }
+    return result;
+  }
+
+  function toggleNewRoom() {
+    document.getElementById('newRoomForm').classList.toggle('d-none');
+    document.getElementById('nrCode').focus();
+  }
+
+  async function createRoom() {
+    const code = document.getElementById('nrCode').value.trim();
+    const beds = parseInt(document.getElementById('nrBeds').value);
+    if (!beds || beds < 1) { showToast('✕ Yatak sayısı gerekli', 'danger'); return; }
+    try {
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, beds_count: beds }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast('✕ ' + (err.error || 'Oda eklenemedi'), 'danger');
+        return;
+      }
+      const room = await res.json();
+      rooms.push(room);
+      // Новая комната сразу появляется в списке отмеченной — ради этого форма и нужна.
+      document.getElementById('fRoomList').appendChild(roomRow(room));
+      document.getElementById(`room-${room.id}`).checked = true;
+      syncRoomPrice(room.id);
+      document.getElementById('nrCode').value = '';
+      document.getElementById('nrBeds').value = '';
+      document.getElementById('newRoomForm').classList.add('d-none');
+      showToast('✓ Oda eklendi', 'success');
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
   document.addEventListener('DOMContentLoaded', () => {
     tourModal = new bootstrap.Modal(document.getElementById('tourModal'));
   });
 
   function populateSelects() {
     const catEl      = document.getElementById('fCategory');
-    const roomEl     = document.getElementById('fRoom');
+    const roomList   = document.getElementById('fRoomList');
     const flightList = document.getElementById('fFlightList');
     catEl.innerHTML  = '<option value="">Seçin...</option>';
-    roomEl.innerHTML = '<option value="">Seçin...</option>';
+    roomList.innerHTML = '';
     flightList.innerHTML = '';
     (categories || []).forEach(c => {
       const o = document.createElement('option');
@@ -200,12 +281,11 @@
       o.textContent = `${c.name} — ${c.price.toFixed(2)} ₺`;
       catEl.appendChild(o);
     });
-    (rooms || []).forEach(r => {
-      const o = document.createElement('option');
-      o.value = r.id;
-      o.textContent = `${r.price.toFixed(2)} ₺ / ${r.beds_count} yatak`;
-      roomEl.appendChild(o);
-    });
+    if (!rooms || !rooms.length) {
+      roomList.innerHTML = '<p class="small text-secondary mb-0">Aşağıdan yeni bir oda ekleyin</p>';
+    } else {
+      rooms.forEach(r => roomList.appendChild(roomRow(r)));
+    }
     if (!flights || !flights.length) {
       flightList.innerHTML = '<p class="small text-secondary mb-0">Önce bir uçuş ekleyin</p>';
     } else {
@@ -231,6 +311,8 @@
 
   async function saveItem(e) {
     e.preventDefault();
+    const selectedRooms = collectRooms();
+    if (!selectedRooms) return;
     const flightIds = Array.from(document.querySelectorAll('#fFlightList input[type=checkbox]:checked')).map(el => parseInt(el.value));
     if (!flightIds.length) {
       showToast('✕ En az bir uçuş seçmelisiniz', 'danger');
@@ -241,7 +323,7 @@
       start_date:       document.getElementById('fStart').value,
       end_date:         document.getElementById('fEnd').value,
       tour_category_id: parseInt(document.getElementById('fCategory').value),
-      room_id:          parseInt(document.getElementById('fRoom').value),
+      rooms:            selectedRooms,
       flight_ids:       flightIds,
     };
     try {

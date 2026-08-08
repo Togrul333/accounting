@@ -53,14 +53,21 @@
               </div>
               <div class="mb-3">
                 <label class="form-label">Tur <span class="text-danger">*</span></label>
-                <select id="fTour" required class="form-select">
+                <select id="fTour" required class="form-select" onchange="populateRoomSelect()">
                   <option value="">Tur seçin</option>
                   {{range .tours}}
                   <option value="{{.ID}}" {{if eq .ID $.order.TourID}}selected{{end}}>
-                    {{.Code}}{{if .RoomCode}} — {{.RoomCode}}{{end}} ({{.StartDate.Format "02.01.2006"}} – {{.EndDate.Format "02.01.2006"}})
+                    {{.Code}} — {{.TourCategoryName}} ({{.StartDate.Format "02.01.2006"}} – {{.EndDate.Format "02.01.2006"}})
                   </option>
                   {{end}}
                 </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Oda</label>
+                <select id="fRoom" class="form-select">
+                  <option value="">Oda seçilmedi</option>
+                </select>
+                <div class="form-text">Oda fiyatı sipariş tutarına eklenir.</div>
               </div>
               <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Kaydet</button>
@@ -200,14 +207,36 @@
 
 <script src="/static/theme/assets/js/main.js" type="module"></script>
 <script>
-  const orderId = {{.order.ID}};
+  const orderId    = {{.order.ID}};
+  const TOURS      = {{json .tours}};
+  const CURRENT_ROOM_ID = {{if .order.RoomID}}{{.order.RoomID}}{{else}}null{{end}};
+
+  // Комнаты и их цены зависят от выбранного тура — они живут в пивоте tour_rooms.
+  function populateRoomSelect() {
+    const tourId = parseInt(document.getElementById('fTour').value);
+    const roomEl = document.getElementById('fRoom');
+    const tour = TOURS.find(t => t.id === tourId);
+    roomEl.innerHTML = '<option value="">Oda seçilmedi</option>';
+    if (!tour) return;
+    (tour.rooms || []).forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.room_id;
+      o.textContent = `${r.code ? r.code + ' — ' : ''}${r.beds_count} yatak · ${r.price.toFixed(2)} ₺`;
+      if (r.room_id === CURRENT_ROOM_ID) o.selected = true;
+      roomEl.appendChild(o);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', populateRoomSelect);
 
   // ── Sipariş güncelle ──
   async function saveOrder(e) {
     e.preventDefault();
+    const roomValue = document.getElementById('fRoom').value;
     const payload = {
       client_id: parseInt(document.getElementById('fClient').value),
       tour_id:   parseInt(document.getElementById('fTour').value),
+      room_id:   roomValue ? parseInt(roomValue) : null,
     };
     try {
       const res = await fetch(`/api/orders/${orderId}`, {

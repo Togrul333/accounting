@@ -57,19 +57,36 @@
                 </select>
               </div>
               <div class="mb-3">
-                <label class="form-label">Oda <span class="text-danger">*</span></label>
-                <select id="fRoom" required class="form-select">
-                  <option value="">Seçin...</option>
+                <label class="form-label">Odalar <span class="text-danger">*</span></label>
+                <div id="fRoomList" class="border rounded-2 p-2 d-flex flex-column gap-2" style="max-height: 220px; overflow-y: auto;">
+                  {{if .rooms}}
                   {{range .rooms}}
-                  <option value="{{.ID}}" {{if eq .ID $.tour.RoomID}}selected{{end}}>
-                    {{printf "%.2f" .Price}} ₺ / {{.BedsCount}} yatak
-                  </option>
+                  <div class="d-flex align-items-center gap-2">
+                    <input class="form-check-input mt-0 room-check" type="checkbox" value="{{.ID}}" id="room-{{.ID}}" {{if index $.selectedRoomIDs .ID}}checked{{end}} onchange="syncRoomPrice({{.ID}})">
+                    <label class="form-label mb-0 small flex-grow-1" for="room-{{.ID}}">{{if .Code}}{{.Code}} — {{end}}{{.BedsCount}} yatak</label>
+                    <input id="roomPrice-{{.ID}}" type="number" step="0.01" min="0" class="form-control form-control-sm" style="max-width:120px;" placeholder="₺"
+                           {{if index $.selectedRoomIDs .ID}}value="{{printf "%.2f" (index $.roomPrices .ID)}}"{{else}}disabled{{end}}>
+                  </div>
                   {{end}}
-                </select>
+                  {{else}}
+                  <p class="small text-secondary mb-0">Aşağıdan yeni bir oda ekleyin</p>
+                  {{end}}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="toggleNewRoom()">
+                  <i class="ti ti-plus"></i> Yeni Oda
+                </button>
+                <div id="newRoomForm" class="border rounded-2 p-2 mt-2 d-none">
+                  <div class="row g-2 align-items-center">
+                    <div class="col-5"><input id="nrCode" type="text" class="form-control form-control-sm" placeholder="Kod (DBL)"></div>
+                    <div class="col-4"><input id="nrBeds" type="number" min="1" class="form-control form-control-sm" placeholder="Yatak"></div>
+                    <div class="col-3"><button type="button" class="btn btn-sm btn-primary w-100" onclick="createRoom()">Ekle</button></div>
+                  </div>
+                </div>
+                <div class="form-text">Birden fazla oda seçip her biri için tur fiyatını girin.</div>
               </div>
               <div class="mb-3">
                 <label class="form-label">Uçuşlar <span class="text-danger">*</span></label>
-                <div class="border rounded-2 p-2 d-flex flex-column gap-1" style="max-height: 220px; overflow-y: auto;">
+                <div id="fFlightList" class="border rounded-2 p-2 d-flex flex-column gap-1" style="max-height: 220px; overflow-y: auto;">
                   {{if .flights}}
                   {{range .flights}}
                   <div class="form-check">
@@ -102,9 +119,80 @@
 <script>
   const tourId = {{.tour.ID}};
 
+  function syncRoomPrice(roomId) {
+    const check = document.getElementById(`room-${roomId}`);
+    const price = document.getElementById(`roomPrice-${roomId}`);
+    price.disabled = !check.checked;
+    if (check.checked) price.focus();
+    else price.value = '';
+  }
+
+  // Собирает отмеченные комнаты с ценами. null — если выбор пуст или цена не заполнена.
+  function collectRooms() {
+    const checked = Array.from(document.querySelectorAll('#fRoomList .room-check:checked'));
+    if (!checked.length) {
+      showToast('✕ En az bir oda seçmelisiniz', 'danger');
+      return null;
+    }
+    const result = [];
+    for (const el of checked) {
+      const id = parseInt(el.value);
+      const price = parseFloat(document.getElementById(`roomPrice-${id}`).value);
+      if (isNaN(price) || price < 0) {
+        showToast('✕ Seçilen her oda için fiyat girin', 'danger');
+        return null;
+      }
+      result.push({ room_id: id, price });
+    }
+    return result;
+  }
+
+  function toggleNewRoom() {
+    document.getElementById('newRoomForm').classList.toggle('d-none');
+    document.getElementById('nrCode').focus();
+  }
+
+  async function createRoom() {
+    const code = document.getElementById('nrCode').value.trim();
+    const beds = parseInt(document.getElementById('nrBeds').value);
+    if (!beds || beds < 1) { showToast('✕ Yatak sayısı gerekli', 'danger'); return; }
+    try {
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, beds_count: beds }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast('✕ ' + (err.error || 'Oda eklenemedi'), 'danger');
+        return;
+      }
+      const room = await res.json();
+      const list = document.getElementById('fRoomList');
+      // Первая созданная комната вытесняет заглушку «список пуст».
+      const empty = list.querySelector('p');
+      if (empty) empty.remove();
+      const label = room.code ? `${room.code} — ${room.beds_count} yatak` : `${room.beds_count} yatak`;
+      const wrap = document.createElement('div');
+      wrap.className = 'd-flex align-items-center gap-2';
+      wrap.innerHTML = `
+        <input class="form-check-input mt-0 room-check" type="checkbox" value="${room.id}" id="room-${room.id}" checked onchange="syncRoomPrice(${room.id})">
+        <label class="form-label mb-0 small flex-grow-1" for="room-${room.id}">${label}</label>
+        <input id="roomPrice-${room.id}" type="number" step="0.01" min="0" class="form-control form-control-sm" style="max-width:120px;" placeholder="₺">
+      `;
+      list.appendChild(wrap);
+      document.getElementById('nrCode').value = '';
+      document.getElementById('nrBeds').value = '';
+      document.getElementById('newRoomForm').classList.add('d-none');
+      showToast('✓ Oda eklendi', 'success');
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
   async function saveTour(e) {
     e.preventDefault();
-    const flightIds = Array.from(document.querySelectorAll('#editForm input[type=checkbox]:checked')).map(el => parseInt(el.value));
+    const selectedRooms = collectRooms();
+    if (!selectedRooms) return;
+    const flightIds = Array.from(document.querySelectorAll('#fFlightList input[type=checkbox]:checked')).map(el => parseInt(el.value));
     if (!flightIds.length) {
       showToast('✕ En az bir uçuş seçmelisiniz', 'danger');
       return;
@@ -114,7 +202,7 @@
       start_date:       document.getElementById('fStart').value,
       end_date:         document.getElementById('fEnd').value,
       tour_category_id: parseInt(document.getElementById('fCategory').value),
-      room_id:          parseInt(document.getElementById('fRoom').value),
+      rooms:            selectedRooms,
       flight_ids:       flightIds,
     };
     try {

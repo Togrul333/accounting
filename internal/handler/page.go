@@ -769,14 +769,23 @@ func (h *PageHandler) TourEdit(c *gin.Context) {
 	for _, f := range tour.Flights {
 		selectedFlightIDs[f.ID] = true
 	}
+	// Две карты вместо одной: шаблону нужно и отметить чекбокс, и подставить цену из пивота.
+	selectedRoomIDs := make(map[int64]bool, len(tour.Rooms))
+	roomPrices := make(map[int64]float64, len(tour.Rooms))
+	for _, rm := range tour.Rooms {
+		selectedRoomIDs[rm.RoomID] = true
+		roomPrices[rm.RoomID] = rm.Price
+	}
 	c.HTML(http.StatusOK, "tour_edit.html", gin.H{
 		"tour":              tour,
 		"categories":        cats,
 		"rooms":             rooms,
 		"flights":           flights,
 		"selectedFlightIDs": selectedFlightIDs,
-		"active":     "tours",
-		"user":       h.currentUser(ctx),
+		"selectedRoomIDs":   selectedRoomIDs,
+		"roomPrices":        roomPrices,
+		"active":            "tours",
+		"user":              h.currentUser(ctx),
 	})
 }
 

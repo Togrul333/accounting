@@ -12,7 +12,7 @@ type OrderRepository interface {
 	GetAll(ctx context.Context) ([]model.Order, error)
 	GetByID(ctx context.Context, id int64) (*model.Order, error)
 	FindByClientAndTour(ctx context.Context, clientID, tourID int64) (*model.Order, error)
-	Create(ctx context.Context, clientID, tourID int64) (*model.Order, error)
+	Create(ctx context.Context, clientID, tourID int64, roomID *int64) (*model.Order, error)
 	Update(ctx context.Context, id int64, req model.UpdateOrderRequest) (*model.Order, error)
 	Delete(ctx context.Context, id int64) error
 }
@@ -31,7 +31,8 @@ const orderListQuery = `
 	       o.tour_id, t.code AS tour_code,
 	       tc.name AS tour_category_name,
 	       tc.price AS tour_category_price,
-	       r.price AS room_price,
+	       o.room_id, r.code AS room_code,
+	       COALESCE(tr.price, 0) AS room_price,
 	       COALESCE(inc.income_count, 0)   AS income_count,
 	       COALESCE(inc.income_total, 0)   AS income_total,
 	       COALESCE(disc.discount_count, 0) AS discount_count,
@@ -41,7 +42,8 @@ const orderListQuery = `
 	JOIN clients c ON c.id = o.client_id
 	JOIN tours t   ON t.id = o.tour_id
 	JOIN tour_categories tc ON tc.id = t.tour_category_id
-	JOIN rooms r ON r.id = t.room_id
+	LEFT JOIN rooms r ON r.id = o.room_id
+	LEFT JOIN tour_rooms tr ON tr.tour_id = o.tour_id AND tr.room_id = o.room_id
 	LEFT JOIN (
 	    SELECT order_id, COUNT(*) AS income_count, SUM(amount) AS income_total
 	    FROM incomes GROUP BY order_id
@@ -57,13 +59,15 @@ const orderBaseQuery = `
 	       o.tour_id, t.code AS tour_code,
 	       tc.name AS tour_category_name,
 	       tc.price AS tour_category_price,
-	       r.price AS room_price,
+	       o.room_id, r.code AS room_code,
+	       COALESCE(tr.price, 0) AS room_price,
 	       o.created_at, o.updated_at
 	FROM orders o
 	JOIN clients c ON c.id = o.client_id
 	JOIN tours t   ON t.id = o.tour_id
 	JOIN tour_categories tc ON tc.id = t.tour_category_id
-	JOIN rooms r ON r.id = t.room_id`
+	LEFT JOIN rooms r ON r.id = o.room_id
+	LEFT JOIN tour_rooms tr ON tr.tour_id = o.tour_id AND tr.room_id = o.room_id`
 
 func (r *orderRepo) GetAll(ctx context.Context) ([]model.Order, error) {
 	var orders []model.Order
@@ -100,10 +104,11 @@ func (r *orderRepo) FindByClientAndTour(ctx context.Context, clientID, tourID in
 	return &order, nil
 }
 
-func (r *orderRepo) Create(ctx context.Context, clientID, tourID int64) (*model.Order, error) {
+func (r *orderRepo) Create(ctx context.Context, clientID, tourID int64, roomID *int64) (*model.Order, error) {
 	order := model.Order{
 		ClientID: clientID,
 		TourID:   tourID,
+		RoomID:   roomID,
 	}
 	if err := r.db.WithContext(ctx).Create(&order).Error; err != nil {
 		return nil, err
@@ -115,6 +120,7 @@ func (r *orderRepo) Update(ctx context.Context, id int64, req model.UpdateOrderR
 	result := r.db.WithContext(ctx).Model(&model.Order{}).Where("id = ?", id).Updates(map[string]any{
 		"client_id": req.ClientID,
 		"tour_id":   req.TourID,
+		"room_id":   req.RoomID,
 	})
 	if result.Error != nil {
 		return nil, result.Error

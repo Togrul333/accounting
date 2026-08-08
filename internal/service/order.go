@@ -10,14 +10,37 @@ import (
 	"accounting/internal/repository"
 )
 
+// ErrRoomNotInTour — выбранная комната не привязана к туру заказа. Без этой проверки
+// цена номера молча стала бы нулевой: она берётся из tour_rooms по паре (тур, комната).
+var ErrRoomNotInTour = errors.New("seçilen oda bu tura ait değil")
+
 type OrderService struct {
 	repo         repository.OrderRepository
 	incomeRepo   repository.IncomeRepository
 	discountRepo repository.DiscountRepository
+	tourRepo     repository.TourRepository
 }
 
-func NewOrderService(repo repository.OrderRepository, incomeRepo repository.IncomeRepository, discountRepo repository.DiscountRepository) *OrderService {
-	return &OrderService{repo: repo, incomeRepo: incomeRepo, discountRepo: discountRepo}
+func NewOrderService(repo repository.OrderRepository, incomeRepo repository.IncomeRepository, discountRepo repository.DiscountRepository, tourRepo repository.TourRepository) *OrderService {
+	return &OrderService{repo: repo, incomeRepo: incomeRepo, discountRepo: discountRepo, tourRepo: tourRepo}
+}
+
+// checkRoom убеждается, что комната входит в набор комнат тура. Пустая комната допустима:
+// заказы из банковской выписки создаются без неё.
+func (s *OrderService) checkRoom(ctx context.Context, tourID int64, roomID *int64) error {
+	if roomID == nil {
+		return nil
+	}
+	tour, err := s.tourRepo.GetByID(ctx, tourID)
+	if err != nil {
+		return err
+	}
+	for _, rm := range tour.Rooms {
+		if rm.RoomID == *roomID {
+			return nil
+		}
+	}
+	return ErrRoomNotInTour
 }
 
 func (s *OrderService) GetAll(ctx context.Context) ([]model.Order, error) {
@@ -67,11 +90,14 @@ func (s *OrderService) FindOrCreateByClientAndTour(ctx context.Context, clientID
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
-	return s.repo.Create(ctx, clientID, tourID)
+	return s.repo.Create(ctx, clientID, tourID, nil)
 }
 
 func (s *OrderService) Create(ctx context.Context, req model.CreateOrderRequest) (*model.Order, error) {
-	order, err := s.repo.Create(ctx, req.ClientID, req.TourID)
+	if err := s.checkRoom(ctx, req.TourID, req.RoomID); err != nil {
+		return nil, err
+	}
+	order, err := s.repo.Create(ctx, req.ClientID, req.TourID, req.RoomID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +121,9 @@ func (s *OrderService) AddDiscount(ctx context.Context, orderID int64, req model
 }
 
 func (s *OrderService) Update(ctx context.Context, id int64, req model.UpdateOrderRequest) (*model.Order, error) {
+	if err := s.checkRoom(ctx, req.TourID, req.RoomID); err != nil {
+		return nil, err
+	}
 	order, err := s.repo.Update(ctx, id, req)
 	if err != nil {
 		return nil, err

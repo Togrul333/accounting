@@ -51,7 +51,7 @@
           <select id="tourFilter" onchange="onTourSelectChange()" class="form-select" style="max-width:340px;">
             <option value="">Tüm Turlar</option>
             {{range .tours}}
-            <option value="{{.ID}}" data-start="{{.StartDate.Format "2006-01-02"}}">{{.Code}}{{if .RoomCode}} — {{.RoomCode}}{{end}} ({{.StartDate.Format "02.01.2006"}} – {{.EndDate.Format "02.01.2006"}})</option>
+            <option value="{{.ID}}" data-start="{{.StartDate.Format "2006-01-02"}}">{{.Code}} — {{.TourCategoryName}} ({{.StartDate.Format "02.01.2006"}} – {{.EndDate.Format "02.01.2006"}})</option>
             {{end}}
           </select>
           <div class="vr d-none d-md-block"></div>
@@ -63,7 +63,7 @@
           <span class="small text-secondary">Son Turlar:</span>
           {{range .recentTours}}
           <button type="button" class="btn btn-sm btn-outline-secondary tour-tag" data-tour-id="{{.ID}}" onclick="selectTourTag('{{.ID}}')">
-            {{.Code}}{{if .RoomCode}} — {{.RoomCode}}{{end}}
+            {{.Code}} — {{.TourCategoryName}}
           </button>
           {{end}}
         </div>
@@ -160,12 +160,19 @@
           </div>
           <div class="mb-3">
             <label class="form-label">Tur <span class="text-danger">*</span></label>
-            <select id="cTour" required class="form-select">
+            <select id="cTour" required class="form-select" onchange="populateRoomSelect()">
               <option value="">Tur seçin</option>
               {{range .tours}}
-              <option value="{{.ID}}">{{.Code}} ({{.StartDate.Format "02.01.2006"}} – {{.EndDate.Format "02.01.2006"}})</option>
+              <option value="{{.ID}}">{{.Code}} — {{.TourCategoryName}} ({{.StartDate.Format "02.01.2006"}} – {{.EndDate.Format "02.01.2006"}})</option>
               {{end}}
             </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Oda</label>
+            <select id="cRoom" class="form-select">
+              <option value="">Önce tur seçin</option>
+            </select>
+            <div class="form-text">Oda fiyatı sipariş tutarına eklenir.</div>
           </div>
 
           <hr>
@@ -193,6 +200,26 @@
 <script>
   const incomeCats = {{json .incomeCategories}};
   const accounts   = {{json .accounts}};
+  const TOURS      = {{json .tours}};
+
+  // Комнаты и их цены зависят от выбранного тура — они живут в пивоте tour_rooms.
+  function populateRoomSelect() {
+    const tourId = parseInt(document.getElementById('cTour').value);
+    const roomEl = document.getElementById('cRoom');
+    const tour = TOURS.find(t => t.id === tourId);
+    if (!tour) {
+      roomEl.innerHTML = '<option value="">Önce tur seçin</option>';
+      return;
+    }
+    const rooms = tour.rooms || [];
+    roomEl.innerHTML = '<option value="">Oda seçilmedi</option>';
+    rooms.forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.room_id;
+      o.textContent = `${r.code ? r.code + ' — ' : ''}${r.beds_count} yatak · ${r.price.toFixed(2)} ₺`;
+      roomEl.appendChild(o);
+    });
+  }
 
   let createIncomes = [];
   let createModal;
@@ -204,6 +231,7 @@
     createIncomes = [];
     document.getElementById('createForm').reset();
     document.getElementById('cIncomeList').innerHTML = '';
+    populateRoomSelect();
     createModal.show();
   }
 
@@ -254,9 +282,11 @@
         incomes.push({ name, amount, date, income_category_id: cat, account_id: acc });
       });
     } catch (ex) { if (ex.message === 'incomplete') return; throw ex; }
+    const roomValue = document.getElementById('cRoom').value;
     const payload = {
       client_id: parseInt(document.getElementById('cClient').value),
       tour_id:   parseInt(document.getElementById('cTour').value),
+      room_id:   roomValue ? parseInt(roomValue) : null,
       incomes,
     };
     try {

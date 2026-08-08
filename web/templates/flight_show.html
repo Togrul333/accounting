@@ -191,7 +191,20 @@
                   <td>{{.StartDate.Format "02.01.2006"}}</td>
                   <td>{{.EndDate.Format "02.01.2006"}}</td>
                   <td>{{.TourCategoryName}}</td>
-                  <td>{{printf "%.2f" .RoomPrice}} ₺ <span class="text-secondary small">/ {{.RoomBedsCount}} yatak</span></td>
+                  <td>
+                    {{if .Rooms}}
+                    <div class="d-flex flex-column gap-1">
+                      {{range .Rooms}}
+                      <div>
+                        <span class="badge bg-info-subtle text-info-emphasis fw-semibold">{{if .Code}}{{.Code}}{{else}}{{.BedsCount}} yatak{{end}}</span>
+                        <span class="text-primary small fw-semibold ms-1">{{printf "%.2f" .Price}} ₺</span>
+                      </div>
+                      {{end}}
+                    </div>
+                    {{else}}
+                    <span class="text-secondary small">—</span>
+                    {{end}}
+                  </td>
                   <td>
                     <a href="/tours/{{.ID}}" class="btn btn-icon btn-sm btn-light" title="Görüntüle">
                       <i class="ti ti-eye"></i>

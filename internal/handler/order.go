@@ -55,6 +55,10 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	}
 	order, err := h.svc.Create(c.Request.Context(), req)
 	if err != nil {
+		if errors.Is(err, service.ErrRoomNotInTour) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -114,6 +118,10 @@ func (h *OrderHandler) Update(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "order not found"})
+			return
+		}
+		if errors.Is(err, service.ErrRoomNotInTour) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

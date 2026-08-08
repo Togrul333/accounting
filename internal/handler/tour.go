@@ -58,7 +58,7 @@ func (h *TourHandler) Create(c *gin.Context) {
 	}
 	tour, err := h.svc.Create(c.Request.Context(), req)
 	if err != nil {
-		if errors.Is(err, service.ErrFlightRequired) {
+		if errors.Is(err, service.ErrRoomRequired) || errors.Is(err, service.ErrFlightRequired) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -85,7 +85,7 @@ func (h *TourHandler) Update(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "tour not found"})
 			return
 		}
-		if errors.Is(err, service.ErrFlightRequired) {
+		if errors.Is(err, service.ErrRoomRequired) || errors.Is(err, service.ErrFlightRequired) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

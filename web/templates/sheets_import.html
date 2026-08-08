@@ -529,7 +529,7 @@
       row.innerHTML = `
         <div>
           <p class="fw-semibold mb-0">${tour.code}</p>
-          <p class="small text-secondary mb-0 mt-1">${tour.start_date} — ${tour.end_date} · ${tour.items.length} qeyd</p>
+          <p class="small text-secondary mb-0 mt-1">${tour.start_date} — ${tour.end_date} · ${tour.groups.length} kateqoriya · ${tour.groups.reduce((n, g) => n + g.rooms.length, 0)} otaq</p>
         </div>
         <div class="d-flex align-items-center gap-2">
           ${badge}
@@ -542,16 +542,16 @@
     });
   }
 
-  async function resolveRoomId(item) {
-    const key = normKey(item.room_code);
+  // Otaq artıq qiymət saxlamır — o, tur_rooms pivotunda tura görə təyin edilir.
+  async function resolveRoomId(roomCode) {
+    const key = normKey(roomCode);
     if (roomsByCode[key]) return roomsByCode[key].id;
     const result = await openModal({
       title: 'Yeni otaq yaradılsın?',
-      subtitle: `Otaq tipi "${item.room_code}" bazada tapılmadı`,
+      subtitle: `Otaq tipi "${roomCode}" bazada tapılmadı`,
       fields: [
-        { key: 'code', label: 'Kod', type: 'text', value: item.room_code },
-        { key: 'price', label: 'Qiymət', type: 'number', value: item.price },
-        { key: 'beds_count', label: 'Yataq sayı', type: 'number', value: guessBedsCount(item.room_code) },
+        { key: 'code', label: 'Kod', type: 'text', value: roomCode },
+        { key: 'beds_count', label: 'Yataq sayı', type: 'number', value: guessBedsCount(roomCode) },
       ],
     });
     if (!result) return null;
@@ -566,15 +566,17 @@
     return room.id;
   }
 
-  async function resolveCategoryId(item) {
-    const key = normKey(item.category_name);
+  // Cədvəldəki xana qiyməti artıq otağa (tur_rooms.price) yazılır, ona görə kateqoriya
+  // qiyməti default 0-dır — əks halda eyni məbləğ iki dəfə sayılardı.
+  async function resolveCategoryId(categoryName) {
+    const key = normKey(categoryName);
     if (categoriesByName[key]) return categoriesByName[key].id;
     const result = await openModal({
       title: 'Yeni kateqoriya yaradılsın?',
-      subtitle: `Kateqoriya "${item.category_name}" bazada tapılmadı`,
+      subtitle: `Kateqoriya "${categoryName}" bazada tapılmadı. Qiymət otaqlara yazılır — burada yalnız əlavə haqq varsa doldurun.`,
       fields: [
-        { key: 'name', label: 'Ad', type: 'text', value: item.category_name },
-        { key: 'price', label: 'Qiymət', type: 'number', value: item.price },
+        { key: 'name', label: 'Ad', type: 'text', value: categoryName },
+        { key: 'price', label: 'Əlavə qiymət', type: 'number', value: 0 },
       ],
     });
     if (!result) return null;
@@ -600,11 +602,19 @@
       return;
     }
 
+    // Hər kateqoriya üçün bir tur yaradılır, otaqlar isə onun içinə pivot vasitəsilə bağlanır.
     let created = 0;
-    for (const item of tour.items) {
-      const roomId = await resolveRoomId(item);
-      const categoryId = await resolveCategoryId(item);
-      if (!roomId || !categoryId) continue;
+    for (const group of tour.groups) {
+      const categoryId = await resolveCategoryId(group.category_name);
+      if (!categoryId) continue;
+
+      const rooms = [];
+      for (const r of group.rooms) {
+        const roomId = await resolveRoomId(r.room_code);
+        if (!roomId) continue;
+        rooms.push({ room_id: roomId, price: r.price });
+      }
+      if (!rooms.length) continue;
 
       const res = await fetch('/api/tours', {
         method: 'POST',
@@ -614,7 +624,7 @@
           start_date: tour.start_date,
           end_date: tour.end_date,
           tour_category_id: categoryId,
-          room_id: roomId,
+          rooms,
           flight_ids: flightIds,
         }),
       });
@@ -674,7 +684,7 @@
 
       let badge, actionHtml = '';
       if (!p.tour_match) {
-        badge = `<span title="Əvvəlcə Turlar-ı import edin" class="badge bg-secondary-subtle text-secondary-emphasis">Tur tapılmadı (${p.tour_code || '—'} / ${p.room_code || '—'} / ${p.category_name || '—'})</span>`;
+        badge = `<span title="Əvvəlcə Turlar-ı import edin" class="badge bg-secondary-subtle text-secondary-emphasis">Tur tapılmadı (${p.tour_code || '—'} / ${p.category_name || '—'})</span>`;
       } else if (p.has_order) {
         badge = `<span class="badge bg-primary-subtle text-primary-emphasis">Sifariş var</span>`;
       } else {
@@ -713,7 +723,7 @@
     const p = passengerCandidates[idx];
     const who = `${p.first_name} ${p.last_name}`;
 
-    if (!p.tour_match) return { status: 'skip', msg: `${who} — tur tapılmadı (${p.tour_code || '—'} / ${p.room_code || '—'} / ${p.category_name || '—'}), ötürüldü` };
+    if (!p.tour_match) return { status: 'skip', msg: `${who} — tur tapılmadı (${p.tour_code || '—'} / ${p.category_name || '—'}), ötürüldü` };
     if (p.has_order) return { status: 'skip', msg: `${who} — artıq sifariş var` };
 
     const missingImportant = !p.client_match && (!p.first_name || !p.last_name || !p.birth_date);
@@ -724,7 +734,8 @@
 
     if (missingImportant || needsIncomeChoice) {
       const fields = [
-        { key: 'tour_info', type: 'info', label: 'Tur', value: `${p.tour_code || '—'} · ${p.room_code || '—'} / ${p.category_name || '—'}` },
+        { key: 'tour_info', type: 'info', label: 'Tur', value: `${p.tour_code || '—'} / ${p.category_name || '—'}` },
+        { key: 'room_info', type: 'info', label: 'Otaq', value: p.room_match ? (p.room_code || '—') : `${p.room_code || '—'} (tura bağlı deyil — otaqsız yaradılacaq)` },
       ];
       if (p.discount_amount > 0) {
         fields.push({ key: 'discount_info', type: 'info', label: 'Endirim (Sheets İmport)', value: p.discount_amount });
@@ -804,7 +815,7 @@
     const res = await fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_id: clientId, tour_id: p.tour_match, incomes: [] }),
+      body: JSON.stringify({ client_id: clientId, tour_id: p.tour_match, room_id: p.room_match ?? null, incomes: [] }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

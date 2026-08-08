@@ -8,7 +8,10 @@ import (
 	"accounting/internal/repository"
 )
 
-var ErrFlightRequired = errors.New("en az bir uçuş seçimi zorunludur")
+var (
+	ErrFlightRequired = errors.New("en az bir uçuş seçimi zorunludur")
+	ErrRoomRequired   = errors.New("en az bir oda seçimi zorunludur")
+)
 
 type TourService struct {
 	repo repository.TourRepository
@@ -27,6 +30,9 @@ func (s *TourService) GetByID(ctx context.Context, id int64) (*model.Tour, error
 }
 
 func (s *TourService) Create(ctx context.Context, req model.CreateTourRequest) (*model.Tour, error) {
+	if len(req.Rooms) == 0 {
+		return nil, ErrRoomRequired
+	}
 	if len(req.FlightIDs) == 0 {
 		return nil, ErrFlightRequired
 	}
@@ -34,6 +40,9 @@ func (s *TourService) Create(ctx context.Context, req model.CreateTourRequest) (
 }
 
 func (s *TourService) Update(ctx context.Context, id int64, req model.UpdateTourRequest) (*model.Tour, error) {
+	if len(req.Rooms) == 0 {
+		return nil, ErrRoomRequired
+	}
 	if len(req.FlightIDs) == 0 {
 		return nil, ErrFlightRequired
 	}

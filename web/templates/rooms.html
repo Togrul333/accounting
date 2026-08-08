@@ -54,7 +54,6 @@
                 <tr>
                   <th>#</th>
                   <th>Kod</th>
-                  <th class="text-end">Fiyat</th>
                   <th class="text-end">Yatak Sayısı</th>
                   <th>Aksiyon</th>
                 </tr>
@@ -64,7 +63,6 @@
                 <tr>
                   <td class="text-secondary">{{.ID}}</td>
                   <td class="fw-semibold">{{.Code}}</td>
-                  <td class="text-end fw-semibold text-primary">{{printf "%.2f" .Price}} ₺</td>
                   <td class="text-end fw-semibold">{{.BedsCount}}</td>
                   <td>
                     <div class="d-flex gap-1">
@@ -111,10 +109,6 @@
             <input id="fCode" type="text" placeholder="QDR, TRP, DBL..." class="form-control">
           </div>
           <div class="mb-3">
-            <label class="form-label">Fiyat (₺) <span class="text-danger">*</span></label>
-            <input id="fPrice" type="number" step="0.01" min="0" required placeholder="0.00" class="form-control">
-          </div>
-          <div class="mb-3">
             <label class="form-label">Yatak Sayısı <span class="text-danger">*</span></label>
             <input id="fBeds" type="number" min="1" required placeholder="2" class="form-control">
           </div>
@@ -143,14 +137,13 @@
     document.getElementById('modalTitle').textContent = 'Yeni Oda';
     document.getElementById('roomForm').reset();
     roomModal.show();
-    setTimeout(() => document.getElementById('fPrice').focus(), 200);
+    setTimeout(() => document.getElementById('fCode').focus(), 200);
   }
 
   function openEdit(room) {
     editingId = room.id;
     document.getElementById('modalTitle').textContent = 'Odayı Düzenle';
     document.getElementById('fCode').value = room.code || '';
-    document.getElementById('fPrice').value = room.price;
     document.getElementById('fBeds').value = room.beds_count;
     roomModal.show();
   }
@@ -159,7 +152,6 @@
     e.preventDefault();
     const payload = {
       code:       document.getElementById('fCode').value.trim(),
-      price:      parseFloat(document.getElementById('fPrice').value),
       beds_count: parseInt(document.getElementById('fBeds').value),
     };
     const url    = editingId ? `/api/rooms/${editingId}` : '/api/rooms';

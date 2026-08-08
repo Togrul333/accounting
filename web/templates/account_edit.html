@@ -504,8 +504,8 @@
   }
   function tourOptions() {
     return '<option value="">—</option>' + TOURS.map(t => {
-      const room = t.room_code ? ` — ${escHtml(t.room_code)}` : '';
-      return `<option value="${t.id}">${escHtml(t.code)}${room}</option>`;
+      const cat = t.tour_category_name ? ` — ${escHtml(t.tour_category_name)}` : '';
+      return `<option value="${t.id}">${escHtml(t.code)}${cat}</option>`;
     }).join('');
   }
   function clientOptions() {

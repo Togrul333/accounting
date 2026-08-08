@@ -32,6 +32,22 @@ type tourFlight struct {
 
 func (tourFlight) TableName() string { return "tour_flights" }
 
+type tourRoom struct {
+	TourID int64   `gorm:"column:tour_id"`
+	RoomID int64   `gorm:"column:room_id"`
+	Price  float64 `gorm:"column:price"`
+}
+
+func (tourRoom) TableName() string { return "tour_rooms" }
+
+type tourRoomRow struct {
+	TourID    int64   `gorm:"column:tour_id"`
+	RoomID    int64   `gorm:"column:room_id"`
+	Code      string  `gorm:"column:code"`
+	BedsCount int     `gorm:"column:beds_count"`
+	Price     float64 `gorm:"column:price"`
+}
+
 type tourFlightRow struct {
 	TourID        int64     `gorm:"column:tour_id"`
 	ID            int64     `gorm:"column:id"`
@@ -47,11 +63,16 @@ type tourFlightRow struct {
 const tourSelectQuery = `
 	SELECT t.id, t.code, t.start_date, t.end_date,
 	       t.tour_category_id, tc.name AS tour_category_name, tc.price AS tour_category_price,
-	       t.room_id, r.code AS room_code, r.price AS room_price, r.beds_count AS room_beds_count,
 	       t.created_at, t.updated_at
 	FROM tours t
-	JOIN tour_categories tc ON tc.id = t.tour_category_id
-	JOIN rooms r ON r.id = t.room_id`
+	JOIN tour_categories tc ON tc.id = t.tour_category_id`
+
+const tourRoomsSelectQuery = `
+	SELECT tr.tour_id, tr.room_id, r.code, r.beds_count, tr.price
+	FROM tour_rooms tr
+	JOIN rooms r ON r.id = tr.room_id
+	WHERE tr.tour_id IN ?
+	ORDER BY r.beds_count, r.code`
 
 const tourFlightsSelectQuery = `
 	SELECT tf.tour_id, f.id, f.pnr, f.departure_time, f.price, f.deposit, f.pax_count, f.created_at, f.updated_at
@@ -84,6 +105,26 @@ func (r *tourRepo) loadFlights(ctx context.Context, tourIDs []int64) (map[int64]
 	return result, nil
 }
 
+func (r *tourRepo) loadRooms(ctx context.Context, tourIDs []int64) (map[int64][]model.TourRoom, error) {
+	result := make(map[int64][]model.TourRoom)
+	if len(tourIDs) == 0 {
+		return result, nil
+	}
+	var rows []tourRoomRow
+	if err := r.db.WithContext(ctx).Raw(tourRoomsSelectQuery, tourIDs).Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		result[row.TourID] = append(result[row.TourID], model.TourRoom{
+			RoomID:    row.RoomID,
+			Code:      row.Code,
+			BedsCount: row.BedsCount,
+			Price:     row.Price,
+		})
+	}
+	return result, nil
+}
+
 func (r *tourRepo) GetAll(ctx context.Context) ([]model.Tour, error) {
 	var tours []model.Tour
 	if err := r.db.WithContext(ctx).Raw(tourSelectQuery + ` ORDER BY t.id`).Scan(&tours).Error; err != nil {
@@ -100,10 +141,18 @@ func (r *tourRepo) GetAll(ctx context.Context) ([]model.Tour, error) {
 	if err != nil {
 		return nil, err
 	}
+	roomsByTour, err := r.loadRooms(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
 	for i := range tours {
 		tours[i].Flights = flightsByTour[tours[i].ID]
 		if tours[i].Flights == nil {
 			tours[i].Flights = []model.Flight{}
+		}
+		tours[i].Rooms = roomsByTour[tours[i].ID]
+		if tours[i].Rooms == nil {
+			tours[i].Rooms = []model.TourRoom{}
 		}
 	}
 	return tours, nil
@@ -126,6 +175,14 @@ func (r *tourRepo) GetByID(ctx context.Context, id int64) (*model.Tour, error) {
 	if t.Flights == nil {
 		t.Flights = []model.Flight{}
 	}
+	roomsByTour, err := r.loadRooms(ctx, []int64{id})
+	if err != nil {
+		return nil, err
+	}
+	t.Rooms = roomsByTour[id]
+	if t.Rooms == nil {
+		t.Rooms = []model.TourRoom{}
+	}
 	return &t, nil
 }
 
@@ -139,6 +196,28 @@ func (r *tourRepo) setFlights(tx *gorm.DB, tourID int64, flightIDs []int64) erro
 	links := make([]tourFlight, len(flightIDs))
 	for i, fid := range flightIDs {
 		links[i] = tourFlight{TourID: tourID, FlightID: fid}
+	}
+	return tx.Create(&links).Error
+}
+
+func (r *tourRepo) setRooms(tx *gorm.DB, tourID int64, rooms []model.TourRoomInput) error {
+	if err := tx.Where("tour_id = ?", tourID).Delete(&tourRoom{}).Error; err != nil {
+		return err
+	}
+	if len(rooms) == 0 {
+		return nil
+	}
+	// Одна и та же комната может прийти дважды (например, повторяющаяся строка в листе Turlar).
+	// Без схлопывания это конфликт по составному первичному ключу — берём последнюю цену.
+	links := make([]tourRoom, 0, len(rooms))
+	seen := make(map[int64]int, len(rooms))
+	for _, rm := range rooms {
+		if i, ok := seen[rm.RoomID]; ok {
+			links[i].Price = rm.Price
+			continue
+		}
+		seen[rm.RoomID] = len(links)
+		links = append(links, tourRoom{TourID: tourID, RoomID: rm.RoomID, Price: rm.Price})
 	}
 	return tx.Create(&links).Error
 }
@@ -157,10 +236,12 @@ func (r *tourRepo) Create(ctx context.Context, req model.CreateTourRequest) (*mo
 		StartDate:      startDate,
 		EndDate:        endDate,
 		TourCategoryID: req.TourCategoryID,
-		RoomID:         req.RoomID,
 	}
 	err = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&t).Error; err != nil {
+			return err
+		}
+		if err := r.setRooms(tx, t.ID, req.Rooms); err != nil {
 			return err
 		}
 		return r.setFlights(tx, t.ID, req.FlightIDs)
@@ -181,18 +262,26 @@ func (r *tourRepo) Update(ctx context.Context, id int64, req model.UpdateTourReq
 		return nil, err
 	}
 	err = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		result := tx.Model(&model.Tour{}).Where("id = ?", id).Updates(map[string]any{
+		// Существование проверяем отдельным запросом: RowsAffected здесь не показатель —
+		// MySQL вернёт 0, если поля тура не изменились, а правили только комнаты или рейсы.
+		var count int64
+		if err := tx.Model(&model.Tour{}).Where("id = ?", id).Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			return gorm.ErrRecordNotFound
+		}
+		err := tx.Model(&model.Tour{}).Where("id = ?", id).Updates(map[string]any{
 			"code":             req.Code,
 			"start_date":       startDate,
 			"end_date":         endDate,
 			"tour_category_id": req.TourCategoryID,
-			"room_id":          req.RoomID,
-		})
-		if result.Error != nil {
-			return result.Error
+		}).Error
+		if err != nil {
+			return err
 		}
-		if result.RowsAffected == 0 {
-			return gorm.ErrRecordNotFound
+		if err := r.setRooms(tx, id, req.Rooms); err != nil {
+			return err
 		}
 		return r.setFlights(tx, id, req.FlightIDs)
 	})

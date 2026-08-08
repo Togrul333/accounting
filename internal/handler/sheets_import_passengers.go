@@ -35,6 +35,7 @@ type passengerCandidate struct {
 	IncomeAmount   float64         `json:"income_amount"`
 	ClientMatch    *passengerMatch `json:"client_match"`
 	TourMatch      *int64          `json:"tour_match"`
+	RoomMatch      *int64          `json:"room_match"`
 	HasOrder       bool            `json:"has_order"`
 }
 
@@ -81,11 +82,19 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	// Комната больше не входит в идентичность тура: тур определяется парой (код, категория),
+	// а комната из таблицы подбирается уже внутри тура и уходит в заказ.
 	tourByKey := make(map[string]int64, len(tours))
 	tourCodeByID := make(map[int64]string, len(tours))
+	roomsByTour := make(map[int64]map[string]int64, len(tours))
 	for _, t := range tours {
-		tourByKey[tourKey(t.Code, t.RoomCode, t.TourCategoryName)] = t.ID
+		tourByKey[tourKey(t.Code, t.TourCategoryName)] = t.ID
 		tourCodeByID[t.ID] = t.Code
+		byCode := make(map[string]int64, len(t.Rooms))
+		for _, rm := range t.Rooms {
+			byCode[normRoomCode(rm.Code)] = rm.RoomID
+		}
+		roomsByTour[t.ID] = byCode
 	}
 
 	orders, err := h.orderSvc.GetAll(ctx)
@@ -135,9 +144,13 @@ func (h *SheetsImportHandler) PassengerCandidates(c *gin.Context) {
 			cand.ClientMatch = &match
 		}
 
-		if tourID, ok := tourByKey[tourKey(cand.TourCode, cand.RoomCode, cand.CategoryName)]; ok {
+		if tourID, ok := tourByKey[tourKey(cand.TourCode, cand.CategoryName)]; ok {
 			id := tourID
 			cand.TourMatch = &id
+			if roomID, ok := roomsByTour[tourID][normRoomCode(cand.RoomCode)]; ok {
+				rid := roomID
+				cand.RoomMatch = &rid
+			}
 		}
 
 		if cand.ClientMatch != nil {
@@ -220,8 +233,12 @@ func clientKey(firstName, lastName string, birthYear int) string {
 	return strings.ToLower(strings.TrimSpace(firstName)) + "|" + strings.ToLower(strings.TrimSpace(lastName)) + "|" + strconv.Itoa(birthYear)
 }
 
-func tourKey(code, roomCode, categoryName string) string {
-	return strings.ToLower(strings.TrimSpace(code)) + "|" + strings.ToLower(strings.TrimSpace(roomCode)) + "|" + strings.ToLower(strings.TrimSpace(categoryName))
+func tourKey(code, categoryName string) string {
+	return strings.ToLower(strings.TrimSpace(code)) + "|" + strings.ToLower(strings.TrimSpace(categoryName))
+}
+
+func normRoomCode(code string) string {
+	return strings.ToLower(strings.TrimSpace(code))
 }
 
 func orderKey(clientID int64, tourCode string) string {

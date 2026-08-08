@@ -101,7 +101,7 @@ func main() {
 	discountSvc := service.NewDiscountService(discountRepo)
 
 	orderRepo := repository.NewOrderRepository(db)
-	orderSvc := service.NewOrderService(orderRepo, incomeRepo, discountRepo)
+	orderSvc := service.NewOrderService(orderRepo, incomeRepo, discountRepo, tourRepo)
 
 	taskRepo := repository.NewTaskRepository(db)
 	taskSvc := service.NewTaskService(taskRepo)

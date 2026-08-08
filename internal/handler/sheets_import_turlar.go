@@ -9,18 +9,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type turlarItem struct {
-	RoomCode     string  `json:"room_code"`
-	CategoryName string  `json:"category_name"`
-	Price        float64 `json:"price"`
+// turlarRoom — строка таблицы: тип номера и его цена в рамках одной категории.
+type turlarRoom struct {
+	RoomCode string  `json:"room_code"`
+	Price    float64 `json:"price"`
+}
+
+// turlarGroup — будущий тур: код + категория. Комнаты идут списком внутрь,
+// а не размножают тур, как было раньше.
+type turlarGroup struct {
+	CategoryName string       `json:"category_name"`
+	Rooms        []turlarRoom `json:"rooms"`
 }
 
 type turlarTour struct {
-	Code      string       `json:"code"`
-	StartDate string       `json:"start_date"`
-	EndDate   string       `json:"end_date"`
-	Exists    bool         `json:"exists"`
-	Items     []turlarItem `json:"items"`
+	Code      string        `json:"code"`
+	StartDate string        `json:"start_date"`
+	EndDate   string        `json:"end_date"`
+	Exists    bool          `json:"exists"`
+	Groups    []turlarGroup `json:"groups"`
 }
 
 // TurlarCandidates "Turlar" vərəqini oxuyub tur kodlarına görə qruplaşdırır və bizim bazada
@@ -58,6 +65,8 @@ func (h *SheetsImportHandler) TurlarCandidates(c *gin.Context) {
 
 	order := make([]string, 0)
 	byCode := make(map[string]*turlarTour)
+	// Внутри каждого тура держим индекс категорий, чтобы дописывать комнаты в уже созданную группу.
+	groupIdx := make(map[string]map[string]int)
 
 	for _, row := range rows[headerIdx+1:] {
 		code := cellAt(row, codeCol)
@@ -78,22 +87,28 @@ func (h *SheetsImportHandler) TurlarCandidates(c *gin.Context) {
 				StartDate: startISO,
 				EndDate:   endISO,
 				Exists:    existingCodes[code],
-				Items:     []turlarItem{},
+				Groups:    []turlarGroup{},
 			}
 			byCode[code] = tour
+			groupIdx[code] = make(map[string]int)
 			order = append(order, code)
 		}
 
 		for _, colIdx := range categoryCols {
-			priceRaw := cellAt(row, colIdx)
-			price, ok := parsePrice(priceRaw)
+			price, ok := parsePrice(cellAt(row, colIdx))
 			if !ok {
 				continue
 			}
-			tour.Items = append(tour.Items, turlarItem{
-				RoomCode:     roomCode,
-				CategoryName: header[colIdx],
-				Price:        price,
+			category := header[colIdx]
+			idx, seen := groupIdx[code][category]
+			if !seen {
+				tour.Groups = append(tour.Groups, turlarGroup{CategoryName: category, Rooms: []turlarRoom{}})
+				idx = len(tour.Groups) - 1
+				groupIdx[code][category] = idx
+			}
+			tour.Groups[idx].Rooms = append(tour.Groups[idx].Rooms, turlarRoom{
+				RoomCode: roomCode,
+				Price:    price,
 			})
 		}
 	}

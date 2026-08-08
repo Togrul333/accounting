@@ -38,9 +38,19 @@
       </div>
       <div class="col-lg-3 col-12">
         <div class="card p-4 h-100">
-          <p class="small text-secondary text-uppercase fw-semibold mb-2">Oda</p>
-          <p class="fw-bold mb-0 text-primary">{{printf "%.2f" .tour.RoomPrice}} ₺</p>
-          <p class="small text-secondary mb-0 mt-1">{{.tour.RoomBedsCount}} yatak</p>
+          <p class="small text-secondary text-uppercase fw-semibold mb-2">Odalar</p>
+          {{if .tour.Rooms}}
+          <div class="d-flex flex-column gap-1">
+            {{range .tour.Rooms}}
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="small">{{if .Code}}{{.Code}}{{else}}{{.BedsCount}} yatak{{end}}</span>
+              <span class="fw-bold text-primary">{{printf "%.2f" .Price}} ₺</span>
+            </div>
+            {{end}}
+          </div>
+          {{else}}
+          <p class="fw-bold mb-0 text-secondary">—</p>
+          {{end}}
         </div>
       </div>
       <div class="col-lg-3 col-12">
