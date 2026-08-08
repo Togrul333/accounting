@@ -97,6 +97,20 @@
               <span class="badge bg-secondary-subtle text-secondary-emphasis">{{len .default_tasks}}</span>
             </button>
 
+            <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-3"
+                    data-bs-toggle="pill" data-bs-target="#pane-telegram" role="tab">
+              <span class="settings-nav-icon"><i class="ti ti-brand-telegram"></i></span>
+              <span class="flex-grow-1 text-start">
+                <span class="d-block fw-semibold">Telegram</span>
+                <span class="d-block small text-secondary">Görev bildirimleri</span>
+              </span>
+              {{if .telegram.Enabled}}
+              <span class="badge bg-success-subtle text-success-emphasis">Açık</span>
+              {{else}}
+              <span class="badge bg-secondary-subtle text-secondary-emphasis">Kapalı</span>
+              {{end}}
+            </button>
+
           </div>
         </div>
       </div>
@@ -333,6 +347,130 @@
         </div>
         </div>
 
+        <!-- Telegram -->
+        <div class="tab-pane fade" id="pane-telegram" role="tabpanel">
+
+        <div class="card mb-4">
+          <div class="card-header bg-transparent px-4 py-3">
+            <h3 class="h6 mb-0"><i class="ti ti-brand-telegram text-info"></i> Telegram Botu</h3>
+            <p class="small text-secondary mb-0 mt-1">Bir personele görev atandığında ona Telegram'dan bildirim gider</p>
+          </div>
+          <div class="card-body">
+
+            <div class="alert alert-info d-flex gap-3 align-items-start">
+              <i class="ti ti-info-circle fs-5"></i>
+              <div class="small">
+                <div class="fw-semibold mb-1">Kurulum</div>
+                <div>1. Telegram'da <code>@BotFather</code>'a <code>/newbot</code> yazın ve <b>token</b>'ı alın.</div>
+                <div>2. Token'ı aşağıya yapıştırıp <b>Kaydet</b>'e basın.</div>
+                <div>3. Her personel için <b>Bağlantı linki</b> alın ve ona gönderin — kişi linki açıp <b>Start</b>'a basmalı.</div>
+                <div>4. <b>Bağlantıları eşleştir</b> düğmesine basın; Start'a basanlar otomatik bağlanır.</div>
+                <div class="text-secondary mt-1">Bot bir kişiye ilk mesajı kendisi atamaz — bu yüzden Start adımı zorunludur.</div>
+              </div>
+            </div>
+
+            <div class="row g-3 align-items-end">
+              <div class="col-md-8 col-12">
+                <label class="form-label">Bot Token</label>
+                <input id="tgToken" type="password" class="form-control" autocomplete="off"
+                       placeholder="{{if .telegram.HasToken}}•••••••••• (kayıtlı — değiştirmek için yenisini yazın){{else}}123456789:AA...{{end}}">
+              </div>
+              <div class="col-md-4 col-12">
+                <div class="form-check form-switch">
+                  <input id="tgEnabled" class="form-check-input" type="checkbox" role="switch" {{if .telegram.Enabled}}checked{{end}}>
+                  <label class="form-check-label" for="tgEnabled">Bildirimler açık</label>
+                </div>
+              </div>
+            </div>
+
+            {{if .telegram.BotUsername}}
+            <p class="small text-secondary mt-3 mb-0">
+              Bağlı bot: <a href="https://t.me/{{.telegram.BotUsername}}" target="_blank">@{{.telegram.BotUsername}}</a>
+            </p>
+            {{end}}
+
+          </div>
+          <div class="card-footer bg-transparent px-4 py-3 d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-primary" onclick="saveTelegram()">
+              <i class="ti ti-check"></i> Kaydet
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="syncTelegram()">
+              <i class="ti ti-refresh"></i> Bağlantıları eşleştir
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header bg-transparent px-4 py-3">
+            <h3 class="h6 mb-0">Personel Bağlantıları</h3>
+            <p class="small text-secondary mb-0 mt-1">Sadece bağlı personel bildirim alır</p>
+          </div>
+
+          {{if .hoca_users}}
+          <div class="table-responsive">
+            <table class="table mb-0 table-hover align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>Personel</th>
+                  <th>Telegram</th>
+                  <th>Durum</th>
+                  <th>Aksiyon</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .hoca_users}}
+                <tr>
+                  <td class="fw-semibold">{{.FirstName}} {{.LastName}}</td>
+                  <td>
+                    {{if .TelegramUsername}}
+                      <a href="https://t.me/{{.TelegramUsername}}" target="_blank" class="text-decoration-none">@{{.TelegramUsername}}</a>
+                    {{else if .TelegramChatID}}
+                      <span class="text-secondary">chat {{.TelegramChatID}}</span>
+                    {{else}}
+                      <span class="text-secondary">—</span>
+                    {{end}}
+                  </td>
+                  <td>
+                    {{if .TelegramChatID}}
+                      <span class="badge bg-success-subtle text-success-emphasis"><i class="ti ti-check"></i> Bağlı</span>
+                    {{else if .TelegramLinkCode}}
+                      <span class="badge bg-warning-subtle text-warning-emphasis">Start bekleniyor</span>
+                    {{else}}
+                      <span class="badge bg-secondary-subtle text-secondary-emphasis">Bağlı değil</span>
+                    {{end}}
+                  </td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      {{if .TelegramChatID}}
+                      <button type="button" class="btn btn-sm btn-light" title="Test mesajı gönder" onclick="testTelegram({{.ID}})">
+                        <i class="ti ti-send"></i> Test
+                      </button>
+                      <button type="button" class="btn btn-icon btn-sm btn-light text-danger" title="Bağlantıyı kaldır" onclick="unlinkTelegram({{.ID}})">
+                        <i class="ti ti-unlink"></i>
+                      </button>
+                      {{else}}
+                      <button type="button" class="btn btn-sm btn-light" onclick="linkTelegram({{.ID}}, '{{.FirstName}} {{.LastName}}')">
+                        <i class="ti ti-link"></i> Bağlantı linki
+                      </button>
+                      {{end}}
+                    </div>
+                  </td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{else}}
+          <div class="card-body text-center py-8">
+            <i class="ti ti-briefcase fs-1 text-secondary"></i>
+            <p class="fw-semibold mt-3 mb-1">Önce personel ekleyin</p>
+            <p class="text-secondary mb-0">Hocalar sekmesinden personel ekledikten sonra buradan bağlayabilirsiniz</p>
+          </div>
+          {{end}}
+        </div>
+
+        </div>
+
         </div>
       </div>
     </div>
@@ -447,6 +585,37 @@
           <button type="submit" class="btn btn-primary">Kaydet</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Telegram Bağlantı Modalı -->
+<div class="modal fade" id="tgLinkModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Telegram Bağlantısı</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3"><span id="tgLinkName" class="fw-semibold"></span> için bağlantı linki hazır.
+          Bu linki kendisine gönderin — açıp <b>Start</b>'a basması yeterli.</p>
+        <div class="input-group mb-2">
+          <input id="tgLinkUrl" type="text" class="form-control" readonly>
+          <button type="button" class="btn btn-outline-secondary" onclick="copyTgLink()">
+            <i class="ti ti-copy"></i> Kopyala
+          </button>
+        </div>
+        <p class="small text-secondary mb-0">
+          Start'a bastıktan sonra <b>Bağlantıları eşleştir</b> düğmesine basın.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Kapat</button>
+        <button type="button" class="btn btn-primary" onclick="syncTelegram()">
+          <i class="ti ti-refresh"></i> Bağlantıları eşleştir
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -650,6 +819,79 @@ function saveRates() {
     else showToast('✕ Hata oluştu', 'danger');
   })
   .catch(function() { showToast('✕ Hata oluştu', 'danger'); });
+}
+
+// ——— Telegram ———
+async function tgFetch(url, options) {
+  const res = await fetch(url, options);
+  if (res.ok) return res.status === 204 ? null : res.json();
+  const err = await res.json().catch(() => ({}));
+  throw new Error(err.error || 'Bir hata oluştu');
+}
+
+async function saveTelegram() {
+  const payload = {
+    bot_token: document.getElementById('tgToken').value.trim(),
+    enabled:   document.getElementById('tgEnabled').checked,
+  };
+  try {
+    await tgFetch('/api/telegram/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    showToast('✓ Telegram ayarları kaydedildi', 'success');
+    setTimeout(() => location.reload(), 800);
+  } catch (e) { showToast('✕ ' + e.message, 'danger'); }
+}
+
+async function linkTelegram(id, name) {
+  try {
+    const data = await tgFetch('/api/telegram/hoca-users/' + id + '/link-code', { method: 'POST' });
+    if (!data.link) {
+      showToast('✕ Önce bot token kaydedin', 'danger');
+      return;
+    }
+    document.getElementById('tgLinkName').textContent = name;
+    document.getElementById('tgLinkUrl').value = data.link;
+    new bootstrap.Modal(document.getElementById('tgLinkModal')).show();
+  } catch (e) { showToast('✕ ' + e.message, 'danger'); }
+}
+
+function copyTgLink() {
+  const el = document.getElementById('tgLinkUrl');
+  el.select();
+  navigator.clipboard.writeText(el.value)
+    .then(() => showToast('✓ Link kopyalandı', 'success'))
+    .catch(() => showToast('✕ Kopyalanamadı', 'danger'));
+}
+
+async function syncTelegram() {
+  try {
+    const data = await tgFetch('/api/telegram/sync', { method: 'POST' });
+    if (data.count === 0) {
+      showToast('Yeni bağlantı yok — kişi Start\'a bastı mı?', 'warning');
+      return;
+    }
+    showToast('✓ Bağlandı: ' + data.linked.join(', '), 'success');
+    setTimeout(() => location.reload(), 1200);
+  } catch (e) { showToast('✕ ' + e.message, 'danger'); }
+}
+
+async function testTelegram(id) {
+  try {
+    await tgFetch('/api/telegram/hoca-users/' + id + '/test', { method: 'POST' });
+    showToast('✓ Test mesajı gönderildi', 'success');
+  } catch (e) { showToast('✕ ' + e.message, 'danger'); }
+}
+
+async function unlinkTelegram(id) {
+  if (!confirm('Telegram bağlantısını kaldırmak istediğinizden emin misiniz?')) return;
+  try {
+    await tgFetch('/api/telegram/hoca-users/' + id, { method: 'DELETE' });
+    showToast('✓ Bağlantı kaldırıldı', 'success');
+    setTimeout(() => location.reload(), 700);
+  } catch (e) { showToast('✕ ' + e.message, 'danger'); }
 }
 
 function showToast(msg, type) {

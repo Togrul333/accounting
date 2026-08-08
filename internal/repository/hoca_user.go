@@ -14,6 +14,10 @@ type HocaUserRepository interface {
 	Create(ctx context.Context, req model.CreateHocaUserRequest) (*model.HocaUser, error)
 	Update(ctx context.Context, id int64, req model.UpdateHocaUserRequest) (*model.HocaUser, error)
 	Delete(ctx context.Context, id int64) error
+	GetByLinkCode(ctx context.Context, code string) (*model.HocaUser, error)
+	SetLinkCode(ctx context.Context, id int64, code string) error
+	SetTelegram(ctx context.Context, id int64, chatID, username string) error
+	ClearTelegram(ctx context.Context, id int64) error
 }
 
 type hocaUserRepo struct {
@@ -70,4 +74,34 @@ func (r *hocaUserRepo) Update(ctx context.Context, id int64, req model.UpdateHoc
 
 func (r *hocaUserRepo) Delete(ctx context.Context, id int64) error {
 	return r.db.WithContext(ctx).Delete(&model.HocaUser{}, id).Error
+}
+
+func (r *hocaUserRepo) GetByLinkCode(ctx context.Context, code string) (*model.HocaUser, error) {
+	var u model.HocaUser
+	if err := r.db.WithContext(ctx).Where("telegram_link_code = ?", code).First(&u).Error; err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (r *hocaUserRepo) SetLinkCode(ctx context.Context, id int64, code string) error {
+	return r.db.WithContext(ctx).Model(&model.HocaUser{}).Where("id = ?", id).
+		Update("telegram_link_code", code).Error
+}
+
+// SetTelegram — привязка чата к сотруднику; код разовый, поэтому гасится.
+func (r *hocaUserRepo) SetTelegram(ctx context.Context, id int64, chatID, username string) error {
+	return r.db.WithContext(ctx).Model(&model.HocaUser{}).Where("id = ?", id).Updates(map[string]any{
+		"telegram_chat_id":   chatID,
+		"telegram_username":  username,
+		"telegram_link_code": nil,
+	}).Error
+}
+
+func (r *hocaUserRepo) ClearTelegram(ctx context.Context, id int64) error {
+	return r.db.WithContext(ctx).Model(&model.HocaUser{}).Where("id = ?", id).Updates(map[string]any{
+		"telegram_chat_id":   nil,
+		"telegram_username":  nil,
+		"telegram_link_code": nil,
+	}).Error
 }

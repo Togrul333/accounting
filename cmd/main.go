@@ -84,7 +84,6 @@ func main() {
 	defaultTaskSvc := service.NewDefaultTaskService(defaultTaskRepo)
 
 	taskRepo := repository.NewTaskRepository(db)
-	taskSvc := service.NewTaskService(taskRepo)
 
 	taskCommentRepo := repository.NewTaskCommentRepository(db)
 	taskCommentSvc := service.NewTaskCommentService(taskCommentRepo)
@@ -103,6 +102,10 @@ func main() {
 
 	hocaUserRepo := repository.NewHocaUserRepository(db)
 	hocaUserSvc := service.NewHocaUserService(hocaUserRepo)
+
+	// Задачи уведомляют исполнителя в Telegram, поэтому создаются после hoca и настроек.
+	telegramSvc := service.NewTelegramService(settingRepo, hocaUserRepo)
+	taskSvc := service.NewTaskService(taskRepo, telegramSvc)
 
 	userRepo := repository.NewUserRepository(db)
 	userSvc := service.NewUserService(userRepo)
@@ -151,10 +154,11 @@ func main() {
 	orderHandler := handler.NewOrderHandler(orderSvc)
 	taskHandler := handler.NewTaskHandler(taskSvc)
 	taskCommentHandler := handler.NewTaskCommentHandler(taskCommentSvc)
-	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, flightSvc, tourSvc, clientSvc, settingSvc, referansUserSvc, hocaUserSvc, defaultTaskSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc, metaAdsSvc)
+	telegramHandler := handler.NewTelegramHandler(telegramSvc)
+	pageHandler := handler.NewPageHandler(accountSvc, incomeCategorySvc, incomeSvc, expenseCategorySvc, expenseSvc, tourCategorySvc, roomSvc, flightSvc, tourSvc, clientSvc, settingSvc, referansUserSvc, hocaUserSvc, defaultTaskSvc, userSvc, discountCategorySvc, discountSvc, orderSvc, taskSvc, metaAdsSvc, telegramSvc)
 	sheetsImportHandler := handler.NewSheetsImportHandler(sheetsClient, sheetLinkSvc, tourSvc, clientSvc, orderSvc)
 	metaAdsHandler := handler.NewMetaAdsHandler(metaAdsSvc)
 
-	router := handler.NewRouter(authHandler, sessions, accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, referansUserHandler, hocaUserHandler, defaultTaskHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, taskCommentHandler, pageHandler, sheetsImportHandler, metaAdsHandler, tmpl)
+	router := handler.NewRouter(authHandler, sessions, accountHandler, incomeCategoryHandler, incomeHandler, expenseCategoryHandler, expenseHandler, tourCategoryHandler, roomHandler, flightHandler, tourHandler, clientHandler, settingHandler, referansUserHandler, hocaUserHandler, defaultTaskHandler, userHandler, discountCategoryHandler, discountHandler, orderHandler, taskHandler, taskCommentHandler, telegramHandler, pageHandler, sheetsImportHandler, metaAdsHandler, tmpl)
 	router.Run(":" + os.Getenv("PORT"))
 }

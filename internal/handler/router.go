@@ -31,6 +31,7 @@ func NewRouter(
 	orders *OrderHandler,
 	tasks *TaskHandler,
 	taskComments *TaskCommentHandler,
+	telegram *TelegramHandler,
 	pages *PageHandler,
 	sheetsImport *SheetsImportHandler,
 	metaAds *MetaAdsHandler,
@@ -199,6 +200,13 @@ func NewRouter(
 		api.POST("/tasks/:id/comments", taskComments.Create)
 		api.PUT("/task-comments/:id", taskComments.Update)
 		api.DELETE("/task-comments/:id", taskComments.Delete)
+
+		api.GET("/telegram/settings", telegram.GetSettings)
+		api.PUT("/telegram/settings", telegram.UpdateSettings)
+		api.POST("/telegram/sync", telegram.Sync)
+		api.POST("/telegram/hoca-users/:id/link-code", telegram.LinkCode)
+		api.POST("/telegram/hoca-users/:id/test", telegram.Test)
+		api.DELETE("/telegram/hoca-users/:id", telegram.Unlink)
 
 		api.GET("/sheets-import/links", sheetsImport.Links)
 		api.POST("/sheets-import/tabs", sheetsImport.Tabs)

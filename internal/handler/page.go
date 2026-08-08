@@ -43,6 +43,7 @@ type PageHandler struct {
 	orderSvc            *service.OrderService
 	taskSvc             *service.TaskService
 	metaAdsSvc          *service.MetaAdsService
+	telegramSvc         *service.TelegramService
 }
 
 func NewPageHandler(
@@ -66,6 +67,7 @@ func NewPageHandler(
 	orderSvc *service.OrderService,
 	taskSvc *service.TaskService,
 	metaAdsSvc *service.MetaAdsService,
+	telegramSvc *service.TelegramService,
 ) *PageHandler {
 	return &PageHandler{
 		accountSvc:          accountSvc,
@@ -88,6 +90,7 @@ func NewPageHandler(
 		orderSvc:            orderSvc,
 		taskSvc:             taskSvc,
 		metaAdsSvc:          metaAdsSvc,
+		telegramSvc:         telegramSvc,
 	}
 }
 
@@ -178,6 +181,12 @@ func (h *PageHandler) Settings(c *gin.Context) {
 		log.Printf("settings default tasks error: %v", err)
 		defaultTasks = []model.DefaultTask{}
 	}
+	telegramSettings, err := h.telegramSvc.GetSettings(ctx)
+	if err != nil {
+		log.Printf("settings telegram error: %v", err)
+		telegramSettings = model.TelegramSettings{}
+	}
+
 	c.HTML(http.StatusOK, "settings.html", gin.H{
 		"active":         "settings",
 		"user":           h.currentUser(ctx),
@@ -185,6 +194,7 @@ func (h *PageHandler) Settings(c *gin.Context) {
 		"referans_users": referansUsers,
 		"hoca_users":     hocaUsers,
 		"default_tasks":  defaultTasks,
+		"telegram":       telegramSettings,
 	})
 }
 
