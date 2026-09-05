@@ -16,9 +16,14 @@
 
     <div class="row">
       <div class="col-12">
-        <div class="mb-4">
-          <h1 class="fs-3 mb-1">Gelirler</h1>
-          <p class="mb-0 text-secondary">Tüm gelirler</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h1 class="fs-3 mb-1">Gelirler</h1>
+            <p class="mb-0 text-secondary">Tüm gelirler</p>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="openCreate()">
+            <i class="ti ti-plus"></i> Gelir Ekle
+          </button>
         </div>
       </div>
     </div>
@@ -88,7 +93,8 @@
           <div class="card-body text-center py-8">
             <i class="ti ti-cash fs-1 text-secondary"></i>
             <p class="fw-semibold mt-3 mb-1">Henüz gelir yok</p>
-            <p class="text-secondary mb-0">Gelirler siparişlerden eklenir</p>
+            <p class="text-secondary mb-4">İlk geliri ekleyin veya bir siparişten ekleyin</p>
+            <button type="button" class="btn btn-primary" onclick="openCreate()"><i class="ti ti-plus"></i> Gelir Ekle</button>
           </div>
           {{end}}
         </div>
@@ -98,6 +104,127 @@
   </div>
 </main>
 
+<!-- Gelir Modalı -->
+<div class="modal fade" id="incomeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Yeni Gelir</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <form id="incomeForm" onsubmit="saveIncome(event)">
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label">Açıklama <span class="text-danger">*</span></label>
+            <input id="fName" type="text" required placeholder="Tur ödemesi" class="form-control">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">Tutar <span class="text-danger">*</span></label>
+              <input id="fAmount" type="number" step="0.01" min="0" required placeholder="0.00" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Tarih <span class="text-danger">*</span></label>
+              <input id="fDate" type="date" required class="form-control">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Kategori <span class="text-danger">*</span></label>
+            <select id="fCategory" required class="form-select">
+              <option value="">Kategori seçin</option>
+              {{range .categories}}
+              <option value="{{.ID}}">{{.Name}}</option>
+              {{end}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Hesap <span class="text-danger">*</span></label>
+            <select id="fAccount" required class="form-select">
+              <option value="">Hesap seçin</option>
+              {{range .accounts}}
+              <option value="{{.ID}}">{{.Name}}</option>
+              {{end}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Tur <span class="text-secondary fw-normal">(opsiyonel)</span></label>
+            <select id="fTour" class="form-select">
+              <option value="">Tur seçilmedi</option>
+              {{range .tours}}
+              <option value="{{.ID}}">{{.Code}} — {{.TourCategoryName}} ({{.StartDate.Format "02.01.2006"}} – {{.EndDate.Format "02.01.2006"}})</option>
+              {{end}}
+            </select>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="alert position-fixed d-none align-items-center gap-2" style="top:20px; right:20px; z-index:1080; min-width:260px;" role="alert"></div>
+
 <script src="/static/theme/assets/js/main.js" type="module"></script>
+<script>
+  let incomeModal;
+  document.addEventListener('DOMContentLoaded', () => {
+    incomeModal = new bootstrap.Modal(document.getElementById('incomeModal'));
+  });
+
+  function openCreate() {
+    document.getElementById('incomeForm').reset();
+    document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+    incomeModal.show();
+    setTimeout(() => document.getElementById('fName').focus(), 200);
+  }
+
+  async function saveIncome(e) {
+    e.preventDefault();
+    const tourValue = document.getElementById('fTour').value;
+    const payload = {
+      name:               document.getElementById('fName').value.trim(),
+      amount:             parseFloat(document.getElementById('fAmount').value),
+      date:               document.getElementById('fDate').value,
+      income_category_id: parseInt(document.getElementById('fCategory').value),
+      account_id:         parseInt(document.getElementById('fAccount').value),
+      tour_id:            tourValue ? parseInt(tourValue) : null,
+    };
+    try {
+      const res = await fetch('/api/incomes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        incomeModal.hide();
+        showToast('✓ Gelir eklendi', 'success');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        const err = await res.json();
+        showToast('✕ ' + (err.error || 'Bir hata oluştu'), 'danger');
+      }
+    } catch { showToast('✕ Sunucu bağlantı hatası', 'danger'); }
+  }
+
+  function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'alert position-fixed d-flex align-items-center gap-2 alert-' + type;
+    el.style.top = '20px';
+    el.style.right = '20px';
+    el.style.zIndex = 1080;
+    el.style.minWidth = '260px';
+    setTimeout(() => el.classList.add('d-none'), 2800);
+  }
+</script>
 </body>
 </html>
