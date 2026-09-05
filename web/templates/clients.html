@@ -342,8 +342,8 @@
     if (!tour) { summary.style.display = 'none'; return; }
     const roomId = parseInt(document.getElementById('fRoom').value);
     const room = (tour.rooms || []).find(r => r.room_id === roomId);
-    const total = (tour.tour_category_price || 0) + (room ? room.price : 0);
-    document.getElementById('tourSummaryPrice').textContent = total.toFixed(2) + ' ₺';
+    if (!room) { summary.style.display = 'none'; return; }
+    document.getElementById('tourSummaryPrice').textContent = room.price.toFixed(2) + ' ₺';
     summary.style.display = 'flex';
   }
 

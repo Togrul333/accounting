@@ -68,10 +68,7 @@
                   <td><span class="fw-bold text-primary">{{.Code}}</span></td>
                   <td>{{.StartDate.Format "02.01.2006"}}</td>
                   <td>{{.EndDate.Format "02.01.2006"}}</td>
-                  <td>
-                    {{.TourCategoryName}}
-                    <span class="text-secondary small ms-1">{{printf "%.2f" .TourCategoryPrice}} ₺</span>
-                  </td>
+                  <td>{{.TourCategoryName}}</td>
                   <td>
                     {{if .Flights}}
                     <div class="d-flex flex-column gap-1">
@@ -344,7 +341,7 @@
     (categories || []).forEach(c => {
       const o = document.createElement('option');
       o.value = c.id;
-      o.textContent = `${c.name} — ${c.price.toFixed(2)} ₺`;
+      o.textContent = c.name;
       catEl.appendChild(o);
     });
     if (!rooms || !rooms.length) {

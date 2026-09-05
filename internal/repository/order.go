@@ -30,7 +30,6 @@ const orderListQuery = `
 	       CONCAT(c.first_name, ' ', c.last_name) AS client_name,
 	       o.tour_id, t.code AS tour_code,
 	       tc.name AS tour_category_name,
-	       tc.price AS tour_category_price,
 	       o.room_id, r.code AS room_code,
 	       COALESCE(tr.price, 0) AS room_price,
 	       COALESCE(inc.income_count, 0)   AS income_count,
@@ -58,7 +57,6 @@ const orderBaseQuery = `
 	       CONCAT(c.first_name, ' ', c.last_name) AS client_name,
 	       o.tour_id, t.code AS tour_code,
 	       tc.name AS tour_category_name,
-	       tc.price AS tour_category_price,
 	       o.room_id, r.code AS room_code,
 	       COALESCE(tr.price, 0) AS room_price,
 	       o.created_at, o.updated_at

@@ -50,9 +50,7 @@
                 <select id="fCategory" required class="form-select">
                   <option value="">Seçin...</option>
                   {{range .categories}}
-                  <option value="{{.ID}}" {{if eq .ID $.tour.TourCategoryID}}selected{{end}}>
-                    {{.Name}} — {{printf "%.2f" .Price}} ₺
-                  </option>
+                  <option value="{{.ID}}" {{if eq .ID $.tour.TourCategoryID}}selected{{end}}>{{.Name}}</option>
                   {{end}}
                 </select>
               </div>

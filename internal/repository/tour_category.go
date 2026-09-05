@@ -40,7 +40,7 @@ func (r *tourCategoryRepo) GetByID(ctx context.Context, id int64) (*model.TourCa
 }
 
 func (r *tourCategoryRepo) Create(ctx context.Context, req model.CreateTourCategoryRequest) (*model.TourCategory, error) {
-	c := model.TourCategory{Name: req.Name, Price: req.Price}
+	c := model.TourCategory{Name: req.Name}
 	if err := r.db.WithContext(ctx).Create(&c).Error; err != nil {
 		return nil, err
 	}
@@ -49,8 +49,7 @@ func (r *tourCategoryRepo) Create(ctx context.Context, req model.CreateTourCateg
 
 func (r *tourCategoryRepo) Update(ctx context.Context, id int64, req model.UpdateTourCategoryRequest) (*model.TourCategory, error) {
 	result := r.db.WithContext(ctx).Model(&model.TourCategory{}).Where("id = ?", id).Updates(map[string]any{
-		"name":  req.Name,
-		"price": req.Price,
+		"name": req.Name,
 	})
 	if result.Error != nil {
 		return nil, result.Error

@@ -62,7 +62,7 @@ type tourFlightRow struct {
 
 const tourSelectQuery = `
 	SELECT t.id, t.code, t.start_date, t.end_date,
-	       t.tour_category_id, tc.name AS tour_category_name, tc.price AS tour_category_price,
+	       t.tour_category_id, tc.name AS tour_category_name,
 	       t.created_at, t.updated_at
 	FROM tours t
 	JOIN tour_categories tc ON tc.id = t.tour_category_id`

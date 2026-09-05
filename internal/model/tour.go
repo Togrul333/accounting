@@ -5,19 +5,16 @@ import "time"
 type TourCategory struct {
 	ID        int64     `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name"`
-	Price     float64   `json:"price"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type CreateTourCategoryRequest struct {
-	Name  string  `json:"name"`
-	Price float64 `json:"price"`
+	Name string `json:"name"`
 }
 
 type UpdateTourCategoryRequest struct {
-	Name  string  `json:"name"`
-	Price float64 `json:"price"`
+	Name string `json:"name"`
 }
 
 // Room — справочник типов номеров. Цена здесь не хранится: она задаётся
@@ -61,7 +58,6 @@ type Tour struct {
 	EndDate           time.Time  `json:"end_date"`
 	TourCategoryID    int64      `json:"tour_category_id"`
 	TourCategoryName  string     `json:"tour_category_name,omitempty" gorm:"<-:false"`
-	TourCategoryPrice float64    `json:"tour_category_price,omitempty" gorm:"<-:false"`
 	Rooms             []TourRoom `json:"rooms" gorm:"-"`
 	Flights           []Flight   `json:"flights" gorm:"-"`
 	CreatedAt         time.Time  `json:"created_at"`

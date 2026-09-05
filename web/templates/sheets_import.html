@@ -566,17 +566,15 @@
     return room.id;
   }
 
-  // Cədvəldəki xana qiyməti artıq otağa (tur_rooms.price) yazılır, ona görə kateqoriya
-  // qiyməti default 0-dır — əks halda eyni məbləğ iki dəfə sayılardı.
+  // Qiymət kateqoriyada saxlanmır — otağa (tur_rooms.price) yazılır. Kateqoriya yalnız ad daşıyır.
   async function resolveCategoryId(categoryName) {
     const key = normKey(categoryName);
     if (categoriesByName[key]) return categoriesByName[key].id;
     const result = await openModal({
       title: 'Yeni kateqoriya yaradılsın?',
-      subtitle: `Kateqoriya "${categoryName}" bazada tapılmadı. Qiymət otaqlara yazılır — burada yalnız əlavə haqq varsa doldurun.`,
+      subtitle: `Kateqoriya "${categoryName}" bazada tapılmadı.`,
       fields: [
         { key: 'name', label: 'Ad', type: 'text', value: categoryName },
-        { key: 'price', label: 'Əlavə qiymət', type: 'number', value: 0 },
       ],
     });
     if (!result) return null;
