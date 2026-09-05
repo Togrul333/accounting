@@ -183,7 +183,7 @@
             </div>
           </div>
 
-          <div class="row g-3">
+          <div class="row g-3 mb-3">
             <div class="col-6">
               <label class="form-label">Baba Adı</label>
               <input id="fFatherName" type="text" class="form-control">
@@ -191,6 +191,29 @@
             <div class="col-6">
               <label class="form-label">Referans</label>
               <input id="fReference" type="text" class="form-control">
+            </div>
+          </div>
+
+          <div id="tourBlock" class="border border-dashed rounded-2 p-3">
+            <div class="mb-2">
+              <label class="form-label mb-0">Tur Kaydı <span class="text-secondary fw-normal">(opsiyonel)</span></label>
+              <p class="small text-secondary mb-2">Tur seçilirse müşteri için otomatik sipariş oluşturulur.</p>
+              <select id="fTour" class="form-select" onchange="onTourChange()">
+                <option value="">Tur seçilmedi</option>
+                {{range .tours}}
+                <option value="{{.ID}}">{{.Code}} — {{.TourCategoryName}} ({{.StartDate.Format "02.01.2006"}} – {{.EndDate.Format "02.01.2006"}})</option>
+                {{end}}
+              </select>
+            </div>
+            <div id="tourRoomWrap" class="mb-2" style="display:none;">
+              <label class="form-label">Oda</label>
+              <select id="fRoom" class="form-select" onchange="updateTourSummary()">
+                <option value="">Oda seçilmedi</option>
+              </select>
+            </div>
+            <div id="tourSummary" class="d-flex align-items-center justify-content-between bg-primary bg-opacity-10 rounded-2 px-3 py-2" style="display:none;">
+              <span class="small text-secondary">Sipariş tutarı</span>
+              <span id="tourSummaryPrice" class="fw-bold text-primary"></span>
             </div>
           </div>
 
@@ -212,6 +235,7 @@
   let pendingDocumentFile = null;
   let clientModal;
   const allClients = {{json .clients}};
+  const TOURS = {{json .tours}};
   document.addEventListener('DOMContentLoaded', () => {
     clientModal = new bootstrap.Modal(document.getElementById('clientModal'));
 
@@ -245,11 +269,22 @@
     status.className = 'small text-secondary mt-1 mb-0';
   }
 
+  function resetTourBlock() {
+    document.getElementById('fTour').value = '';
+    document.getElementById('fRoom').innerHTML = '<option value="">Oda seçilmedi</option>';
+    document.getElementById('tourRoomWrap').style.display = 'none';
+    document.getElementById('tourSummary').style.display = 'none';
+  }
+
+  // Müşteri eklerken tur seçilirse otomatik sipariş açılır — bu yüzden blok
+  // sadece "yeni müşteri" akışında gösteriliyor, mevcut müşteriyi düzenlerken değil.
   function openCreate() {
     editingId = null;
     document.getElementById('modalTitle').textContent = 'Yeni Müşteri';
     document.getElementById('clientForm').reset();
     resetDocumentBox();
+    resetTourBlock();
+    document.getElementById('tourBlock').style.display = '';
     clientModal.show();
     setTimeout(() => document.getElementById('fFirst').focus(), 200);
   }
@@ -269,6 +304,8 @@
     document.getElementById('fFatherName').value = c.father_name || '';
     document.getElementById('fReference').value = c.reference_name || '';
     resetDocumentBox();
+    resetTourBlock();
+    document.getElementById('tourBlock').style.display = 'none';
     if (c.document_photo) {
       const thumb = document.getElementById('docThumb');
       thumb.src = c.document_photo;
@@ -276,6 +313,38 @@
       document.getElementById('docStatus').textContent = 'Kayıtlı kimlik fotoğrafı — değiştirmek için yükleyin';
     }
     clientModal.show();
+  }
+
+  function onTourChange() {
+    const tourId = parseInt(document.getElementById('fTour').value);
+    const roomEl = document.getElementById('fRoom');
+    const roomWrap = document.getElementById('tourRoomWrap');
+    roomEl.innerHTML = '<option value="">Oda seçilmedi</option>';
+    const tour = TOURS.find(t => t.id === tourId);
+    if (tour && (tour.rooms || []).length) {
+      tour.rooms.forEach(r => {
+        const o = document.createElement('option');
+        o.value = r.room_id;
+        o.textContent = `${r.code ? r.code + ' — ' : ''}${r.beds_count} yatak · ${r.price.toFixed(2)} ₺`;
+        roomEl.appendChild(o);
+      });
+      roomWrap.style.display = '';
+    } else {
+      roomWrap.style.display = 'none';
+    }
+    updateTourSummary();
+  }
+
+  function updateTourSummary() {
+    const tourId = parseInt(document.getElementById('fTour').value);
+    const summary = document.getElementById('tourSummary');
+    const tour = TOURS.find(t => t.id === tourId);
+    if (!tour) { summary.style.display = 'none'; return; }
+    const roomId = parseInt(document.getElementById('fRoom').value);
+    const room = (tour.rooms || []).find(r => r.room_id === roomId);
+    const total = (tour.tour_category_price || 0) + (room ? room.price : 0);
+    document.getElementById('tourSummaryPrice').textContent = total.toFixed(2) + ' ₺';
+    summary.style.display = 'flex';
   }
 
   function loadImageFromFile(file) {
@@ -549,8 +618,36 @@
           formData.append('document', pendingDocumentFile);
           await fetch(`/api/clients/${saved.id}/document`, { method: 'POST', body: formData });
         }
+
+        let toastMsg = '✓ ' + (editingId ? 'Müşteri güncellendi' : 'Müşteri eklendi');
+        const tourId = !editingId ? parseInt(document.getElementById('fTour').value) : NaN;
+        if (!isNaN(tourId)) {
+          const roomValue = document.getElementById('fRoom').value;
+          const orderPayload = {
+            client_id: saved.id,
+            tour_id: tourId,
+            room_id: roomValue ? parseInt(roomValue) : null,
+            incomes: [],
+          };
+          try {
+            const orderRes = await fetch('/api/orders', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(orderPayload),
+            });
+            if (orderRes.ok) {
+              toastMsg += ' ve sipariş oluşturuldu';
+            } else {
+              const orderErr = await orderRes.json();
+              toastMsg = '✓ Müşteri eklendi, ancak sipariş oluşturulamadı: ' + (orderErr.error || 'hata');
+            }
+          } catch {
+            toastMsg = '✓ Müşteri eklendi, ancak sipariş oluşturulamadı (bağlantı hatası)';
+          }
+        }
+
         clientModal.hide();
-        showToast('✓ ' + (editingId ? 'Müşteri güncellendi' : 'Müşteri eklendi'), 'success');
+        showToast(toastMsg, 'success');
         setTimeout(() => location.reload(), 700);
       } else {
         const err = await res.json();

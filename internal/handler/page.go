@@ -729,8 +729,13 @@ func (h *PageHandler) Clients(c *gin.Context) {
 	if clients == nil {
 		clients = []model.Client{}
 	}
+	tours, err := h.tourSvc.GetAll(ctx)
+	if err != nil {
+		tours = []model.Tour{}
+	}
 	c.HTML(http.StatusOK, "clients.html", gin.H{
 		"clients": clients,
+		"tours":   tours,
 		"active":  "clients",
 		"user":    user,
 	})
