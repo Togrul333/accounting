@@ -21,26 +21,6 @@ import (
 	"accounting/internal/service"
 )
 
-// applyMigration035 догоняет migrations/035_drop_tours_room_id.sql, если она ещё
-// не применена: старая колонка tours.room_id (NOT NULL, FK на rooms) заставляет
-// MySQL подставлять room_id=0 при создании тура через GORM, что валит вставку
-// нарушением fk_tour_room, — комнаты тура теперь живут в tour_rooms.
-func applyMigration035(db *gorm.DB) error {
-	var count int64
-	err := db.Raw(`
-		SELECT COUNT(*) FROM information_schema.COLUMNS
-		WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tours' AND COLUMN_NAME = 'room_id'
-	`).Scan(&count).Error
-	if err != nil {
-		return err
-	}
-	if count == 0 {
-		return nil
-	}
-	log.Println("migrasyon 035 tətbiq olunur: tours.room_id sütunu silinir...")
-	return db.Exec(`ALTER TABLE tours DROP FOREIGN KEY fk_tour_room, DROP COLUMN room_id`).Error
-}
-
 func main() {
 	godotenv.Load()
 
@@ -57,13 +37,6 @@ func main() {
 	})
 	if err != nil {
 		log.Fatalf("veritabanına bağlanılamadı: %v", err)
-	}
-
-	// ВРЕМЕННО: догоняет миграцию 035 на проде, где к ней нет ручного доступа
-	// (mysql CLI). Убрать этот блок после того, как убедимся, что тур создаётся
-	// без ошибки fk_tour_room.
-	if err := applyMigration035(db); err != nil {
-		log.Fatalf("migrasyon 035 hatası: %v", err)
 	}
 
 	tmpl, err := template.New("").Funcs(template.FuncMap{

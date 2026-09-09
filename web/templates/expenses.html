@@ -5,6 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Giderler — Hisar Tour</title>
   <link rel="stylesheet" href="/static/theme/assets/css/main.css">
+  <style>
+    .bulk-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1.3fr 1.3fr 1fr 34px;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 2px;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+    }
+    .bulk-row-header {
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgba(0,0,0,.08);
+      margin-bottom: 2px;
+    }
+    .bulk-row .form-control,
+    .bulk-row .form-select {
+      padding: .3rem .55rem;
+      font-size: .8125rem;
+    }
+    .bulk-row:last-child { border-bottom: none; }
+    #bulkForm {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    @media (max-width: 767.98px) {
+      .bulk-row-header { display: none; }
+      .bulk-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        border: 1px solid rgba(0,0,0,.08);
+        border-radius: .5rem;
+        padding: 10px;
+        margin-bottom: 8px;
+      }
+      .bulk-row input[type="text"] { grid-column: 1 / -1; }
+      .bulk-row button { grid-column: 1 / -1; justify-self: end; }
+    }
+  </style>
 </head>
 <body>
 
@@ -117,7 +160,7 @@
 
 <!-- Gider Modalı: Toplu Ekleme -->
 <div class="modal fade" id="bulkModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+  <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Yeni Gider</h5>
@@ -125,7 +168,16 @@
       </div>
       <form id="bulkForm" onsubmit="saveBulk(event)">
         <div class="modal-body">
-          <div id="bulkRows" class="d-flex flex-column gap-3"></div>
+          <div class="bulk-row bulk-row-header text-secondary d-none d-md-grid">
+            <span>Ad</span>
+            <span>Tutar</span>
+            <span>Tarih</span>
+            <span>Kategori</span>
+            <span>Hesap</span>
+            <span>Tur</span>
+            <span></span>
+          </div>
+          <div id="bulkRows" class="d-flex flex-column"></div>
           <button type="button" class="btn btn-outline-danger w-100 mt-3" onclick="addBulkRow()">
             <i class="ti ti-plus"></i> Satır Ekle
           </button>
@@ -239,48 +291,24 @@
 
   function addBulkRow() {
     const container = document.getElementById('bulkRows');
-    const num = container.children.length + 1;
-    const card = document.createElement('div');
-    card.className = 'border rounded-2 p-3 position-relative';
-    card.innerHTML = `
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <span class="small text-secondary fw-semibold text-uppercase">#${num}</span>
-        <button type="button" class="btn btn-icon btn-sm btn-light text-danger" onclick="removeRow(this)">
-          <i class="ti ti-x"></i>
-        </button>
-      </div>
-      <div class="mb-2">
-        <label class="form-label small text-secondary">Ad</label>
-        <input type="text" placeholder="Kira ödemesi" class="form-control row-input" required>
-      </div>
-      <div class="row g-2 mb-2">
-        <div class="col-4">
-          <label class="form-label small text-secondary">Tutar</label>
-          <input type="number" step="0.01" min="0" placeholder="0.00" class="form-control row-input" required>
-        </div>
-        <div class="col-4">
-          <label class="form-label small text-secondary">Tarih</label>
-          <input type="date" class="form-control row-input" value="${today}" required>
-        </div>
-        <div class="col-4">
-          <label class="form-label small text-secondary">Kategori</label>
-          <select class="form-select row-input" required>${categoryOptions}</select>
-        </div>
-      </div>
-      <div class="mb-2">
-        <label class="form-label small text-secondary">Hesap</label>
-        <select class="form-select row-input" required>${accountOptions}</select>
-      </div>
-      <div>
-        <label class="form-label small text-secondary">Tur</label>
-        <select class="form-select row-input row-tour">${tourOptions}</select>
-      </div>`;
-    container.appendChild(card);
+    const row = document.createElement('div');
+    row.className = 'bulk-row';
+    row.innerHTML = `
+      <input type="text" placeholder="Ad" class="form-control row-input" required>
+      <input type="number" step="0.01" min="0" placeholder="0.00" class="form-control row-input" required>
+      <input type="date" class="form-control row-input" value="${today}" required>
+      <select class="form-select row-input" required>${categoryOptions}</select>
+      <select class="form-select row-input" required>${accountOptions}</select>
+      <select class="form-select row-input row-tour">${tourOptions}</select>
+      <button type="button" class="btn btn-icon btn-sm btn-light text-danger" title="Sil" onclick="removeRow(this)">
+        <i class="ti ti-x"></i>
+      </button>`;
+    container.appendChild(row);
   }
 
   function removeRow(btn) {
     const rows = document.getElementById('bulkRows');
-    if (rows.children.length > 1) btn.closest('.border').remove();
+    if (rows.children.length > 1) btn.closest('.bulk-row').remove();
   }
 
   async function saveBulk(e) {
