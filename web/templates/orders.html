@@ -85,6 +85,8 @@
                   <th>Gelir Sayısı</th>
                   <th>Toplam Gelir</th>
                   <th>Net Tutar</th>
+                  <th>İndirimli Fiyat</th>
+                  <th>Kalan</th>
                   <th>Tarih</th>
                   <th>Aksiyon</th>
                 </tr>
@@ -103,6 +105,17 @@
                   </td>
                   <td>
                     {{if gt .NetTotal 0.0}}<span class="text-primary fw-semibold">{{printf "%.2f" .NetTotal}} ₺</span>{{else}}<span class="text-secondary">—</span>{{end}}
+                  </td>
+                  <td>
+                    {{if .DiscountTotal}}
+                    <span class="text-decoration-line-through text-secondary small d-block">{{printf "%.2f" .TourPrice}} ₺</span>
+                    <span class="fw-semibold">{{printf "%.2f" .DiscountedPrice}} ₺</span>
+                    {{else}}
+                    <span class="fw-semibold">{{printf "%.2f" .DiscountedPrice}} ₺</span>
+                    {{end}}
+                  </td>
+                  <td>
+                    {{if gt .RemainingTotal 0.0}}<span class="text-danger fw-semibold">{{printf "%.2f" .RemainingTotal}} ₺</span>{{else}}<span class="text-success fw-semibold">Ödendi</span>{{end}}
                   </td>
                   <td class="text-secondary">{{.CreatedAt.Format "02.01.2006"}}</td>
                   <td>

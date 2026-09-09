@@ -57,7 +57,18 @@
       <div class="col-lg-3 col-6">
         <div class="card p-4 h-100 border-primary border-opacity-25">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Tur Fiyatı</p>
+          {{if .order.DiscountTotal}}
+          <p class="mb-1">
+            <span class="text-decoration-line-through text-secondary">{{printf "%.2f" .order.TourPrice}} ₺</span>
+          </p>
+          <p class="fw-bold mb-2 text-primary">{{printf "%.2f" .order.DiscountedPrice}} ₺</p>
+          <div class="d-flex justify-content-between small text-warning mb-1">
+            <span>İndirim</span>
+            <span>-{{printf "%.2f" .order.DiscountTotal}} ₺</span>
+          </div>
+          {{else}}
           <p class="fw-bold mb-2">{{printf "%.2f" .order.TourPrice}} ₺</p>
+          {{end}}
           <div class="d-flex justify-content-between small text-secondary">
             <span>{{if .order.RoomCode}}Oda ({{.order.RoomCode}}){{else}}Oda{{end}}</span>
             <span>{{printf "%.2f" .order.RoomPrice}} ₺</span>
@@ -68,24 +79,33 @@
 
     <!-- Bilgi kartları — Satır 2: Finansal -->
     <div class="row g-3 mb-4">
-      <div class="col-lg-4 col-12">
+      <div class="col-lg-3 col-6">
         <div class="card p-4">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Toplam Gelir</p>
           <p class="fw-bold mb-0 text-success">{{printf "%.2f" .order.IncomeTotal}} ₺</p>
         </div>
       </div>
-      <div class="col-lg-4 col-12">
+      <div class="col-lg-3 col-6">
         <div class="card p-4">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Toplam İndirim</p>
           <p class="fw-bold mb-0 text-warning">{{printf "%.2f" .order.DiscountTotal}} ₺</p>
         </div>
       </div>
-      <div class="col-lg-4 col-12">
+      <div class="col-lg-3 col-6">
         <div class="card p-4 border-primary border-opacity-25">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Net Tutar</p>
           <p class="fw-bold mb-0 text-primary">{{printf "%.2f" .order.NetTotal}} ₺</p>
           <p class="small text-secondary mb-0 mt-1">
             {{printf "%.2f" .order.IncomeTotal}}{{if .order.DiscountTotal}} − {{printf "%.2f" .order.DiscountTotal}}{{end}}
+          </p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="card p-4 {{if gt .order.RemainingTotal 0.0}}border-danger border-opacity-25{{else}}border-success border-opacity-25{{end}}">
+          <p class="small text-secondary text-uppercase fw-semibold mb-2">Kalan</p>
+          <p class="fw-bold mb-0 {{if gt .order.RemainingTotal 0.0}}text-danger{{else}}text-success{{end}}">{{printf "%.2f" .order.RemainingTotal}} ₺</p>
+          <p class="small text-secondary mb-0 mt-1">
+            {{if gt .order.RemainingTotal 0.0}}Ödenmesi gereken{{else}}Ödeme tamamlandı{{end}}
           </p>
         </div>
       </div>
