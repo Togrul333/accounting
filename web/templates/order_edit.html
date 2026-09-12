@@ -96,7 +96,7 @@
                   <p class="fw-semibold mb-0 text-truncate">{{.Name}}</p>
                   <p class="small text-secondary mb-0">{{.IncomeCategoryName}} · {{.AccountName}} · {{.Date.Format "02.01.2006"}}</p>
                 </div>
-                <span class="fw-semibold text-success text-nowrap">{{printf "%.2f" .Amount}} ₺</span>
+                <span class="fw-semibold text-success text-nowrap">{{printf "%.2f" .Amount}} {{currencySymbol .AccountCurrency}}</span>
                 <button type="button" class="btn btn-icon btn-sm btn-light text-danger" onclick="deleteIncome({{.ID}})"><i class="ti ti-trash"></i></button>
               </div>
               {{else}}
@@ -164,7 +164,7 @@
                 <div class="flex-grow-1 min-w-0">
                   <p class="fw-semibold mb-0">{{.DiscountCategoryName}}</p>
                 </div>
-                <span class="fw-semibold text-warning text-nowrap">-{{printf "%.2f" .Amount}} ₺</span>
+                <span class="fw-semibold text-warning text-nowrap">-{{printf "%.2f" .Amount}} ₼</span>
                 <button type="button" class="btn btn-icon btn-sm btn-light text-danger" onclick="deleteDiscount({{.ID}})"><i class="ti ti-trash"></i></button>
               </div>
               {{else}}
@@ -210,6 +210,7 @@
   const orderId    = {{.order.ID}};
   const TOURS      = {{json .tours}};
   const CURRENT_ROOM_ID = {{if .order.RoomID}}{{.order.RoomID}}{{else}}null{{end}};
+  const CURRENCY_SYMBOL = { TRY: '₺', USD: '$', EUR: '€', GBP: '£', RUB: '₽', AZN: '₼' };
 
   // Комнаты и их цены зависят от выбранного тура — они живут в пивоте tour_rooms.
   function populateRoomSelect() {
@@ -221,7 +222,7 @@
     (tour.rooms || []).forEach(r => {
       const o = document.createElement('option');
       o.value = r.room_id;
-      o.textContent = `${r.code ? r.code + ' — ' : ''}${r.beds_count} yatak · ${r.price.toFixed(2)} ₺`;
+      o.textContent = `${r.code ? r.code + ' — ' : ''}${r.beds_count} yatak · ${r.price.toFixed(2)} ₼`;
       if (r.room_id === CURRENT_ROOM_ID) o.selected = true;
       roomEl.appendChild(o);
     });
@@ -365,7 +366,7 @@
           <div class="flex-grow-1 min-w-0">
             <p class="fw-semibold mb-0">${d.discount_category_name || ''}</p>
           </div>
-          <span class="fw-semibold text-warning text-nowrap">-${parseFloat(d.amount).toFixed(2)} ₺</span>
+          <span class="fw-semibold text-warning text-nowrap">-${parseFloat(d.amount).toFixed(2)} ₼</span>
           <button type="button" class="btn btn-icon btn-sm btn-light text-danger" onclick="deleteDiscount(${d.id})"><i class="ti ti-trash"></i></button>
         </div>`).join('');
     } catch { showToast('✕ İndirimler yüklenemedi', 'danger'); }
@@ -390,7 +391,7 @@
             <p class="fw-semibold mb-0 text-truncate">${inc.name}</p>
             <p class="small text-secondary mb-0">${inc.income_category_name || ''} · ${inc.account_name || ''} · ${inc.date ? inc.date.substring(0,10) : ''}</p>
           </div>
-          <span class="fw-semibold text-success text-nowrap">${parseFloat(inc.amount).toFixed(2)} ₺</span>
+          <span class="fw-semibold text-success text-nowrap">${parseFloat(inc.amount).toFixed(2)} ${CURRENCY_SYMBOL[inc.account_currency] || inc.account_currency || ''}</span>
           <button type="button" class="btn btn-icon btn-sm btn-light text-danger" onclick="deleteIncome(${inc.id})"><i class="ti ti-trash"></i></button>
         </div>`).join('');
     } catch { showToast('✕ Gelirler yüklenemedi', 'danger'); }

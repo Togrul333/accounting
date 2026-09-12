@@ -31,7 +31,7 @@ func NewExpenseRepository(db *gorm.DB) ExpenseRepository {
 const expenseSelectQuery = `
 	SELECT e.id, e.name, e.amount, e.date,
 	       e.expense_category_id, c.name AS expense_category_name,
-	       e.account_id, a.name AS account_name,
+	       e.account_id, a.name AS account_name, a.currency AS account_currency,
 	       e.tour_id, t.code AS tour_code,
 	       e.bank_ref, e.counterparty, e.counterparty_tax_id,
 	       e.created_at, e.updated_at

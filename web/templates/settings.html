@@ -60,10 +60,10 @@
 
             <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-3 active"
                     data-bs-toggle="pill" data-bs-target="#pane-rates" role="tab">
-              <span class="settings-nav-icon"><i class="ti ti-currency-lira"></i></span>
+              <span class="settings-nav-icon"><i class="ti ti-arrows-exchange"></i></span>
               <span class="flex-grow-1 text-start">
                 <span class="d-block fw-semibold">Döviz Kurları</span>
-                <span class="d-block small text-secondary">USD · EUR · GBP</span>
+                <span class="d-block small text-secondary">USD · TRY · EUR · GBP</span>
               </span>
             </button>
 
@@ -124,27 +124,34 @@
         <div class="card">
           <div class="card-header bg-transparent px-4 py-3">
             <h3 class="h6 mb-0">Döviz Kurları</h3>
-            <p class="small text-secondary mb-0 mt-1">1 birim yabancı para = kaç ₺ (Türk Lirası)</p>
+            <p class="small text-secondary mb-0 mt-1">1 birim yabancı para = kaç ₼ (Manat)</p>
           </div>
           <div class="card-body">
 
             <div class="row g-3">
-              <div class="col-md-4 col-12">
-                <label class="form-label">USD → TRY</label>
+              <div class="col-md-6 col-lg-3 col-12">
+                <label class="form-label">USD → AZN</label>
                 <div class="input-group">
                   <span class="input-group-text bg-primary bg-opacity-10 text-primary fw-bold">$</span>
                   <input type="number" step="0.01" min="0" id="rate-usd" class="form-control" placeholder="0.00" value="{{printf "%.4f" .rates.USD}}">
                 </div>
               </div>
-              <div class="col-md-4 col-12">
-                <label class="form-label">EUR → TRY</label>
+              <div class="col-md-6 col-lg-3 col-12">
+                <label class="form-label">TRY → AZN</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-danger bg-opacity-10 text-danger fw-bold">₺</span>
+                  <input type="number" step="0.01" min="0" id="rate-try" class="form-control" placeholder="0.00" value="{{printf "%.4f" .rates.TRY}}">
+                </div>
+              </div>
+              <div class="col-md-6 col-lg-3 col-12">
+                <label class="form-label">EUR → AZN</label>
                 <div class="input-group">
                   <span class="input-group-text bg-info bg-opacity-10 text-info fw-bold">€</span>
                   <input type="number" step="0.01" min="0" id="rate-eur" class="form-control" placeholder="0.00" value="{{printf "%.4f" .rates.EUR}}">
                 </div>
               </div>
-              <div class="col-md-4 col-12">
-                <label class="form-label">GBP → TRY</label>
+              <div class="col-md-6 col-lg-3 col-12">
+                <label class="form-label">GBP → AZN</label>
                 <div class="input-group">
                   <span class="input-group-text bg-warning bg-opacity-10 text-warning fw-bold">£</span>
                   <input type="number" step="0.01" min="0" id="rate-gbp" class="form-control" placeholder="0.00" value="{{printf "%.4f" .rates.GBP}}">
@@ -808,11 +815,12 @@ function saveRates() {
   var usd = parseFloat(document.getElementById('rate-usd').value) || 0;
   var eur = parseFloat(document.getElementById('rate-eur').value) || 0;
   var gbp = parseFloat(document.getElementById('rate-gbp').value) || 0;
+  var try_ = parseFloat(document.getElementById('rate-try').value) || 0;
 
   fetch('/api/settings/rates', {
     method: 'PUT',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({usd: usd, eur: eur, gbp: gbp})
+    body: JSON.stringify({usd: usd, eur: eur, gbp: gbp, try: try_})
   })
   .then(function(r) {
     if (r.ok) showToast('✓ Kurlar kaydedildi', 'success');

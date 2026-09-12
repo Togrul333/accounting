@@ -50,7 +50,7 @@
             </div>
             <div>
               <h2 class="mb-3 fs-6">Toplam Tutar</h2>
-              <h3 class="fw-bold mb-0">{{printf "%.2f" .total}} ₺</h3>
+              <h3 class="fw-bold mb-0">{{printf "%.2f" .total}} ₼</h3>
             </div>
           </div>
         </div>
@@ -87,7 +87,7 @@
                     <span class="text-secondary">—</span>
                     {{end}}
                   </td>
-                  <td class="text-end fw-semibold">{{printf "%.2f" .Amount}} ₺</td>
+                  <td class="text-end fw-semibold">{{printf "%.2f" .Amount}} ₼</td>
                   <td>
                     <div class="d-flex gap-1">
                       <button type="button" class="btn btn-icon btn-sm btn-light" title="Düzenle" onclick='openEdit({{json .}})'>

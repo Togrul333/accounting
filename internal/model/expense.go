@@ -26,6 +26,7 @@ type Expense struct {
 	ExpenseCategoryName string    `json:"expense_category_name,omitempty" gorm:"<-:false"`
 	AccountID           int64     `json:"account_id"`
 	AccountName         string    `json:"account_name,omitempty" gorm:"<-:false"`
+	AccountCurrency     string    `json:"account_currency,omitempty" gorm:"<-:false"`
 	TourID              *int64    `json:"tour_id"`
 	TourCode            string    `json:"tour_code,omitempty" gorm:"<-:false"`
 	BankRef             string    `json:"bank_ref,omitempty"`

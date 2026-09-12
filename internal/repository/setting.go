@@ -30,7 +30,7 @@ func (r *settingRepo) GetRates(ctx context.Context) (model.ExchangeRates, error)
 		Value string `gorm:"column:value"`
 	}
 	var rows []row
-	if err := r.db.WithContext(ctx).Raw("SELECT `key`, `value` FROM settings WHERE `key` IN ('rate_usd','rate_eur','rate_gbp')").Scan(&rows).Error; err != nil {
+	if err := r.db.WithContext(ctx).Raw("SELECT `key`, `value` FROM settings WHERE `key` IN ('rate_usd','rate_eur','rate_gbp','rate_try')").Scan(&rows).Error; err != nil {
 		return model.ExchangeRates{}, err
 	}
 	var rates model.ExchangeRates
@@ -43,6 +43,8 @@ func (r *settingRepo) GetRates(ctx context.Context) (model.ExchangeRates, error)
 			rates.EUR = v
 		case "rate_gbp":
 			rates.GBP = v
+		case "rate_try":
+			rates.TRY = v
 		}
 	}
 	return rates, nil
@@ -87,6 +89,7 @@ func (r *settingRepo) UpdateRates(ctx context.Context, req model.UpdateRatesRequ
 		"rate_usd": req.USD,
 		"rate_eur": req.EUR,
 		"rate_gbp": req.GBP,
+		"rate_try": req.TRY,
 	}
 	for key, val := range updates {
 		if err := r.db.WithContext(ctx).Exec(

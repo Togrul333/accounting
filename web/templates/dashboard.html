@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — Hisar Tour</title>
   <link rel="stylesheet" href="/static/theme/assets/css/main.css">
+  <style>
+    .stat-card {
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 .5rem 1.25rem rgba(0,0,0,.08);
+    }
+  </style>
 </head>
 <body>
 
@@ -26,62 +35,107 @@
     <!-- Üst stat kartları -->
     <div class="row g-3 mb-3">
 
-      <div class="col-lg-3 col-12">
-        <div class="card p-4 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-2 h-100">
-          <div class="d-flex gap-3">
-            <div class="icon-shape icon-md bg-primary text-white rounded-2">
-              <i class="ti ti-building-bank fs-4"></i>
-            </div>
-            <div>
-              <h2 class="mb-3 fs-6">Toplam Bakiye</h2>
-              <h3 class="fw-bold mb-0">{{printf "%.2f" .totalBalance}} ₺</h3>
-              <p class="text-primary mb-0 small">{{.accountCount}} hesap</p>
+      <div class="col-lg-3 col-md-6 col-12">
+        <div class="card p-4 h-100 stat-card bg-primary bg-opacity-10 border border-primary border-opacity-25">
+          <div class="d-flex align-items-start justify-content-between mb-3">
+            <p class="small text-uppercase fw-semibold text-primary mb-0">Toplam Bakiye</p>
+            <div class="icon-shape icon-md bg-primary text-white rounded-circle">
+              <i class="ti ti-building-bank fs-5"></i>
             </div>
           </div>
+          {{if eq (len .balanceTotals) 1}}
+          {{range .balanceTotals}}
+          <h3 class="fw-bold mb-0 text-primary">{{printf "%.2f" .Total}} <span class="fs-6 fw-semibold">{{currencySymbol .Currency}}</span></h3>
+          {{end}}
+          {{else}}
+          <div class="d-flex flex-column gap-1">
+            {{range .balanceTotals}}
+            <div class="d-flex align-items-baseline justify-content-between">
+              <span class="fw-bold fs-5 text-primary">{{printf "%.2f" .Total}}</span>
+              <span class="small fw-semibold text-primary">{{currencySymbol .Currency}}</span>
+            </div>
+            {{end}}
+          </div>
+          {{end}}
+          <p class="text-primary mb-0 small mt-2 pt-2 border-top border-primary border-opacity-25">{{.accountCount}} hesap</p>
         </div>
       </div>
 
-      <div class="col-lg-3 col-12">
-        <div class="card p-4 bg-success bg-opacity-10 border border-success border-opacity-25 rounded-2 h-100">
-          <div class="d-flex gap-3">
-            <div class="icon-shape icon-md bg-success text-white rounded-2">
-              <i class="ti ti-trending-up fs-4"></i>
-            </div>
-            <div>
-              <h2 class="mb-3 fs-6">Toplam Gelir</h2>
-              <h3 class="fw-bold mb-0">+{{printf "%.2f" .totalIncome}} ₺</h3>
-              <p class="text-success mb-0 small">{{.incomeCount}} kayıt</p>
+      <div class="col-lg-3 col-md-6 col-12">
+        <div class="card p-4 h-100 stat-card bg-success bg-opacity-10 border border-success border-opacity-25">
+          <div class="d-flex align-items-start justify-content-between mb-3">
+            <p class="small text-uppercase fw-semibold text-success mb-0">Toplam Gelir</p>
+            <div class="icon-shape icon-md bg-success text-white rounded-circle">
+              <i class="ti ti-trending-up fs-5"></i>
             </div>
           </div>
+          {{if eq (len .incomeTotals) 1}}
+          {{range .incomeTotals}}
+          <h3 class="fw-bold mb-0 text-success">+{{printf "%.2f" .Total}} <span class="fs-6 fw-semibold">{{currencySymbol .Currency}}</span></h3>
+          {{end}}
+          {{else}}
+          <div class="d-flex flex-column gap-1">
+            {{range .incomeTotals}}
+            <div class="d-flex align-items-baseline justify-content-between">
+              <span class="fw-bold fs-5 text-success">+{{printf "%.2f" .Total}}</span>
+              <span class="small fw-semibold text-success">{{currencySymbol .Currency}}</span>
+            </div>
+            {{end}}
+          </div>
+          {{end}}
+          <p class="text-success mb-0 small mt-2 pt-2 border-top border-success border-opacity-25">{{.incomeCount}} kayıt</p>
         </div>
       </div>
 
-      <div class="col-lg-3 col-12">
-        <div class="card p-4 bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-2 h-100">
-          <div class="d-flex gap-3">
-            <div class="icon-shape icon-md bg-danger text-white rounded-2">
-              <i class="ti ti-trending-down fs-4"></i>
-            </div>
-            <div>
-              <h2 class="mb-3 fs-6">Toplam Gider</h2>
-              <h3 class="fw-bold mb-0">-{{printf "%.2f" .totalExpense}} ₺</h3>
-              <p class="text-danger mb-0 small">{{.expenseCount}} kayıt</p>
+      <div class="col-lg-3 col-md-6 col-12">
+        <div class="card p-4 h-100 stat-card bg-danger bg-opacity-10 border border-danger border-opacity-25">
+          <div class="d-flex align-items-start justify-content-between mb-3">
+            <p class="small text-uppercase fw-semibold text-danger mb-0">Toplam Gider</p>
+            <div class="icon-shape icon-md bg-danger text-white rounded-circle">
+              <i class="ti ti-trending-down fs-5"></i>
             </div>
           </div>
+          {{if eq (len .expenseTotals) 1}}
+          {{range .expenseTotals}}
+          <h3 class="fw-bold mb-0 text-danger">-{{printf "%.2f" .Total}} <span class="fs-6 fw-semibold">{{currencySymbol .Currency}}</span></h3>
+          {{end}}
+          {{else}}
+          <div class="d-flex flex-column gap-1">
+            {{range .expenseTotals}}
+            <div class="d-flex align-items-baseline justify-content-between">
+              <span class="fw-bold fs-5 text-danger">-{{printf "%.2f" .Total}}</span>
+              <span class="small fw-semibold text-danger">{{currencySymbol .Currency}}</span>
+            </div>
+            {{end}}
+          </div>
+          {{end}}
+          <p class="text-danger mb-0 small mt-2 pt-2 border-top border-danger border-opacity-25">{{.expenseCount}} kayıt</p>
         </div>
       </div>
 
-      <div class="col-lg-3 col-12">
-        <div class="card p-4 {{if ge .net 0.0}}bg-success{{else}}bg-danger{{end}} bg-opacity-10 border {{if ge .net 0.0}}border-success{{else}}border-danger{{end}} border-opacity-25 rounded-2 h-100">
-          <div class="d-flex gap-3">
-            <div class="icon-shape icon-md {{if ge .net 0.0}}bg-success{{else}}bg-danger{{end}} text-white rounded-2">
-              <i class="ti ti-report-money fs-4"></i>
-            </div>
-            <div>
-              <h2 class="mb-3 fs-6">Net (Gelir − Gider)</h2>
-              <h3 class="fw-bold mb-0 {{if ge .net 0.0}}text-success{{else}}text-danger{{end}}">{{if ge .net 0.0}}+{{end}}{{printf "%.2f" .net}} ₺</h3>
+      <div class="col-lg-3 col-md-6 col-12">
+        <div class="card p-4 h-100 stat-card bg-primary bg-opacity-10 border border-primary border-opacity-25">
+          <div class="d-flex align-items-start justify-content-between mb-3">
+            <p class="small text-uppercase fw-semibold text-primary mb-0">Net (Gelir − Gider)</p>
+            <div class="icon-shape icon-md bg-primary text-white rounded-circle">
+              <i class="ti ti-report-money fs-5"></i>
             </div>
           </div>
+          {{if eq (len .netTotals) 1}}
+          {{range .netTotals}}
+          <h3 class="fw-bold mb-0 {{if ge .Total 0.0}}text-success{{else}}text-danger{{end}}">{{if ge .Total 0.0}}+{{end}}{{printf "%.2f" .Total}} <span class="fs-6 fw-semibold">{{currencySymbol .Currency}}</span></h3>
+          {{end}}
+          {{else}}
+          <div class="d-flex flex-column gap-1">
+            {{range .netTotals}}
+            <div class="d-flex align-items-baseline justify-content-between">
+              <span class="fw-bold fs-5 {{if ge .Total 0.0}}text-success{{else}}text-danger{{end}}">{{if ge .Total 0.0}}+{{end}}{{printf "%.2f" .Total}}</span>
+              <span class="small fw-semibold text-primary">{{currencySymbol .Currency}}</span>
+            </div>
+            {{end}}
+          </div>
+          {{end}}
+          <p class="text-primary mb-0 small mt-2 pt-2 border-top border-primary border-opacity-25">Gelir − Gider</p>
         </div>
       </div>
 
@@ -210,9 +264,9 @@
                   <td>{{.CategoryName}}</td>
                   <td>
                     {{if .IsIncome}}
-                    <span class="text-success fw-semibold">+{{printf "%.2f" .Amount}} ₺</span>
+                    <span class="text-success fw-semibold">+{{printf "%.2f" .Amount}} {{currencySymbol .AccountCurrency}}</span>
                     {{else}}
-                    <span class="text-danger fw-semibold">-{{printf "%.2f" .Amount}} ₺</span>
+                    <span class="text-danger fw-semibold">-{{printf "%.2f" .Amount}} {{currencySymbol .AccountCurrency}}</span>
                     {{end}}
                   </td>
                 </tr>

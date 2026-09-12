@@ -59,19 +59,19 @@
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Tur Fiyatı</p>
           {{if .order.DiscountTotal}}
           <p class="mb-1">
-            <span class="text-decoration-line-through text-secondary">{{printf "%.2f" .order.TourPrice}} ₺</span>
+            <span class="text-decoration-line-through text-secondary">{{printf "%.2f" .order.TourPrice}} ₼</span>
           </p>
-          <p class="fw-bold mb-2 text-primary">{{printf "%.2f" .order.DiscountedPrice}} ₺</p>
+          <p class="fw-bold mb-2 text-primary">{{printf "%.2f" .order.DiscountedPrice}} ₼</p>
           <div class="d-flex justify-content-between small text-warning mb-1">
             <span>İndirim</span>
-            <span>-{{printf "%.2f" .order.DiscountTotal}} ₺</span>
+            <span>-{{printf "%.2f" .order.DiscountTotal}} ₼</span>
           </div>
           {{else}}
-          <p class="fw-bold mb-2">{{printf "%.2f" .order.TourPrice}} ₺</p>
+          <p class="fw-bold mb-2">{{printf "%.2f" .order.TourPrice}} ₼</p>
           {{end}}
           <div class="d-flex justify-content-between small text-secondary">
             <span>{{if .order.RoomCode}}Oda ({{.order.RoomCode}}){{else}}Oda{{end}}</span>
-            <span>{{printf "%.2f" .order.RoomPrice}} ₺</span>
+            <span>{{printf "%.2f" .order.RoomPrice}} ₼</span>
           </div>
         </div>
       </div>
@@ -82,19 +82,19 @@
       <div class="col-lg-3 col-6">
         <div class="card p-4">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Toplam Gelir</p>
-          <p class="fw-bold mb-0 text-success">{{printf "%.2f" .order.IncomeTotal}} ₺</p>
+          <p class="fw-bold mb-0 text-success">{{printf "%.2f" .order.IncomeTotal}} ₼</p>
         </div>
       </div>
       <div class="col-lg-3 col-6">
         <div class="card p-4">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Toplam İndirim</p>
-          <p class="fw-bold mb-0 text-warning">{{printf "%.2f" .order.DiscountTotal}} ₺</p>
+          <p class="fw-bold mb-0 text-warning">{{printf "%.2f" .order.DiscountTotal}} ₼</p>
         </div>
       </div>
       <div class="col-lg-3 col-6">
         <div class="card p-4 border-primary border-opacity-25">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Net Tutar</p>
-          <p class="fw-bold mb-0 text-primary">{{printf "%.2f" .order.NetTotal}} ₺</p>
+          <p class="fw-bold mb-0 text-primary">{{printf "%.2f" .order.NetTotal}} ₼</p>
           <p class="small text-secondary mb-0 mt-1">
             {{printf "%.2f" .order.IncomeTotal}}{{if .order.DiscountTotal}} − {{printf "%.2f" .order.DiscountTotal}}{{end}}
           </p>
@@ -103,7 +103,7 @@
       <div class="col-lg-3 col-6">
         <div class="card p-4 {{if gt .order.RemainingTotal 0.0}}border-danger border-opacity-25{{else}}border-success border-opacity-25{{end}}">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Kalan</p>
-          <p class="fw-bold mb-0 {{if gt .order.RemainingTotal 0.0}}text-danger{{else}}text-success{{end}}">{{printf "%.2f" .order.RemainingTotal}} ₺</p>
+          <p class="fw-bold mb-0 {{if gt .order.RemainingTotal 0.0}}text-danger{{else}}text-success{{end}}">{{printf "%.2f" .order.RemainingTotal}} ₼</p>
           <p class="small text-secondary mb-0 mt-1">
             {{if gt .order.RemainingTotal 0.0}}Ödenmesi gereken{{else}}Ödeme tamamlandı{{end}}
           </p>
@@ -133,7 +133,7 @@
                   <p class="fw-semibold mb-0">{{.Name}}</p>
                   <p class="small text-secondary mb-0">{{.IncomeCategoryName}} · {{.AccountName}} · {{.Date.Format "02.01.2006"}}</p>
                 </div>
-                <span class="fw-semibold text-success text-nowrap">{{printf "%.2f" .Amount}} ₺</span>
+                <span class="fw-semibold text-success text-nowrap">{{printf "%.2f" .Amount}} {{currencySymbol .AccountCurrency}}</span>
                 <button type="button" class="btn btn-icon btn-sm btn-light text-danger" onclick="deleteIncome({{.ID}})"><i class="ti ti-trash"></i></button>
               </div>
               {{else}}
@@ -203,7 +203,7 @@
                 <div class="flex-grow-1 min-w-0">
                   <p class="fw-semibold mb-0">{{.DiscountCategoryName}}</p>
                 </div>
-                <span class="fw-semibold text-warning text-nowrap">-{{printf "%.2f" .Amount}} ₺</span>
+                <span class="fw-semibold text-warning text-nowrap">-{{printf "%.2f" .Amount}} ₼</span>
                 <button type="button" class="btn btn-icon btn-sm btn-light text-danger" onclick="deleteDiscount({{.ID}})"><i class="ti ti-trash"></i></button>
               </div>
               {{else}}

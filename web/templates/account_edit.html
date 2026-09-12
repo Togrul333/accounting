@@ -38,7 +38,7 @@
             <div>
               <p class="small text-secondary text-uppercase fw-semibold mb-1">Bakiye</p>
               <p class="fw-bold mb-0 fs-4 {{if lt .account.Balance 0.0}}text-danger{{else}}text-primary{{end}}">
-                {{printf "%.2f" .account.Balance}} {{.account.Currency}}
+                {{printf "%.2f" .account.Balance}} {{currencySymbol .account.Currency}}
               </p>
               <p class="small text-secondary mb-0">Gelirler − Giderler</p>
             </div>
@@ -349,6 +349,7 @@
   const accountId = {{.account.ID}};
   const INCOMES  = {{json .incomes}};
   const EXPENSES = {{json .expenses}};
+  const CURRENCY_SYMBOL = {{json (currencySymbol .account.Currency)}};
   const PER_PAGE = 10;
   let importModal;
   document.addEventListener('DOMContentLoaded', () => {
@@ -657,7 +658,7 @@
     document.getElementById('curDate').textContent  = row.date || '—';
     document.getElementById('curRef').textContent    = row.ref || '—';
     document.getElementById('curRefBadge').innerHTML = savedBadge(row.ref, importedGelirRefs);
-    document.getElementById('curAmount').textContent = '+' + Number(row.credit).toFixed(2) + ' ₼';
+    document.getElementById('curAmount').textContent = '+' + Number(row.credit).toFixed(2) + ' ' + CURRENCY_SYMBOL;
     document.getElementById('curCP').textContent      = row.cp || '—';
     document.getElementById('curDesc').textContent    = row.desc || '—';
 
@@ -751,7 +752,7 @@
     document.getElementById('curGiderDate').textContent   = row.date || '—';
     document.getElementById('curGiderRef').textContent    = row.ref || '—';
     document.getElementById('curGiderRefBadge').innerHTML = savedBadge(row.ref, importedGiderRefs);
-    document.getElementById('curGiderAmount').textContent = '−' + Number(row.debit).toFixed(2) + ' ₼';
+    document.getElementById('curGiderAmount').textContent = '−' + Number(row.debit).toFixed(2) + ' ' + CURRENCY_SYMBOL;
     document.getElementById('curGiderCP').textContent      = row.cp || '—';
     document.getElementById('curGiderDesc').textContent    = row.desc || '—';
 
@@ -827,9 +828,9 @@
     document.getElementById('importMeta').textContent =
       `IBAN: ${data.iban} · ${data.gelirler.length} gelir · ${data.giderler.length} gider`;
     document.getElementById('gelirCount').textContent = data.gelirler.length;
-    document.getElementById('gelirTotal').textContent = data.total_credit.toFixed(2) + ' ₼';
+    document.getElementById('gelirTotal').textContent = data.total_credit.toFixed(2) + ' ' + CURRENCY_SYMBOL;
     document.getElementById('giderCount').textContent = data.giderler.length;
-    document.getElementById('giderTotal').textContent = data.total_debit.toFixed(2) + ' ₼';
+    document.getElementById('giderTotal').textContent = data.total_debit.toFixed(2) + ' ' + CURRENCY_SYMBOL;
 
     document.getElementById('bulkIncomeCat').innerHTML    = catOptions(INCOME_CATS);
     document.getElementById('bulkIncomeTour').innerHTML   = tourOptions();

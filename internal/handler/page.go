@@ -15,11 +15,12 @@ import (
 )
 
 type dashboardTransaction struct {
-	IsIncome     bool
-	Name         string
-	CategoryName string
-	Amount       float64
-	Date         time.Time
+	IsIncome        bool
+	Name            string
+	CategoryName    string
+	Amount          float64
+	AccountCurrency string
+	Date            time.Time
 }
 
 type PageHandler struct {
@@ -248,27 +249,56 @@ func (h *PageHandler) Dashboard(c *gin.Context) {
 	if accounts == nil {
 		accounts = []model.Account{}
 	}
-	var totalBalance float64
+	currencyByAccountID := map[int64]string{}
+	balanceByCurrency := map[string]float64{}
 	for _, a := range accounts {
-		totalBalance += a.Balance
+		currencyByAccountID[a.ID] = a.Currency
+		balanceByCurrency[a.Currency] += a.Balance
 	}
 
 	incomes, _ := h.incomeSvc.GetAll(ctx)
 	if incomes == nil {
 		incomes = []model.Income{}
 	}
-	var totalIncome float64
+	incomeByCurrency := map[string]float64{}
 	for _, inc := range incomes {
-		totalIncome += inc.Amount
+		incomeByCurrency[currencyByAccountID[inc.AccountID]] += inc.Amount
 	}
 
 	expenses, _ := h.expenseSvc.GetAll(ctx)
 	if expenses == nil {
 		expenses = []model.Expense{}
 	}
-	var totalExpense float64
+	expenseByCurrency := map[string]float64{}
 	for _, exp := range expenses {
-		totalExpense += exp.Amount
+		expenseByCurrency[currencyByAccountID[exp.AccountID]] += exp.Amount
+	}
+
+	currencySet := map[string]bool{}
+	for cur := range balanceByCurrency {
+		currencySet[cur] = true
+	}
+	for cur := range incomeByCurrency {
+		currencySet[cur] = true
+	}
+	for cur := range expenseByCurrency {
+		currencySet[cur] = true
+	}
+	currencies := make([]string, 0, len(currencySet))
+	for cur := range currencySet {
+		currencies = append(currencies, cur)
+	}
+	sort.Strings(currencies)
+
+	balanceTotals := make([]gin.H, 0, len(currencies))
+	incomeTotals := make([]gin.H, 0, len(currencies))
+	expenseTotals := make([]gin.H, 0, len(currencies))
+	netTotals := make([]gin.H, 0, len(currencies))
+	for _, cur := range currencies {
+		balanceTotals = append(balanceTotals, gin.H{"Currency": cur, "Total": balanceByCurrency[cur]})
+		incomeTotals = append(incomeTotals, gin.H{"Currency": cur, "Total": incomeByCurrency[cur]})
+		expenseTotals = append(expenseTotals, gin.H{"Currency": cur, "Total": expenseByCurrency[cur]})
+		netTotals = append(netTotals, gin.H{"Currency": cur, "Total": incomeByCurrency[cur] - expenseByCurrency[cur]})
 	}
 
 	tours, _ := h.tourSvc.GetAll(ctx)
@@ -302,20 +332,22 @@ func (h *PageHandler) Dashboard(c *gin.Context) {
 	var txs []dashboardTransaction
 	for _, inc := range incomes {
 		txs = append(txs, dashboardTransaction{
-			IsIncome:     true,
-			Name:         inc.Name,
-			CategoryName: inc.IncomeCategoryName,
-			Amount:       inc.Amount,
-			Date:         inc.Date,
+			IsIncome:        true,
+			Name:            inc.Name,
+			CategoryName:    inc.IncomeCategoryName,
+			Amount:          inc.Amount,
+			AccountCurrency: inc.AccountCurrency,
+			Date:            inc.Date,
 		})
 	}
 	for _, exp := range expenses {
 		txs = append(txs, dashboardTransaction{
-			IsIncome:     false,
-			Name:         exp.Name,
-			CategoryName: exp.ExpenseCategoryName,
-			Amount:       exp.Amount,
-			Date:         exp.Date,
+			IsIncome:        false,
+			Name:            exp.Name,
+			CategoryName:    exp.ExpenseCategoryName,
+			Amount:          exp.Amount,
+			AccountCurrency: exp.AccountCurrency,
+			Date:            exp.Date,
 		})
 	}
 	sort.Slice(txs, func(i, j int) bool {
@@ -328,13 +360,13 @@ func (h *PageHandler) Dashboard(c *gin.Context) {
 	c.HTML(http.StatusOK, "dashboard.html", gin.H{
 		"active":             "dashboard",
 		"user":               user,
-		"totalBalance":       totalBalance,
+		"balanceTotals":      balanceTotals,
 		"accountCount":       len(accounts),
-		"totalIncome":        totalIncome,
+		"incomeTotals":       incomeTotals,
 		"incomeCount":        len(incomes),
-		"totalExpense":       totalExpense,
+		"expenseTotals":      expenseTotals,
 		"expenseCount":       len(expenses),
-		"net":                totalIncome - totalExpense,
+		"netTotals":          netTotals,
 		"tourCount":          len(tours),
 		"activeTourCount":    activeTourCount,
 		"clientCount":        len(clients),
@@ -361,14 +393,23 @@ func (h *PageHandler) Accounts(c *gin.Context) {
 		accounts = []model.Account{}
 	}
 
-	var total float64
+	totalsByCurrency := map[string]float64{}
 	for _, a := range accounts {
-		total += a.Balance
+		totalsByCurrency[a.Currency] += a.Balance
+	}
+	currencies := make([]string, 0, len(totalsByCurrency))
+	for cur := range totalsByCurrency {
+		currencies = append(currencies, cur)
+	}
+	sort.Strings(currencies)
+	totals := make([]gin.H, 0, len(currencies))
+	for _, cur := range currencies {
+		totals = append(totals, gin.H{"Currency": cur, "Total": totalsByCurrency[cur]})
 	}
 
 	c.HTML(http.StatusOK, "accounts.html", gin.H{
 		"accounts": accounts,
-		"total":    total,
+		"totals":   totals,
 		"active":   "accounts",
 		"user":     user,
 	})
@@ -551,9 +592,18 @@ func (h *PageHandler) Incomes(c *gin.Context) {
 		tours = []model.Tour{}
 	}
 
-	var total float64
+	totalsByCurrency := map[string]float64{}
 	for _, inc := range incomes {
-		total += inc.Amount
+		totalsByCurrency[inc.AccountCurrency] += inc.Amount
+	}
+	currencies := make([]string, 0, len(totalsByCurrency))
+	for cur := range totalsByCurrency {
+		currencies = append(currencies, cur)
+	}
+	sort.Strings(currencies)
+	totals := make([]gin.H, 0, len(currencies))
+	for _, cur := range currencies {
+		totals = append(totals, gin.H{"Currency": cur, "Total": totalsByCurrency[cur]})
 	}
 
 	c.HTML(http.StatusOK, "incomes.html", gin.H{
@@ -561,7 +611,7 @@ func (h *PageHandler) Incomes(c *gin.Context) {
 		"categories": cats,
 		"accounts":   accounts,
 		"tours":      tours,
-		"total":      total,
+		"totals":     totals,
 		"active":     "incomes",
 		"user":       h.currentUser(ctx),
 	})
@@ -1080,9 +1130,18 @@ func (h *PageHandler) Expenses(c *gin.Context) {
 		tours = []model.Tour{}
 	}
 
-	var total float64
+	totalsByCurrency := map[string]float64{}
 	for _, exp := range expenses {
-		total += exp.Amount
+		totalsByCurrency[exp.AccountCurrency] += exp.Amount
+	}
+	currencies := make([]string, 0, len(totalsByCurrency))
+	for cur := range totalsByCurrency {
+		currencies = append(currencies, cur)
+	}
+	sort.Strings(currencies)
+	totals := make([]gin.H, 0, len(currencies))
+	for _, cur := range currencies {
+		totals = append(totals, gin.H{"Currency": cur, "Total": totalsByCurrency[cur]})
 	}
 
 	c.HTML(http.StatusOK, "expenses.html", gin.H{
@@ -1090,7 +1149,7 @@ func (h *PageHandler) Expenses(c *gin.Context) {
 		"categories": cats,
 		"accounts":   accounts,
 		"tours":      tours,
-		"total":      total,
+		"totals":     totals,
 		"active":     "expenses",
 		"user":       h.currentUser(ctx),
 	})

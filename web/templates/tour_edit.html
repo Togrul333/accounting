@@ -62,7 +62,7 @@
                   <div class="d-flex align-items-center gap-2">
                     <input class="form-check-input mt-0 room-check" type="checkbox" value="{{.ID}}" id="room-{{.ID}}" {{if index $.selectedRoomIDs .ID}}checked{{end}} onchange="syncRoomPrice({{.ID}})">
                     <label class="form-label mb-0 small flex-grow-1" for="room-{{.ID}}">{{if .Code}}{{.Code}} — {{end}}{{.BedsCount}} yatak</label>
-                    <input id="roomPrice-{{.ID}}" type="number" step="0.01" min="0" class="form-control form-control-sm" style="max-width:120px;" placeholder="₺"
+                    <input id="roomPrice-{{.ID}}" type="number" step="0.01" min="0" class="form-control form-control-sm" style="max-width:120px;" placeholder="₼"
                            {{if index $.selectedRoomIDs .ID}}value="{{printf "%.2f" (index $.roomPrices .ID)}}"{{else}}disabled{{end}}>
                   </div>
                   {{end}}
@@ -105,8 +105,8 @@
                     <div class="col-6"><input id="nfDeparture" type="datetime-local" class="form-control form-control-sm"></div>
                   </div>
                   <div class="row g-2 align-items-center">
-                    <div class="col-4"><input id="nfPrice" type="number" step="0.01" min="0" class="form-control form-control-sm" placeholder="Fiyat ₺"></div>
-                    <div class="col-4"><input id="nfDeposit" type="number" step="0.01" min="0" class="form-control form-control-sm" placeholder="Depozito ₺"></div>
+                    <div class="col-4"><input id="nfPrice" type="number" step="0.01" min="0" class="form-control form-control-sm" placeholder="Fiyat ₼"></div>
+                    <div class="col-4"><input id="nfDeposit" type="number" step="0.01" min="0" class="form-control form-control-sm" placeholder="Depozito ₼"></div>
                     <div class="col-4"><input id="nfPax" type="number" min="1" class="form-control form-control-sm" placeholder="Koltuk"></div>
                   </div>
                   <button type="button" class="btn btn-sm btn-primary w-100 mt-2" onclick="createFlight()">Ekle</button>
@@ -191,7 +191,7 @@
       wrap.innerHTML = `
         <input class="form-check-input mt-0 room-check" type="checkbox" value="${room.id}" id="room-${room.id}" checked onchange="syncRoomPrice(${room.id})">
         <label class="form-label mb-0 small flex-grow-1" for="room-${room.id}">${label}</label>
-        <input id="roomPrice-${room.id}" type="number" step="0.01" min="0" class="form-control form-control-sm" style="max-width:120px;" placeholder="₺">
+        <input id="roomPrice-${room.id}" type="number" step="0.01" min="0" class="form-control form-control-sm" style="max-width:120px;" placeholder="₼">
       `;
       list.appendChild(wrap);
       document.getElementById('nrCode').value = '';

@@ -1,15 +1,18 @@
 package model
 
+// ExchangeRates — 1 birim yabancı para = kaç AZN (manat).
 type ExchangeRates struct {
 	USD float64 `json:"usd"`
 	EUR float64 `json:"eur"`
 	GBP float64 `json:"gbp"`
+	TRY float64 `json:"try"`
 }
 
 type UpdateRatesRequest struct {
 	USD float64 `json:"usd"`
 	EUR float64 `json:"eur"`
 	GBP float64 `json:"gbp"`
+	TRY float64 `json:"try"`
 }
 
 // Ключи настроек Telegram в таблице settings.

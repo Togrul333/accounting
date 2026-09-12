@@ -32,7 +32,7 @@ func NewIncomeRepository(db *gorm.DB) IncomeRepository {
 const incomeSelectQuery = `
 	SELECT i.id, i.name, i.amount, i.date,
 	       i.income_category_id, c.name AS income_category_name,
-	       i.account_id, a.name AS account_name,
+	       i.account_id, a.name AS account_name, a.currency AS account_currency,
 	       i.tour_id, t.code AS tour_code,
 	       i.order_id,
 	       i.bank_ref, i.counterparty, i.counterparty_tax_id,

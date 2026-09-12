@@ -21,6 +21,27 @@ import (
 	"accounting/internal/service"
 )
 
+// currencySymbol her hesap para biriminin kodunu (accounts.currency) kullanıcıya
+// gösterilecek sembole çevirir. Bilinmeyen bir kod verilirse kodun kendisi döner.
+func currencySymbol(code string) string {
+	switch code {
+	case "TRY":
+		return "₺"
+	case "USD":
+		return "$"
+	case "EUR":
+		return "€"
+	case "GBP":
+		return "£"
+	case "RUB":
+		return "₽"
+	case "AZN":
+		return "₼"
+	default:
+		return code
+	}
+}
+
 func main() {
 	godotenv.Load()
 
@@ -51,6 +72,7 @@ func main() {
 			}
 			return s[8:10] + "." + s[5:7] + "." + s[0:4]
 		},
+		"currencySymbol": currencySymbol,
 	}).ParseGlob("web/templates/*.html")
 	if err != nil {
 		log.Fatalf("şablon hatası: %v", err)

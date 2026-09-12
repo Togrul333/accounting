@@ -43,7 +43,7 @@
             {{range .tour.Rooms}}
             <div class="d-flex justify-content-between align-items-center">
               <span class="small">{{if .Code}}{{.Code}}{{else}}{{.BedsCount}} yatak{{end}}</span>
-              <span class="fw-bold text-primary">{{printf "%.2f" .Price}} ₺</span>
+              <span class="fw-bold text-primary">{{printf "%.2f" .Price}} ₼</span>
             </div>
             {{end}}
           </div>
@@ -75,7 +75,7 @@
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
               <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Gelir</p>
-              <h3 class="fw-bold mb-0 text-success">{{printf "%.2f" .incomeTotal}} ₺</h3>
+              <h3 class="fw-bold mb-0 text-success">{{printf "%.2f" .incomeTotal}} ₼</h3>
             </div>
             <div class="icon-shape icon-md bg-success bg-opacity-10 text-success rounded-2">
               <i class="ti ti-trending-up fs-4"></i>
@@ -89,7 +89,7 @@
               {{if gt .IncomeTotal 0.0}}
               <div class="d-flex align-items-center justify-content-between">
                 <span class="small text-secondary text-truncate">{{.ClientName}} · {{.IncomeCount}} gelir</span>
-                <span class="small fw-bold text-success text-nowrap">+{{printf "%.2f" .IncomeTotal}} ₺</span>
+                <span class="small fw-bold text-success text-nowrap">+{{printf "%.2f" .IncomeTotal}} ₼</span>
               </div>
               {{end}}
               {{end}}
@@ -107,7 +107,7 @@
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
               <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Gider</p>
-              <h3 class="fw-bold mb-0 text-danger">{{printf "%.2f" .expenseTotal}} ₺</h3>
+              <h3 class="fw-bold mb-0 text-danger">{{printf "%.2f" .expenseTotal}} ₼</h3>
             </div>
             <div class="icon-shape icon-md bg-danger bg-opacity-10 text-danger rounded-2">
               <i class="ti ti-trending-down fs-4"></i>
@@ -120,7 +120,7 @@
               {{range .expenses}}
               <div class="d-flex align-items-center justify-content-between">
                 <span class="small text-secondary text-truncate">{{.Name}} · {{.ExpenseCategoryName}}</span>
-                <span class="small fw-bold text-danger text-nowrap">−{{printf "%.2f" .Amount}} ₺</span>
+                <span class="small fw-bold text-danger text-nowrap">−{{printf "%.2f" .Amount}} {{currencySymbol .AccountCurrency}}</span>
               </div>
               {{end}}
             </div>
@@ -137,7 +137,7 @@
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
               <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam İndirimler</p>
-              <h3 class="fw-bold mb-0 text-warning">{{printf "%.2f" .discountTotal}} ₺</h3>
+              <h3 class="fw-bold mb-0 text-warning">{{printf "%.2f" .discountTotal}} ₼</h3>
             </div>
             <div class="icon-shape icon-md bg-warning bg-opacity-10 text-warning rounded-2">
               <i class="ti ti-discount-2 fs-4"></i>
@@ -151,7 +151,7 @@
               {{if gt .DiscountTotal 0.0}}
               <div class="d-flex align-items-center justify-content-between">
                 <span class="small text-secondary text-truncate">{{.ClientName}} · {{.DiscountCount}} indirim</span>
-                <span class="small fw-bold text-warning text-nowrap">-{{printf "%.2f" .DiscountTotal}} ₺</span>
+                <span class="small fw-bold text-warning text-nowrap">-{{printf "%.2f" .DiscountTotal}} ₼</span>
               </div>
               {{end}}
               {{end}}
@@ -169,7 +169,7 @@
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
               <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Net Tutar</p>
-              <h3 class="fw-bold mb-0 {{if ge .netTotal 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .netTotal}} ₺</h3>
+              <h3 class="fw-bold mb-0 {{if ge .netTotal 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .netTotal}} ₼</h3>
             </div>
             <div class="icon-shape icon-md bg-primary bg-opacity-10 text-primary rounded-2">
               <i class="ti ti-report-money fs-4"></i>
@@ -179,19 +179,19 @@
           <div class="border-top pt-2 d-flex flex-column gap-1">
             <div class="d-flex align-items-center justify-content-between small">
               <span class="text-secondary">Toplam Gelir</span>
-              <span class="fw-bold text-success">+{{printf "%.2f" .incomeTotal}} ₺</span>
+              <span class="fw-bold text-success">+{{printf "%.2f" .incomeTotal}} ₼</span>
             </div>
             <div class="d-flex align-items-center justify-content-between small">
               <span class="text-secondary">Toplam Gider</span>
-              <span class="fw-bold text-danger">−{{printf "%.2f" .expenseTotal}} ₺</span>
+              <span class="fw-bold text-danger">−{{printf "%.2f" .expenseTotal}} ₼</span>
             </div>
             <div class="d-flex align-items-center justify-content-between small">
               <span class="text-secondary">Toplam İndirimler</span>
-              <span class="fw-bold text-warning">−{{printf "%.2f" .discountTotal}} ₺</span>
+              <span class="fw-bold text-warning">−{{printf "%.2f" .discountTotal}} ₼</span>
             </div>
             <div class="d-flex align-items-center justify-content-between border-top pt-1 mt-1">
               <span class="small fw-semibold">Net</span>
-              <span class="fw-bold {{if ge .netTotal 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .netTotal}} ₺</span>
+              <span class="fw-bold {{if ge .netTotal 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .netTotal}} ₼</span>
             </div>
           </div>
         </div>
@@ -229,8 +229,8 @@
                   <td class="text-secondary">{{.ID}}</td>
                   <td class="fw-semibold">{{.PNR}}</td>
                   <td>{{.DepartureTime.Format "02.01.2006 15:04"}}</td>
-                  <td class="text-end">{{printf "%.2f" .Price}} ₺</td>
-                  <td class="text-end">{{printf "%.2f" .Deposit}} ₺</td>
+                  <td class="text-end">{{printf "%.2f" .Price}} ₼</td>
+                  <td class="text-end">{{printf "%.2f" .Deposit}} ₼</td>
                   <td class="text-end">{{.PaxCount}}</td>
                   <td>
                     <a href="/flights/{{.ID}}" class="btn btn-icon btn-sm btn-light" title="Görüntüle">
@@ -284,7 +284,7 @@
                     {{if gt .IncomeCount 0}}{{.IncomeCount}} gelir{{else}}<span class="text-secondary">—</span>{{end}}
                   </td>
                   <td>
-                    {{if gt .IncomeTotal 0.0}}<span class="text-success fw-semibold">{{printf "%.2f" .IncomeTotal}} ₺</span>{{else}}<span class="text-secondary">—</span>{{end}}
+                    {{if gt .IncomeTotal 0.0}}<span class="text-success fw-semibold">{{printf "%.2f" .IncomeTotal}} ₼</span>{{else}}<span class="text-secondary">—</span>{{end}}
                   </td>
                   <td class="text-secondary">{{.CreatedAt.Format "02.01.2006"}}</td>
                   <td>

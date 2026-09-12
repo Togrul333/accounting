@@ -84,6 +84,7 @@
 <script src="/static/theme/assets/js/main.js" type="module"></script>
 <script>
   const ALL_ROWS = {{json .expenses}};
+  const CURRENCY_SYMBOL = {{json (currencySymbol .account.Currency)}};
   const PER_PAGE = 25;
   let filtered = [];
   let currentPage = 1;
@@ -234,7 +235,7 @@
     let html = '';
     html += row('ID', r.id, 'font-monospace text-danger');
     html += row('Ad', r.name);
-    html += row('Tutar', '−' + Number(r.amount).toFixed(2) + ' ₺', 'fw-bold text-danger');
+    html += row('Tutar', '−' + Number(r.amount).toFixed(2) + ' ' + CURRENCY_SYMBOL, 'fw-bold text-danger');
     html += row('Tarih', fmtDate(r.date));
     html += row('Kategori', r.expense_category_name);
     html += row('Hesap', r.account_name);

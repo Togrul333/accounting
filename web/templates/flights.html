@@ -67,8 +67,8 @@
                   <td class="text-secondary">{{.ID}}</td>
                   <td class="fw-semibold">{{.PNR}}</td>
                   <td>{{.DepartureTime.Format "02.01.2006 15:04"}}</td>
-                  <td class="text-end fw-semibold text-primary">{{printf "%.2f" .Price}} ₺</td>
-                  <td class="text-end fw-semibold">{{printf "%.2f" .Deposit}} ₺</td>
+                  <td class="text-end fw-semibold text-primary">{{printf "%.2f" .Price}} ₼</td>
+                  <td class="text-end fw-semibold">{{printf "%.2f" .Deposit}} ₼</td>
                   <td class="text-end fw-semibold">{{.PaxCount}}</td>
                   <td>
                     <div class="d-flex gap-1">
@@ -122,11 +122,11 @@
             <input id="fDeparture" type="datetime-local" required class="form-control">
           </div>
           <div class="mb-3">
-            <label class="form-label">Fiyat (₺) <span class="text-danger">*</span></label>
+            <label class="form-label">Fiyat (₼) <span class="text-danger">*</span></label>
             <input id="fPrice" type="number" step="0.01" min="0" required placeholder="0.00" class="form-control">
           </div>
           <div class="mb-3">
-            <label class="form-label">Depozit (₺)</label>
+            <label class="form-label">Depozit (₼)</label>
             <input id="fDeposit" type="number" step="0.01" min="0" placeholder="0.00" class="form-control">
           </div>
           <div class="mb-3">

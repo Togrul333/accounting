@@ -58,7 +58,7 @@
             <div class="icon-shape icon-md bg-success bg-opacity-10 text-success rounded-2"><i class="ti ti-cash fs-4"></i></div>
             <div>
               <p class="small text-secondary text-uppercase fw-semibold mb-1">Fiyat</p>
-              <p class="fw-bold mb-0">{{printf "%.2f" .flight.Price}} ₺</p>
+              <p class="fw-bold mb-0">{{printf "%.2f" .flight.Price}} ₼</p>
             </div>
           </div>
         </div>
@@ -69,7 +69,7 @@
             <div class="icon-shape icon-md bg-warning bg-opacity-10 text-warning rounded-2"><i class="ti ti-wallet fs-4"></i></div>
             <div>
               <p class="small text-secondary text-uppercase fw-semibold mb-1">Depozit</p>
-              <p class="fw-bold mb-0">{{printf "%.2f" .flight.Deposit}} ₺</p>
+              <p class="fw-bold mb-0">{{printf "%.2f" .flight.Deposit}} ₼</p>
             </div>
           </div>
         </div>
@@ -135,7 +135,7 @@
             <div class="d-flex flex-column gap-2">
               <div class="d-flex align-items-center justify-content-between">
                 <span class="text-secondary">Fiyat</span>
-                <span class="fw-semibold">{{printf "%.2f" .flight.Price}} ₺</span>
+                <span class="fw-semibold">{{printf "%.2f" .flight.Price}} ₼</span>
               </div>
               <div class="d-flex align-items-center justify-content-between">
                 <span class="text-secondary">× Pax Sayısı</span>
@@ -143,15 +143,15 @@
               </div>
               <div class="d-flex align-items-center justify-content-between border-top pt-2">
                 <span class="fw-semibold">= Toplam (Fiyat × Pax)</span>
-                <span class="fw-bold text-success">{{printf "%.2f" .grossTotal}} ₺</span>
+                <span class="fw-bold text-success">{{printf "%.2f" .grossTotal}} ₼</span>
               </div>
               <div class="d-flex align-items-center justify-content-between mt-2">
                 <span class="text-secondary">− Depozit</span>
-                <span class="fw-semibold text-danger">−{{printf "%.2f" .flight.Deposit}} ₺</span>
+                <span class="fw-semibold text-danger">−{{printf "%.2f" .flight.Deposit}} ₼</span>
               </div>
               <div class="d-flex align-items-center justify-content-between border-top pt-3 mt-1">
                 <span class="fw-bold">= Qalan Tutar</span>
-                <span class="fs-3 fw-bold text-primary">{{printf "%.2f" .remaining}} ₺</span>
+                <span class="fs-3 fw-bold text-primary">{{printf "%.2f" .remaining}} ₼</span>
               </div>
             </div>
           </div>
@@ -197,7 +197,7 @@
                       {{range .Rooms}}
                       <div>
                         <span class="badge bg-info-subtle text-info-emphasis fw-semibold">{{if .Code}}{{.Code}}{{else}}{{.BedsCount}} yatak{{end}}</span>
-                        <span class="text-primary small fw-semibold ms-1">{{printf "%.2f" .Price}} ₺</span>
+                        <span class="text-primary small fw-semibold ms-1">{{printf "%.2f" .Price}} ₼</span>
                       </div>
                       {{end}}
                     </div>
@@ -247,11 +247,11 @@
             <input id="fDeparture" type="datetime-local" required class="form-control">
           </div>
           <div class="mb-3">
-            <label class="form-label">Fiyat (₺) <span class="text-danger">*</span></label>
+            <label class="form-label">Fiyat (₼) <span class="text-danger">*</span></label>
             <input id="fPrice" type="number" step="0.01" min="0" required class="form-control">
           </div>
           <div class="mb-3">
-            <label class="form-label">Depozit (₺)</label>
+            <label class="form-label">Depozit (₼)</label>
             <input id="fDeposit" type="number" step="0.01" min="0" class="form-control">
           </div>
           <div class="mb-3">
