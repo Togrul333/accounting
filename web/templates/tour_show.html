@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{.tour.Code}} — Hisar Tour</title>
   <link rel="stylesheet" href="/static/theme/assets/css/main.css">
+  <style>
+    .collapse-toggle .ti-chevron-down { transition: transform .2s ease; }
+    .collapse-toggle[aria-expanded="true"] .ti-chevron-down { transform: rotate(180deg); }
+  </style>
 </head>
 <body>
 
@@ -27,38 +31,21 @@
       </div>
     </div>
 
-    <!-- Bilgi kartları — Satır 1 -->
+    <!-- Genel bilgiler -->
     <div class="row g-3 mb-3">
-      <div class="col-lg-3 col-12">
+      <div class="col-lg-4 col-12">
         <div class="card p-4 h-100">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Kategori</p>
           <p class="fw-bold mb-0">{{.tour.TourCategoryName}}</p>
         </div>
       </div>
-      <div class="col-lg-3 col-12">
-        <div class="card p-4 h-100">
-          <p class="small text-secondary text-uppercase fw-semibold mb-2">Odalar</p>
-          {{if .tour.Rooms}}
-          <div class="d-flex flex-column gap-1">
-            {{range .tour.Rooms}}
-            <div class="d-flex justify-content-between align-items-center">
-              <span class="small">{{if .Code}}{{.Code}}{{else}}{{.BedsCount}} yatak{{end}}</span>
-              <span class="fw-bold text-primary">{{printf "%.2f" .Price}} ₼</span>
-            </div>
-            {{end}}
-          </div>
-          {{else}}
-          <p class="fw-bold mb-0 text-secondary">—</p>
-          {{end}}
-        </div>
-      </div>
-      <div class="col-lg-3 col-12">
+      <div class="col-lg-4 col-12">
         <div class="card p-4 h-100">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Uçuş Sayısı</p>
           <h3 class="fw-bold mb-0">{{len .tour.Flights}}</h3>
         </div>
       </div>
-      <div class="col-lg-3 col-12">
+      <div class="col-lg-4 col-12">
         <div class="card p-4 h-100">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Sipariş Sayısı</p>
           <h3 class="fw-bold mb-0">{{len .orders}}</h3>
@@ -66,11 +53,52 @@
       </div>
     </div>
 
-    <!-- Bilgi kartları — Satır 2: Gelir & Gider -->
+    <!-- Odalar -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="badge rounded-pill bg-primary">&nbsp;</span>
+          <h3 class="h6 mb-0">Odalar</h3>
+          <span class="badge bg-primary-subtle text-primary-emphasis">{{len .tour.Rooms}}</span>
+        </div>
+
+        <div class="card">
+          {{if .tour.Rooms}}
+          <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+            <table class="table mb-0 table-hover align-middle">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>Oda</th>
+                  <th class="text-end">Yatak</th>
+                  <th class="text-end">Fiyat</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .tour.Rooms}}
+                <tr>
+                  <td class="fw-semibold">{{if .Code}}{{.Code}}{{else}}—{{end}}</td>
+                  <td class="text-end">{{.BedsCount}}</td>
+                  <td class="text-end fw-bold text-primary">{{printf "%.2f" .Price}} ₼</td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{else}}
+          <div class="card-body text-center py-6">
+            <p class="fw-semibold mb-1">Oda bulunamadı</p>
+            <p class="text-secondary mb-0">Bu tura henüz oda bağlanmamış</p>
+          </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+
+    <!-- Mali özet: Gelir / Gider / İndirim -->
     <div class="row g-3 mb-4">
 
       <!-- Toplam Gelir -->
-      <div class="col-lg-3 col-12">
+      <div class="col-lg-4 col-12">
         <div class="card p-4 h-100">
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
@@ -90,10 +118,14 @@
               <i class="ti ti-trending-up fs-4"></i>
             </div>
           </div>
-          <p class="small text-secondary mb-2">Siparişlerin toplam geliri</p>
-          <div class="border-top pt-2">
-            {{if .orders}}
-            <div class="d-flex flex-column gap-1">
+          <p class="small text-secondary mb-0">Siparişlerin toplam geliri</p>
+          {{if .orders}}
+          <button class="btn btn-sm btn-light w-100 mt-3 d-flex align-items-center justify-content-between collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#incomeDetails" aria-expanded="false">
+            <span>Sipariş detayları</span>
+            <i class="ti ti-chevron-down"></i>
+          </button>
+          <div class="collapse mt-2" id="incomeDetails">
+            <div class="d-flex flex-column gap-1" style="max-height: 220px; overflow-y: auto;">
               {{range $order := .orders}}
               {{range $order.IncomeByCurrencyAZN}}
               <div class="d-flex align-items-center justify-content-between">
@@ -103,15 +135,15 @@
               {{end}}
               {{end}}
             </div>
-            {{else}}
-            <p class="small text-secondary mb-0">Henüz sipariş yok</p>
-            {{end}}
           </div>
+          {{else}}
+          <p class="small text-secondary mb-0 mt-3">Henüz sipariş yok</p>
+          {{end}}
         </div>
       </div>
 
       <!-- Toplam Gider -->
-      <div class="col-lg-3 col-12">
+      <div class="col-lg-4 col-12">
         <div class="card p-4 h-100">
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
@@ -131,10 +163,14 @@
               <i class="ti ti-trending-down fs-4"></i>
             </div>
           </div>
-          <p class="small text-secondary mb-2">Bu tura bağlı tüm giderler</p>
-          <div class="border-top pt-2">
-            {{if .expenses}}
-            <div class="d-flex flex-column gap-1">
+          <p class="small text-secondary mb-0">Bu tura bağlı tüm giderler</p>
+          {{if .expenses}}
+          <button class="btn btn-sm btn-light w-100 mt-3 d-flex align-items-center justify-content-between collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#expenseDetails" aria-expanded="false">
+            <span>Gider detayları</span>
+            <i class="ti ti-chevron-down"></i>
+          </button>
+          <div class="collapse mt-2" id="expenseDetails">
+            <div class="d-flex flex-column gap-1" style="max-height: 220px; overflow-y: auto;">
               {{range .expenses}}
               <div class="d-flex align-items-center justify-content-between">
                 <span class="small text-secondary text-truncate">{{.Name}} · {{.ExpenseCategoryName}}</span>
@@ -142,15 +178,15 @@
               </div>
               {{end}}
             </div>
-            {{else}}
-            <p class="small text-secondary mb-0">Bu tura bağlı gider yok</p>
-            {{end}}
           </div>
+          {{else}}
+          <p class="small text-secondary mb-0 mt-3">Bu tura bağlı gider yok</p>
+          {{end}}
         </div>
       </div>
 
       <!-- Toplam İndirimler -->
-      <div class="col-lg-3 col-12">
+      <div class="col-lg-4 col-12">
         <div class="card p-4 h-100">
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
@@ -161,10 +197,14 @@
               <i class="ti ti-discount-2 fs-4"></i>
             </div>
           </div>
-          <p class="small text-secondary mb-2">Siparişlerin toplam indirimleri</p>
-          <div class="border-top pt-2">
-            {{if .orders}}
-            <div class="d-flex flex-column gap-1">
+          <p class="small text-secondary mb-0">Siparişlerin toplam indirimleri</p>
+          {{if gt .discountTotal 0.0}}
+          <button class="btn btn-sm btn-light w-100 mt-3 d-flex align-items-center justify-content-between collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#discountDetails" aria-expanded="false">
+            <span>İndirim detayları</span>
+            <i class="ti ti-chevron-down"></i>
+          </button>
+          <div class="collapse mt-2" id="discountDetails">
+            <div class="d-flex flex-column gap-1" style="max-height: 220px; overflow-y: auto;">
               {{range .orders}}
               {{if gt .DiscountTotal 0.0}}
               <div class="d-flex align-items-center justify-content-between">
@@ -174,67 +214,86 @@
               {{end}}
               {{end}}
             </div>
-            {{else}}
-            <p class="small text-secondary mb-0">Henüz indirim yok</p>
-            {{end}}
           </div>
+          {{else}}
+          <p class="small text-secondary mb-0 mt-3">Henüz indirim yok</p>
+          {{end}}
         </div>
       </div>
 
-      <!-- Toplam Net Tutar -->
-      <div class="col-lg-3 col-12">
-        <div class="card p-4 h-100 border-primary border-opacity-25">
-          <div class="d-flex align-items-start justify-content-between mb-3">
-            <div>
-              <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Net Tutar</p>
+    </div>
+
+    <!-- Toplam Net Tutar -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card p-4 border-primary border-opacity-25 bg-primary bg-opacity-10">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="icon-shape icon-lg bg-primary bg-opacity-10 text-primary rounded-3">
+                <i class="ti ti-report-money fs-2"></i>
+              </div>
+              <div>
+                <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Net Tutar</p>
+                <p class="small text-secondary mb-0">Gelir − Gider − İndirimler (para birimine göre)</p>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-4">
               {{if .currencyTotals}}
               {{range .currencyTotals}}
-              <h3 class="fw-bold mb-0 {{if ge .Net 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .Net}} <span class="fs-6 fw-semibold">{{currencySymbol .Currency}}</span></h3>
+              <div class="text-end">
+                <p class="small text-secondary mb-0">{{currencySymbol .Currency}}</p>
+                <h2 class="fw-bold mb-0 {{if ge .Net 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .Net}}</h2>
+                {{if and .HasRate (ne .Currency "AZN")}}<p class="small text-secondary mb-0">≈ {{printf "%.2f" .NetAZN}} ₼</p>{{end}}
+              </div>
+              {{end}}
+              {{if gt (len .currencyTotals) 1}}
+              <div class="text-end border-start ps-4">
+                <p class="small text-secondary mb-0">Cəmi (manat)</p>
+                <h2 class="fw-bold mb-0 {{if ge .totalNetAZN 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .totalNetAZN}} ₼</h2>
+              </div>
               {{end}}
               {{else}}
-              <h3 class="fw-bold mb-0 text-primary">0.00 ₼</h3>
+              <h2 class="fw-bold mb-0 text-primary">0.00 ₼</h2>
               {{end}}
             </div>
-            <div class="icon-shape icon-md bg-primary bg-opacity-10 text-primary rounded-2">
-              <i class="ti ti-report-money fs-4"></i>
-            </div>
           </div>
-          <p class="small text-secondary mb-2">Gelir − Gider − İndirimler (para birimine göre)</p>
-          <div class="border-top pt-2 d-flex flex-column gap-2">
-            {{range $i, $ct := .currencyTotals}}
-            <div class="d-flex flex-column gap-1 {{if gt $i 0}}border-top pt-2{{end}}">
-              <div class="d-flex align-items-center justify-content-between small">
-                <span class="text-secondary">Gelir ({{currencySymbol .Currency}})</span>
-                <span class="fw-bold text-success">+{{printf "%.2f" .Income}} {{currencySymbol .Currency}}</span>
-              </div>
-              <div class="d-flex align-items-center justify-content-between small">
-                <span class="text-secondary">Gider ({{currencySymbol .Currency}})</span>
-                <span class="fw-bold text-danger">−{{printf "%.2f" .Expense}} {{currencySymbol .Currency}}</span>
-              </div>
-              {{if .Discount}}
-              <div class="d-flex align-items-center justify-content-between small">
-                <span class="text-secondary">İndirim</span>
-                <span class="fw-bold text-warning">−{{printf "%.2f" .Discount}} {{currencySymbol .Currency}}</span>
+
+          {{if .currencyTotals}}
+          <button class="btn btn-sm btn-light mt-3 d-inline-flex align-items-center gap-1 collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#netDetails" aria-expanded="false">
+            <i class="ti ti-chevron-down"></i>
+            <span>Para birimine göre detaylar</span>
+          </button>
+          <div class="collapse mt-3" id="netDetails">
+            <div class="d-flex flex-column gap-2">
+              {{range $i, $ct := .currencyTotals}}
+              <div class="d-flex flex-column gap-1 {{if gt $i 0}}border-top pt-2{{end}}">
+                <div class="d-flex align-items-center justify-content-between small">
+                  <span class="text-secondary">Gelir ({{currencySymbol .Currency}})</span>
+                  <span class="fw-bold text-success">+{{printf "%.2f" .Income}} {{currencySymbol .Currency}}</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between small">
+                  <span class="text-secondary">Gider ({{currencySymbol .Currency}})</span>
+                  <span class="fw-bold text-danger">−{{printf "%.2f" .Expense}} {{currencySymbol .Currency}}</span>
+                </div>
+                {{if .Discount}}
+                <div class="d-flex align-items-center justify-content-between small">
+                  <span class="text-secondary">İndirim</span>
+                  <span class="fw-bold text-warning">−{{printf "%.2f" .Discount}} {{currencySymbol .Currency}}</span>
+                </div>
+                {{end}}
+                <div class="d-flex align-items-center justify-content-between border-top pt-1 mt-1">
+                  <span class="small fw-semibold">Net</span>
+                  <span class="fw-bold {{if ge .Net 0.0}}text-primary{{else}}text-warning{{end}}">
+                    {{printf "%.2f" .Net}} {{currencySymbol .Currency}}{{if and .HasRate (ne .Currency "AZN")}} = {{printf "%.2f" .NetAZN}} ₼ <span class="small text-secondary fw-normal">(kurs {{printf "%.4f" .Rate}})</span>{{end}}
+                  </span>
+                </div>
               </div>
               {{end}}
-              <div class="d-flex align-items-center justify-content-between border-top pt-1 mt-1">
-                <span class="small fw-semibold">Net</span>
-                <span class="fw-bold {{if ge .Net 0.0}}text-primary{{else}}text-warning{{end}}">
-                  {{printf "%.2f" .Net}} {{currencySymbol .Currency}}{{if and .HasRate (ne .Currency "AZN")}} = {{printf "%.2f" .NetAZN}} ₼ <span class="small text-secondary fw-normal">(kurs {{printf "%.4f" .Rate}})</span>{{end}}
-                </span>
-              </div>
             </div>
-            {{end}}
-            {{if gt (len .currencyTotals) 1}}
-            <div class="d-flex align-items-center justify-content-between border-top pt-2 mt-1">
-              <span class="small fw-semibold">≈ Cəmi (manat)</span>
-              <span class="fw-bold {{if ge .totalNetAZN 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .totalNetAZN}} ₼</span>
-            </div>
-            {{end}}
           </div>
+          {{end}}
         </div>
       </div>
-
     </div>
 
     <!-- Uçuşlar tablosu -->
