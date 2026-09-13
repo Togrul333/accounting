@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raporlar — Hisar Tour</title>
+  <link rel="stylesheet" href="/static/theme/assets/css/main.css">
+</head>
+<body>
+
+{{template "topbar_v2" .}}
+{{template "sidebar_v2" .}}
+
+<main id="content" class="content py-10">
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h1 class="fs-3 mb-1">Raporlar</h1>
+            <p class="mb-0 text-secondary">Gelir ve giderleri birlikte inceleyin</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="card p-4 h-100 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-2">
+          <div class="d-flex gap-3">
+            <div class="icon-shape icon-md bg-primary text-white rounded-2">
+              <i class="ti ti-cash fs-4"></i>
+            </div>
+            <div>
+              <h2 class="mb-3 fs-6">Gelir Kaydı</h2>
+              <h3 class="fw-bold mb-0">{{.incomeCount}}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="card p-4 h-100 bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-2">
+          <div class="d-flex gap-3">
+            <div class="icon-shape icon-md bg-danger text-white rounded-2">
+              <i class="ti ti-receipt-2 fs-4"></i>
+            </div>
+            <div>
+              <h2 class="mb-3 fs-6">Gider Kaydı</h2>
+              <h3 class="fw-bold mb-0">{{.expenseCount}}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      {{range .totals}}
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="card p-4 h-100 bg-secondary bg-opacity-10 border border-secondary border-opacity-25 rounded-2">
+          <div class="d-flex gap-3">
+            <div class="icon-shape icon-md bg-secondary text-white rounded-2">
+              <i class="ti ti-coin fs-4"></i>
+            </div>
+            <div>
+              <h2 class="mb-3 fs-6">Net ({{.Currency}})</h2>
+              <h3 class="fw-bold mb-0 {{if ge .Net 0.0}}text-primary{{else}}text-danger{{end}}">{{printf "%.2f" .Net}} {{currencySymbol .Currency}}</h3>
+              <p class="mb-0 small text-secondary">Gelir: {{printf "%.2f" .Income}} · Gider: {{printf "%.2f" .Expense}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {{end}}
+    </div>
+
+    {{if .transactions}}
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="card p-3">
+          <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label mb-1 small">Tür</label>
+              <select id="filterType" class="form-select form-select-sm" onchange="applyFilters()">
+                <option value="">Tümü</option>
+                <option value="income">Gelir</option>
+                <option value="expense">Gider</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label mb-1 small">Ad</label>
+              <input type="text" id="filterName" class="form-control form-control-sm" placeholder="Ara..." oninput="applyFilters()">
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label mb-1 small">Kategori</label>
+              <select id="filterCategory" class="form-select form-select-sm" onchange="applyFilters()">
+                <option value="">Tümü</option>
+                {{range .categoryNames}}<option value="{{.}}">{{.}}</option>{{end}}
+              </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label mb-1 small">Hesap</label>
+              <select id="filterAccount" class="form-select form-select-sm" onchange="applyFilters()">
+                <option value="">Tümü</option>
+                {{range .accounts}}<option value="{{.Name}}">{{.Name}}</option>{{end}}
+              </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label mb-1 small">Tur</label>
+              <select id="filterTour" class="form-select form-select-sm" onchange="applyFilters()">
+                <option value="">Tümü</option>
+                {{range .tours}}<option value="{{.Code}}">{{.Code}}</option>{{end}}
+              </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label mb-1 small">Tarih (başlangıç)</label>
+              <input type="date" id="filterDateFrom" class="form-control form-control-sm" onchange="applyFilters()">
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label mb-1 small">Tarih (bitiş)</label>
+              <input type="date" id="filterDateTo" class="form-control form-control-sm" onchange="applyFilters()">
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label mb-1 small">Tutar (min)</label>
+              <input type="number" step="0.01" id="filterAmountMin" class="form-control form-control-sm" onchange="applyFilters()">
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label mb-1 small">Tutar (max)</label>
+              <input type="number" step="0.01" id="filterAmountMax" class="form-control form-control-sm" onchange="applyFilters()">
+            </div>
+            <div class="col-12 col-md-4 col-lg-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="resetFilters()">
+                <i class="ti ti-x"></i> Filtreleri Temizle
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{end}}
+
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          {{if .transactions}}
+          <div class="table-responsive">
+            <table class="table mb-0 table-hover align-middle" id="reportsTable">
+              <thead class="table-light border-light">
+                <tr>
+                  <th>Tür</th>
+                  <th>Ad</th>
+                  <th>Kategori</th>
+                  <th>Hesap</th>
+                  <th>Tur</th>
+                  <th class="text-end">Tutar</th>
+                  <th>Tarih</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .transactions}}
+                <tr data-type="{{.Type}}" data-name="{{.Name}}" data-category="{{.CategoryName}}" data-account="{{.AccountName}}" data-tour="{{.TourCode}}" data-date="{{.Date.Format "2006-01-02"}}" data-amount="{{.Amount}}">
+                  <td>
+                    {{if eq .Type "income"}}
+                    <span class="badge bg-success-subtle text-success-emphasis">Gelir</span>
+                    {{else}}
+                    <span class="badge bg-danger-subtle text-danger-emphasis">Gider</span>
+                    {{end}}
+                  </td>
+                  <td class="fw-semibold">{{.Name}}</td>
+                  <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{.CategoryName}}</span></td>
+                  <td><span class="badge bg-info-subtle text-info-emphasis">{{.AccountName}}</span></td>
+                  <td>
+                    {{if .TourCode}}<span class="badge bg-secondary-subtle text-secondary-emphasis">{{.TourCode}}</span>{{else}}<span class="text-secondary">—</span>{{end}}
+                  </td>
+                  <td class="text-end fw-semibold {{if eq .Type "income"}}text-success{{else}}text-danger{{end}}">
+                    {{if eq .Type "income"}}+{{else}}-{{end}}{{printf "%.2f" .Amount}} {{currencySymbol .AccountCurrency}}
+                  </td>
+                  <td class="text-secondary">{{.Date.Format "02.01.2006"}}</td>
+                </tr>
+                {{end}}
+                <tr id="noResultsRow" style="display:none;">
+                  <td colspan="7" class="text-center text-secondary py-4">Filtreye uyan kayıt bulunamadı</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          {{else}}
+          <div class="card-body text-center py-8">
+            <i class="ti ti-report-analytics fs-1 text-secondary"></i>
+            <p class="fw-semibold mt-3 mb-1">Henüz kayıt yok</p>
+            <p class="text-secondary mb-0">Gelir veya gider eklendiğinde burada görünecek</p>
+          </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="/static/theme/assets/js/main.js" type="module"></script>
+<script>
+  function applyFilters() {
+    const table = document.getElementById('reportsTable');
+    if (!table) return;
+    const type  = document.getElementById('filterType').value;
+    const name  = document.getElementById('filterName').value.trim().toLowerCase();
+    const cat   = document.getElementById('filterCategory').value;
+    const acc   = document.getElementById('filterAccount').value;
+    const tour  = document.getElementById('filterTour').value;
+    const dFrom = document.getElementById('filterDateFrom').value;
+    const dTo   = document.getElementById('filterDateTo').value;
+    const aMin  = document.getElementById('filterAmountMin').value;
+    const aMax  = document.getElementById('filterAmountMax').value;
+
+    const rows = table.querySelectorAll('tbody tr[data-name]');
+    let visibleCount = 0;
+    rows.forEach(row => {
+      const rType   = row.dataset.type;
+      const rName   = row.dataset.name.toLowerCase();
+      const rCat    = row.dataset.category;
+      const rAcc    = row.dataset.account;
+      const rTour   = row.dataset.tour;
+      const rDate   = row.dataset.date;
+      const rAmount = parseFloat(row.dataset.amount);
+
+      let visible = true;
+      if (type && rType !== type) visible = false;
+      if (name && !rName.includes(name)) visible = false;
+      if (cat && rCat !== cat) visible = false;
+      if (acc && rAcc !== acc) visible = false;
+      if (tour && rTour !== tour) visible = false;
+      if (dFrom && rDate < dFrom) visible = false;
+      if (dTo && rDate > dTo) visible = false;
+      if (aMin && rAmount < parseFloat(aMin)) visible = false;
+      if (aMax && rAmount > parseFloat(aMax)) visible = false;
+
+      row.style.display = visible ? '' : 'none';
+      if (visible) visibleCount++;
+    });
+
+    const emptyRow = document.getElementById('noResultsRow');
+    if (emptyRow) emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+  }
+
+  function resetFilters() {
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterName').value = '';
+    document.getElementById('filterCategory').value = '';
+    document.getElementById('filterAccount').value = '';
+    document.getElementById('filterTour').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    document.getElementById('filterAmountMin').value = '';
+    document.getElementById('filterAmountMax').value = '';
+    applyFilters();
+  }
+</script>
+</body>
+</html>

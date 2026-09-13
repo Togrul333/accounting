@@ -57,6 +57,7 @@ func NewRouter(
 	r.GET("/income-categories", pages.IncomeCategories)
 	r.GET("/expenses", pages.Expenses)
 	r.GET("/expense-categories", pages.ExpenseCategories)
+	r.GET("/reports", pages.Reports)
 	r.GET("/tours", pages.Tours)
 	r.GET("/tours/:id", pages.TourShow)
 	r.GET("/tours/:id/edit", pages.TourEdit)

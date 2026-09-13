@@ -1155,6 +1155,135 @@ func (h *PageHandler) Expenses(c *gin.Context) {
 	})
 }
 
+// reportTransaction — Raporlar sayfasında gelir ve giderleri tek listede
+// göstermek için ortak görünüm; hangi tabloya ait olduğu Type alanından anlaşılır.
+type reportTransaction struct {
+	Type            string // "income" | "expense"
+	Name            string
+	CategoryName    string
+	AccountName     string
+	AccountCurrency string
+	TourCode        string
+	Amount          float64
+	Date            time.Time
+}
+
+// Reports — Gelirler ve Giderler tablolarını birleştiren, tüm alanlara göre
+// filtrelenebilen rapor/istatistik sayfası.
+func (h *PageHandler) Reports(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	incomes, err := h.incomeSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("reports page incomes error: %v", err)
+		incomes = []model.Income{}
+	}
+	expenses, err := h.expenseSvc.GetAll(ctx)
+	if err != nil {
+		log.Printf("reports page expenses error: %v", err)
+		expenses = []model.Expense{}
+	}
+
+	txs := make([]reportTransaction, 0, len(incomes)+len(expenses))
+	for _, inc := range incomes {
+		txs = append(txs, reportTransaction{
+			Type:            "income",
+			Name:            inc.Name,
+			CategoryName:    inc.IncomeCategoryName,
+			AccountName:     inc.AccountName,
+			AccountCurrency: inc.AccountCurrency,
+			TourCode:        inc.TourCode,
+			Amount:          inc.Amount,
+			Date:            inc.Date,
+		})
+	}
+	for _, exp := range expenses {
+		txs = append(txs, reportTransaction{
+			Type:            "expense",
+			Name:            exp.Name,
+			CategoryName:    exp.ExpenseCategoryName,
+			AccountName:     exp.AccountName,
+			AccountCurrency: exp.AccountCurrency,
+			TourCode:        exp.TourCode,
+			Amount:          exp.Amount,
+			Date:            exp.Date,
+		})
+	}
+	sort.Slice(txs, func(i, j int) bool { return txs[i].Date.After(txs[j].Date) })
+
+	incomeCats, err := h.incomeCategorySvc.GetAll(ctx)
+	if err != nil {
+		incomeCats = []model.IncomeCategory{}
+	}
+	expenseCats, err := h.expenseCategorySvc.GetAll(ctx)
+	if err != nil {
+		expenseCats = []model.ExpenseCategory{}
+	}
+	categoryNameSet := map[string]bool{}
+	for _, cat := range incomeCats {
+		categoryNameSet[cat.Name] = true
+	}
+	for _, cat := range expenseCats {
+		categoryNameSet[cat.Name] = true
+	}
+	categoryNames := make([]string, 0, len(categoryNameSet))
+	for name := range categoryNameSet {
+		categoryNames = append(categoryNames, name)
+	}
+	sort.Strings(categoryNames)
+
+	accounts, err := h.accountSvc.GetAll(ctx)
+	if err != nil {
+		accounts = []model.Account{}
+	}
+	tours, err := h.tourSvc.GetAll(ctx)
+	if err != nil {
+		tours = []model.Tour{}
+	}
+
+	incomeByCurrency := map[string]float64{}
+	for _, inc := range incomes {
+		incomeByCurrency[inc.AccountCurrency] += inc.Amount
+	}
+	expenseByCurrency := map[string]float64{}
+	for _, exp := range expenses {
+		expenseByCurrency[exp.AccountCurrency] += exp.Amount
+	}
+	currencySet := map[string]bool{}
+	for cur := range incomeByCurrency {
+		currencySet[cur] = true
+	}
+	for cur := range expenseByCurrency {
+		currencySet[cur] = true
+	}
+	currencies := make([]string, 0, len(currencySet))
+	for cur := range currencySet {
+		currencies = append(currencies, cur)
+	}
+	sort.Strings(currencies)
+	totals := make([]gin.H, 0, len(currencies))
+	for _, cur := range currencies {
+		totals = append(totals, gin.H{
+			"Currency": cur,
+			"Income":   incomeByCurrency[cur],
+			"Expense":  expenseByCurrency[cur],
+			"Net":      incomeByCurrency[cur] - expenseByCurrency[cur],
+		})
+	}
+
+	c.HTML(http.StatusOK, "reports.html", gin.H{
+		"transactions":  txs,
+		"categoryNames": categoryNames,
+		"accounts":      accounts,
+		"tours":         tours,
+		"totals":        totals,
+		"incomeCount":   len(incomes),
+		"expenseCount":  len(expenses),
+		"active":        "reports",
+		"user":          h.currentUser(ctx),
+	})
+}
+
 // Tasks — Jira benzeri görev panosu. Pano tarayıcıda çizildiği için
 // görevler ve tüm bağlantı seçenekleri JSON olarak şablona verilir.
 func (h *PageHandler) Tasks(c *gin.Context) {
