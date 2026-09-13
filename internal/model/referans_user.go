@@ -30,8 +30,11 @@ type ReferansOrder struct {
 	ReferenceName string    `json:"reference_name"`
 	TourCode      string    `json:"tour_code"`
 	IncomeTotal   float64   `json:"income_total"`
-	Confirmed     bool      `json:"confirmed"`
-	CreatedAt     time.Time `json:"created_at"`
+	// IncomeByCurrency — gelirler farklı hesaplardan (farklı para birimlerinden)
+	// gelebildiği için IncomeTotal'ı para birimine göre ayırır.
+	IncomeByCurrency []CurrencyAmount `json:"income_by_currency,omitempty"`
+	Confirmed        bool             `json:"confirmed"`
+	CreatedAt        time.Time        `json:"created_at"`
 }
 
 type AddReferansOrderRequest struct {

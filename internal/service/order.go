@@ -48,8 +48,13 @@ func (s *OrderService) GetAll(ctx context.Context) ([]model.Order, error) {
 	if err != nil {
 		return nil, err
 	}
+	incomeByCurrency, err := s.repo.IncomeTotalsByCurrency(ctx)
+	if err != nil {
+		incomeByCurrency = map[int64]map[string]float64{}
+	}
 	for i := range orders {
 		orders[i].ComputeNet()
+		orders[i].ApplyCurrencyBreakdown(incomeByCurrency[orders[i].ID])
 	}
 	return orders, nil
 }
@@ -78,6 +83,11 @@ func (s *OrderService) GetByID(ctx context.Context, id int64) (*model.Order, err
 		order.DiscountTotal += d.Amount
 	}
 	order.ComputeNet()
+	incomeByCurrency := map[string]float64{}
+	for _, inc := range incomes {
+		incomeByCurrency[inc.AccountCurrency] += inc.Amount
+	}
+	order.ApplyCurrencyBreakdown(incomeByCurrency)
 	return order, nil
 }
 

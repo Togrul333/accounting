@@ -75,7 +75,16 @@
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
               <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Gelir</p>
-              <h3 class="fw-bold mb-0 text-success">{{printf "%.2f" .incomeTotal}} ₼</h3>
+              {{if .incomeTotals}}
+              {{range .incomeTotals}}
+              <h3 class="fw-bold mb-0 text-success">{{printf "%.2f" .Total}} <span class="fs-6 fw-semibold">{{currencySymbol .Currency}}</span></h3>
+              {{end}}
+              {{if gt (len .incomeTotals) 1}}
+              <p class="small text-secondary mb-0">≈ {{printf "%.2f" .totalIncomeAZN}} ₼ cəmi</p>
+              {{end}}
+              {{else}}
+              <h3 class="fw-bold mb-0 text-success">0.00 ₼</h3>
+              {{end}}
             </div>
             <div class="icon-shape icon-md bg-success bg-opacity-10 text-success rounded-2">
               <i class="ti ti-trending-up fs-4"></i>
@@ -85,11 +94,11 @@
           <div class="border-top pt-2">
             {{if .orders}}
             <div class="d-flex flex-column gap-1">
-              {{range .orders}}
-              {{if gt .IncomeTotal 0.0}}
+              {{range $order := .orders}}
+              {{range $order.IncomeByCurrencyAZN}}
               <div class="d-flex align-items-center justify-content-between">
-                <span class="small text-secondary text-truncate">{{.ClientName}} · {{.IncomeCount}} gelir</span>
-                <span class="small fw-bold text-success text-nowrap">+{{printf "%.2f" .IncomeTotal}} ₼</span>
+                <span class="small text-secondary text-truncate">{{$order.ClientName}} · {{$order.IncomeCount}} gelir</span>
+                <span class="small fw-bold text-success text-nowrap">+{{printf "%.2f" .Amount}} {{currencySymbol .Currency}}{{if and .HasRate (ne .Currency "AZN")}} = {{printf "%.2f" .AZN}} ₼{{end}}</span>
               </div>
               {{end}}
               {{end}}
@@ -107,7 +116,16 @@
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
               <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Gider</p>
-              <h3 class="fw-bold mb-0 text-danger">{{printf "%.2f" .expenseTotal}} ₼</h3>
+              {{if .expenseTotals}}
+              {{range .expenseTotals}}
+              <h3 class="fw-bold mb-0 text-danger">{{printf "%.2f" .Total}} <span class="fs-6 fw-semibold">{{currencySymbol .Currency}}</span></h3>
+              {{end}}
+              {{if gt (len .expenseTotals) 1}}
+              <p class="small text-secondary mb-0">≈ {{printf "%.2f" .totalExpenseAZN}} ₼ cəmi</p>
+              {{end}}
+              {{else}}
+              <h3 class="fw-bold mb-0 text-danger">0.00 ₼</h3>
+              {{end}}
             </div>
             <div class="icon-shape icon-md bg-danger bg-opacity-10 text-danger rounded-2">
               <i class="ti ti-trending-down fs-4"></i>
@@ -169,30 +187,50 @@
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
               <p class="small text-secondary text-uppercase fw-semibold mb-1">Toplam Net Tutar</p>
-              <h3 class="fw-bold mb-0 {{if ge .netTotal 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .netTotal}} ₼</h3>
+              {{if .currencyTotals}}
+              {{range .currencyTotals}}
+              <h3 class="fw-bold mb-0 {{if ge .Net 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .Net}} <span class="fs-6 fw-semibold">{{currencySymbol .Currency}}</span></h3>
+              {{end}}
+              {{else}}
+              <h3 class="fw-bold mb-0 text-primary">0.00 ₼</h3>
+              {{end}}
             </div>
             <div class="icon-shape icon-md bg-primary bg-opacity-10 text-primary rounded-2">
               <i class="ti ti-report-money fs-4"></i>
             </div>
           </div>
-          <p class="small text-secondary mb-2">Gelir − Gider − İndirimler</p>
-          <div class="border-top pt-2 d-flex flex-column gap-1">
-            <div class="d-flex align-items-center justify-content-between small">
-              <span class="text-secondary">Toplam Gelir</span>
-              <span class="fw-bold text-success">+{{printf "%.2f" .incomeTotal}} ₼</span>
+          <p class="small text-secondary mb-2">Gelir − Gider − İndirimler (para birimine göre)</p>
+          <div class="border-top pt-2 d-flex flex-column gap-2">
+            {{range $i, $ct := .currencyTotals}}
+            <div class="d-flex flex-column gap-1 {{if gt $i 0}}border-top pt-2{{end}}">
+              <div class="d-flex align-items-center justify-content-between small">
+                <span class="text-secondary">Gelir ({{currencySymbol .Currency}})</span>
+                <span class="fw-bold text-success">+{{printf "%.2f" .Income}} {{currencySymbol .Currency}}</span>
+              </div>
+              <div class="d-flex align-items-center justify-content-between small">
+                <span class="text-secondary">Gider ({{currencySymbol .Currency}})</span>
+                <span class="fw-bold text-danger">−{{printf "%.2f" .Expense}} {{currencySymbol .Currency}}</span>
+              </div>
+              {{if .Discount}}
+              <div class="d-flex align-items-center justify-content-between small">
+                <span class="text-secondary">İndirim</span>
+                <span class="fw-bold text-warning">−{{printf "%.2f" .Discount}} {{currencySymbol .Currency}}</span>
+              </div>
+              {{end}}
+              <div class="d-flex align-items-center justify-content-between border-top pt-1 mt-1">
+                <span class="small fw-semibold">Net</span>
+                <span class="fw-bold {{if ge .Net 0.0}}text-primary{{else}}text-warning{{end}}">
+                  {{printf "%.2f" .Net}} {{currencySymbol .Currency}}{{if and .HasRate (ne .Currency "AZN")}} = {{printf "%.2f" .NetAZN}} ₼ <span class="small text-secondary fw-normal">(kurs {{printf "%.4f" .Rate}})</span>{{end}}
+                </span>
+              </div>
             </div>
-            <div class="d-flex align-items-center justify-content-between small">
-              <span class="text-secondary">Toplam Gider</span>
-              <span class="fw-bold text-danger">−{{printf "%.2f" .expenseTotal}} ₼</span>
+            {{end}}
+            {{if gt (len .currencyTotals) 1}}
+            <div class="d-flex align-items-center justify-content-between border-top pt-2 mt-1">
+              <span class="small fw-semibold">≈ Cəmi (manat)</span>
+              <span class="fw-bold {{if ge .totalNetAZN 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .totalNetAZN}} ₼</span>
             </div>
-            <div class="d-flex align-items-center justify-content-between small">
-              <span class="text-secondary">Toplam İndirimler</span>
-              <span class="fw-bold text-warning">−{{printf "%.2f" .discountTotal}} ₼</span>
-            </div>
-            <div class="d-flex align-items-center justify-content-between border-top pt-1 mt-1">
-              <span class="small fw-semibold">Net</span>
-              <span class="fw-bold {{if ge .netTotal 0.0}}text-primary{{else}}text-warning{{end}}">{{printf "%.2f" .netTotal}} ₼</span>
-            </div>
+            {{end}}
           </div>
         </div>
       </div>
@@ -284,7 +322,18 @@
                     {{if gt .IncomeCount 0}}{{.IncomeCount}} gelir{{else}}<span class="text-secondary">—</span>{{end}}
                   </td>
                   <td>
-                    {{if gt .IncomeTotal 0.0}}<span class="text-success fw-semibold">{{printf "%.2f" .IncomeTotal}} ₼</span>{{else}}<span class="text-secondary">—</span>{{end}}
+                    {{if .IncomeByCurrencyAZN}}
+                    <div class="d-flex flex-column">
+                      {{range .IncomeByCurrencyAZN}}
+                      <span class="text-success fw-semibold text-nowrap">
+                        {{printf "%.2f" .Amount}} {{currencySymbol .Currency}}{{if and .HasRate (ne .Currency "AZN")}} = {{printf "%.2f" .AZN}} ₼{{end}}
+                      </span>
+                      {{end}}
+                      {{if gt (len .IncomeByCurrencyAZN) 1}}
+                      <span class="small text-secondary">≈ {{printf "%.2f" .IncomeTotalAZN}} ₼ cəmi</span>
+                      {{end}}
+                    </div>
+                    {{else}}<span class="text-secondary">—</span>{{end}}
                   </td>
                   <td class="text-secondary">{{.CreatedAt.Format "02.01.2006"}}</td>
                   <td>

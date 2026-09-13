@@ -227,12 +227,19 @@ func (h *PageHandler) ReferansUserShow(c *gin.Context) {
 		referrals = []model.ReferansOrder{}
 	}
 
+	// Manat karşılığı yalnızca bilgi amaçlıdır — Ayarlar → Döviz Kurları'ndaki kura göre (JS'de hesaplanır).
+	rates, err := h.settingSvc.GetRates(ctx)
+	if err != nil {
+		rates = model.ExchangeRates{}
+	}
+
 	c.HTML(http.StatusOK, "referans_user_show.html", gin.H{
 		"active":       "settings",
 		"user":         h.currentUser(ctx),
 		"referansUser": refUser,
 		"candidates":   candidates,
 		"referrals":    referrals,
+		"rates":        rates,
 	})
 }
 
@@ -862,42 +869,110 @@ func (h *PageHandler) TourShow(c *gin.Context) {
 		allOrders = []model.Order{}
 	}
 	var tourOrders []model.Order
-	var incomeTotal, discountTotal float64
+	var discountTotal float64
+	incomeByCurrency := map[string]float64{}
 	for _, o := range allOrders {
 		if o.TourID == id {
 			tourOrders = append(tourOrders, o)
-			incomeTotal += o.IncomeTotal
 			discountTotal += o.DiscountTotal
+			for _, ca := range o.IncomeByCurrency {
+				incomeByCurrency[ca.Currency] += ca.Amount
+			}
 		}
 	}
 	if tourOrders == nil {
 		tourOrders = []model.Order{}
 	}
+	// Manat karşılığı yalnızca bilgi amaçlıdır — Ayarlar → Döviz Kurları'ndaki kura göre.
+	rates, err := h.settingSvc.GetRates(ctx)
+	if err != nil {
+		rates = model.ExchangeRates{}
+	}
+	for i := range tourOrders {
+		tourOrders[i].ApplyExchangeRates(rates)
+	}
 	allExpenses, err := h.expenseSvc.GetAll(ctx)
 	if err != nil {
 		allExpenses = []model.Expense{}
 	}
-	var expenseTotal float64
+	expenseByCurrency := map[string]float64{}
 	var tourExpenses []model.Expense
 	for _, e := range allExpenses {
 		if e.TourID != nil && *e.TourID == id {
-			expenseTotal += e.Amount
+			expenseByCurrency[e.AccountCurrency] += e.Amount
 			tourExpenses = append(tourExpenses, e)
 		}
 	}
 	if tourExpenses == nil {
 		tourExpenses = []model.Expense{}
 	}
+
+	// Gelir ve gider farklı hesaplardan (farklı para birimlerinden) gelebildiği için
+	// tek bir toplam yerine para birimine göre ayrılmış listeler kullanılır — bkz. dashboard.
+	// İndirim her zaman AZN olduğundan (Discount modelinde para birimi alanı yok)
+	// yalnızca AZN satırından düşülür.
+	currencySet := map[string]bool{}
+	for cur := range incomeByCurrency {
+		currencySet[cur] = true
+	}
+	for cur := range expenseByCurrency {
+		currencySet[cur] = true
+	}
+	if discountTotal > 0 {
+		currencySet["AZN"] = true
+	}
+	currencies := make([]string, 0, len(currencySet))
+	for cur := range currencySet {
+		currencies = append(currencies, cur)
+	}
+	sort.Strings(currencies)
+
+	incomeTotals := make([]gin.H, 0, len(currencies))
+	expenseTotals := make([]gin.H, 0, len(currencies))
+	currencyTotals := make([]gin.H, 0, len(currencies))
+	var totalIncomeAZN, totalExpenseAZN, totalNetAZN float64
+	for _, cur := range currencies {
+		inc := incomeByCurrency[cur]
+		exp := expenseByCurrency[cur]
+		disc := 0.0
+		if cur == "AZN" {
+			disc = discountTotal
+		}
+		net := inc - exp - disc
+		rate, hasRate := rates.RateFor(cur)
+		incomeAZN := inc * rate
+		expenseAZN := exp * rate
+		netAZN := net * rate
+		if hasRate {
+			totalIncomeAZN += incomeAZN
+			totalExpenseAZN += expenseAZN
+			totalNetAZN += netAZN
+		}
+		incomeTotals = append(incomeTotals, gin.H{
+			"Currency": cur, "Total": inc, "Rate": rate, "HasRate": hasRate, "AZN": incomeAZN,
+		})
+		expenseTotals = append(expenseTotals, gin.H{
+			"Currency": cur, "Total": exp, "Rate": rate, "HasRate": hasRate, "AZN": expenseAZN,
+		})
+		currencyTotals = append(currencyTotals, gin.H{
+			"Currency": cur, "Income": inc, "Expense": exp, "Discount": disc, "Net": net,
+			"Rate": rate, "HasRate": hasRate, "NetAZN": netAZN,
+		})
+	}
+
 	c.HTML(http.StatusOK, "tour_show.html", gin.H{
-		"tour":          tour,
-		"orders":        tourOrders,
-		"incomeTotal":   incomeTotal,
-		"expenseTotal":  expenseTotal,
-		"discountTotal": discountTotal,
-		"netTotal":      incomeTotal - expenseTotal - discountTotal,
-		"expenses":      tourExpenses,
-		"active":        "tours",
-		"user":          h.currentUser(ctx),
+		"tour":            tour,
+		"orders":          tourOrders,
+		"incomeTotals":    incomeTotals,
+		"expenseTotals":   expenseTotals,
+		"discountTotal":   discountTotal,
+		"currencyTotals":  currencyTotals,
+		"totalIncomeAZN":  totalIncomeAZN,
+		"totalExpenseAZN": totalExpenseAZN,
+		"totalNetAZN":     totalNetAZN,
+		"expenses":        tourExpenses,
+		"active":          "tours",
+		"user":           h.currentUser(ctx),
 	})
 }
 
@@ -970,6 +1045,12 @@ func (h *PageHandler) OrderShow(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/orders")
 		return
 	}
+	// Manat karşılığı yalnızca bilgi amaçlıdır — Ayarlar → Döviz Kurları'ndaki kura göre.
+	rates, err := h.settingSvc.GetRates(ctx)
+	if err != nil {
+		rates = model.ExchangeRates{}
+	}
+	order.ApplyExchangeRates(rates)
 	incomeCategories, err := h.incomeCategorySvc.GetAll(ctx)
 	if err != nil {
 		incomeCategories = []model.IncomeCategory{}
@@ -1060,6 +1141,15 @@ func (h *PageHandler) Orders(c *gin.Context) {
 	}
 	if orders == nil {
 		orders = []model.Order{}
+	}
+
+	// Manat karşılığı yalnızca bilgi amaçlıdır — Ayarlar → Döviz Kurları'ndaki kura göre.
+	rates, err := h.settingSvc.GetRates(ctx)
+	if err != nil {
+		rates = model.ExchangeRates{}
+	}
+	for i := range orders {
+		orders[i].ApplyExchangeRates(rates)
 	}
 
 	clients, err := h.clientSvc.GetAll(ctx)

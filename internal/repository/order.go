@@ -15,6 +15,9 @@ type OrderRepository interface {
 	Create(ctx context.Context, clientID, tourID int64, roomID *int64) (*model.Order, error)
 	Update(ctx context.Context, id int64, req model.UpdateOrderRequest) (*model.Order, error)
 	Delete(ctx context.Context, id int64) error
+	// IncomeTotalsByCurrency — sipariş başına, hesabın para birimine göre ayrılmış gelir
+	// toplamları. IncomeTotal'ın (SUM(amount)) aksine farklı para birimlerini birbirine karıştırmaz.
+	IncomeTotalsByCurrency(ctx context.Context) (map[int64]map[string]float64, error)
 }
 
 type orderRepo struct {
@@ -131,4 +134,32 @@ func (r *orderRepo) Update(ctx context.Context, id int64, req model.UpdateOrderR
 
 func (r *orderRepo) Delete(ctx context.Context, id int64) error {
 	return r.db.WithContext(ctx).Delete(&model.Order{}, id).Error
+}
+
+func (r *orderRepo) IncomeTotalsByCurrency(ctx context.Context) (map[int64]map[string]float64, error) {
+	type row struct {
+		OrderID  int64
+		Currency string
+		Total    float64
+	}
+	var rows []row
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT i.order_id AS order_id, a.currency AS currency, SUM(i.amount) AS total
+		FROM incomes i
+		JOIN accounts a ON a.id = i.account_id
+		WHERE i.order_id IS NOT NULL
+		GROUP BY i.order_id, a.currency`).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[int64]map[string]float64, len(rows))
+	for _, r := range rows {
+		m := result[r.OrderID]
+		if m == nil {
+			m = map[string]float64{}
+			result[r.OrderID] = m
+		}
+		m[r.Currency] = r.Total
+	}
+	return result, nil
 }

@@ -101,10 +101,32 @@
                     {{if gt .IncomeCount 0}}{{.IncomeCount}} gelir{{else}}<span class="text-secondary">—</span>{{end}}
                   </td>
                   <td>
-                    {{if gt .IncomeTotal 0.0}}<span class="text-success fw-semibold">{{printf "%.2f" .IncomeTotal}} ₼</span>{{else}}<span class="text-secondary">—</span>{{end}}
+                    {{if .IncomeByCurrencyAZN}}
+                    <div class="d-flex flex-column">
+                      {{range .IncomeByCurrencyAZN}}
+                      <span class="text-success fw-semibold text-nowrap">
+                        {{printf "%.2f" .Amount}} {{currencySymbol .Currency}}{{if and .HasRate (ne .Currency "AZN")}} = {{printf "%.2f" .AZN}} ₼{{end}}
+                      </span>
+                      {{end}}
+                      {{if gt (len .IncomeByCurrencyAZN) 1}}
+                      <span class="small text-secondary">≈ {{printf "%.2f" .IncomeTotalAZN}} ₼ cəmi</span>
+                      {{end}}
+                    </div>
+                    {{else}}<span class="text-secondary">—</span>{{end}}
                   </td>
                   <td>
-                    {{if gt .NetTotal 0.0}}<span class="text-primary fw-semibold">{{printf "%.2f" .NetTotal}} ₼</span>{{else}}<span class="text-secondary">—</span>{{end}}
+                    {{if .NetByCurrencyAZN}}
+                    <div class="d-flex flex-column">
+                      {{range .NetByCurrencyAZN}}
+                      <span class="{{if gt .Amount 0.0}}text-primary{{else}}text-secondary{{end}} fw-semibold text-nowrap">
+                        {{printf "%.2f" .Amount}} {{currencySymbol .Currency}}{{if and .HasRate (ne .Currency "AZN")}} = {{printf "%.2f" .AZN}} ₼{{end}}
+                      </span>
+                      {{end}}
+                      {{if gt (len .NetByCurrencyAZN) 1}}
+                      <span class="small text-secondary">≈ {{printf "%.2f" .NetTotalAZN}} ₼ cəmi</span>
+                      {{end}}
+                    </div>
+                    {{else}}<span class="text-secondary">—</span>{{end}}
                   </td>
                   <td>
                     {{if .DiscountTotal}}

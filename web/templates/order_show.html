@@ -82,7 +82,18 @@
       <div class="col-lg-3 col-6">
         <div class="card p-4">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Toplam Gelir</p>
-          <p class="fw-bold mb-0 text-success">{{printf "%.2f" .order.IncomeTotal}} ₼</p>
+          {{if .order.IncomeByCurrencyAZN}}
+          {{range .order.IncomeByCurrencyAZN}}
+          <p class="fw-bold mb-0 text-success">
+            {{printf "%.2f" .Amount}} {{currencySymbol .Currency}}{{if and .HasRate (ne .Currency "AZN")}} = {{printf "%.2f" .AZN}} ₼ <span class="small text-secondary fw-normal">(kurs {{printf "%.4f" .Rate}})</span>{{end}}
+          </p>
+          {{end}}
+          {{if gt (len .order.IncomeByCurrencyAZN) 1}}
+          <p class="small text-secondary mb-0 mt-1">≈ Cəmi: {{printf "%.2f" .order.IncomeTotalAZN}} ₼</p>
+          {{end}}
+          {{else}}
+          <p class="fw-bold mb-0 text-success">0.00 ₼</p>
+          {{end}}
         </div>
       </div>
       <div class="col-lg-3 col-6">
@@ -94,10 +105,18 @@
       <div class="col-lg-3 col-6">
         <div class="card p-4 border-primary border-opacity-25">
           <p class="small text-secondary text-uppercase fw-semibold mb-2">Net Tutar</p>
-          <p class="fw-bold mb-0 text-primary">{{printf "%.2f" .order.NetTotal}} ₼</p>
-          <p class="small text-secondary mb-0 mt-1">
-            {{printf "%.2f" .order.IncomeTotal}}{{if .order.DiscountTotal}} − {{printf "%.2f" .order.DiscountTotal}}{{end}}
+          {{if .order.NetByCurrencyAZN}}
+          {{range .order.NetByCurrencyAZN}}
+          <p class="fw-bold mb-0 {{if gt .Amount 0.0}}text-primary{{else}}text-secondary{{end}}">
+            {{printf "%.2f" .Amount}} {{currencySymbol .Currency}}{{if and .HasRate (ne .Currency "AZN")}} = {{printf "%.2f" .AZN}} ₼ <span class="small text-secondary fw-normal">(kurs {{printf "%.4f" .Rate}})</span>{{end}}
           </p>
+          {{end}}
+          {{if gt (len .order.NetByCurrencyAZN) 1}}
+          <p class="small text-secondary mb-0 mt-1">≈ Cəmi: {{printf "%.2f" .order.NetTotalAZN}} ₼</p>
+          {{end}}
+          {{else}}
+          <p class="fw-bold mb-0 text-primary">0.00 ₼</p>
+          {{end}}
         </div>
       </div>
       <div class="col-lg-3 col-6">

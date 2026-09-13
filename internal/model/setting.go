@@ -8,6 +8,26 @@ type ExchangeRates struct {
 	TRY float64 `json:"try"`
 }
 
+// RateFor bir para biriminin manat (AZN) karşılığı kurunu döner. AZN için her zaman 1,
+// Ayarlar sayfasında girilmemiş (0) veya desteklenmeyen (örn. RUB) para birimleri için
+// ok=false — bu durumda o para birimi manat toplamına dahil edilmemeli.
+func (r ExchangeRates) RateFor(currency string) (rate float64, ok bool) {
+	switch currency {
+	case "AZN":
+		return 1, true
+	case "USD":
+		return r.USD, r.USD > 0
+	case "EUR":
+		return r.EUR, r.EUR > 0
+	case "GBP":
+		return r.GBP, r.GBP > 0
+	case "TRY":
+		return r.TRY, r.TRY > 0
+	default:
+		return 0, false
+	}
+}
+
 type UpdateRatesRequest struct {
 	USD float64 `json:"usd"`
 	EUR float64 `json:"eur"`

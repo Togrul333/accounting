@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"sort"
 	"strings"
 
 	"gorm.io/gorm"
@@ -101,6 +102,43 @@ const referansOrderQuery = `
 	) inc ON inc.order_id = o.id
 	LEFT JOIN referans_user_orders ruo ON ruo.order_id = o.id AND ruo.referans_user_id = ?`
 
+// attachIncomeByCurrency — income_total (SUM(amount), para birimini karıştırıyor) yerine
+// her sipariş için hesabın para birimine göre ayrılmış gelir listesini doldurur.
+func (r *referansUserRepo) attachIncomeByCurrency(ctx context.Context, orders []model.ReferansOrder) error {
+	if len(orders) == 0 {
+		return nil
+	}
+	ids := make([]int64, len(orders))
+	for i, o := range orders {
+		ids[i] = o.ID
+	}
+	type row struct {
+		OrderID  int64
+		Currency string
+		Total    float64
+	}
+	var rows []row
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT i.order_id AS order_id, a.currency AS currency, SUM(i.amount) AS total
+		FROM incomes i
+		JOIN accounts a ON a.id = i.account_id
+		WHERE i.order_id IN ?
+		GROUP BY i.order_id, a.currency`, ids).Scan(&rows).Error
+	if err != nil {
+		return err
+	}
+	byOrder := make(map[int64][]model.CurrencyAmount, len(rows))
+	for _, row := range rows {
+		byOrder[row.OrderID] = append(byOrder[row.OrderID], model.CurrencyAmount{Currency: row.Currency, Amount: row.Total})
+	}
+	for i := range orders {
+		amounts := byOrder[orders[i].ID]
+		sort.Slice(amounts, func(a, b int) bool { return amounts[a].Currency < amounts[b].Currency })
+		orders[i].IncomeByCurrency = amounts
+	}
+	return nil
+}
+
 func (r *referansUserRepo) Candidates(ctx context.Context, u model.ReferansUser, limit int) ([]model.ReferansOrder, error) {
 	// Совпадение по имени или фамилии — сравниваем через LIKE,
 	// так как reference_name у клиента обычно записан целиком («ADI SOYADI»).
@@ -129,6 +167,9 @@ func (r *referansUserRepo) Candidates(ctx context.Context, u model.ReferansUser,
 	if orders == nil {
 		orders = []model.ReferansOrder{}
 	}
+	if err == nil {
+		err = r.attachIncomeByCurrency(ctx, orders)
+	}
 	return orders, err
 }
 
@@ -156,6 +197,9 @@ func (r *referansUserRepo) SearchOrders(ctx context.Context, userID int64, query
 	if orders == nil {
 		orders = []model.ReferansOrder{}
 	}
+	if err == nil {
+		err = r.attachIncomeByCurrency(ctx, orders)
+	}
 	return orders, err
 }
 
@@ -165,6 +209,9 @@ func (r *referansUserRepo) Referrals(ctx context.Context, userID int64) ([]model
 	err := r.db.WithContext(ctx).Raw(sql, userID).Scan(&orders).Error
 	if orders == nil {
 		orders = []model.ReferansOrder{}
+	}
+	if err == nil {
+		err = r.attachIncomeByCurrency(ctx, orders)
 	}
 	return orders, err
 }

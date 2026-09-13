@@ -174,6 +174,8 @@
   // Первый рендер — из данных, отданных сервером, без лишнего запроса.
   const initialCandidates = {{json .candidates}};
   const initialReferrals  = {{json .referrals}};
+  // Ayarlar → Döviz Kurları'ndaki kurlar — manat karşılığı yalnızca bilgi amaçlıdır.
+  const RATES = {{json .rates}};
   let refModal;
   let searchTimer = null;
 
@@ -209,8 +211,40 @@
 
   // --- Sipariş listeleri ---
 
-  function money(v) {
-    return (v || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₼';
+  const CURRENCY_SYMBOL = { TRY: '₺', USD: '$', EUR: '€', GBP: '£', RUB: '₽', AZN: '₼' };
+
+  function fmtNum(n) {
+    return (n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // rateForCurrency — AZN için her zaman 1, diğerleri için Ayarlar'daki kur (girilmemişse 0).
+  function rateForCurrency(cur) {
+    if (cur === 'AZN') return 1;
+    const rate = RATES ? RATES[String(cur).toLowerCase()] : 0;
+    return rate > 0 ? rate : 0;
+  }
+
+  // Gelirler farklı hesaplardan (farklı para birimlerinden) gelebildiği için
+  // her para birimi ayrı satırda gösterilir — bkz. income_by_currency.
+  // Manat karşılığı ("=" ile) yalnızca bilgi amaçlıdır, Ayarlar'daki kura göre hesaplanır.
+  function money(byCurrency) {
+    if (!byCurrency || !byCurrency.length) {
+      return fmtNum(0) + ' ₼';
+    }
+    let totalAZN = 0;
+    const lines = byCurrency.map(c => {
+      const base = fmtNum(c.amount) + ' ' + (CURRENCY_SYMBOL[c.currency] || c.currency);
+      const rate = rateForCurrency(c.currency);
+      if (rate <= 0) return base;
+      const azn = (c.amount || 0) * rate;
+      totalAZN += azn;
+      if (c.currency === 'AZN') return base;
+      return base + ' = ' + fmtNum(azn) + ' ₼ <span class="text-secondary">(kurs ' + rate.toFixed(4) + ')</span>';
+    });
+    if (byCurrency.length > 1) {
+      lines.push('<span class="text-secondary">≈ Cəmi: ' + fmtNum(totalAZN) + ' ₼</span>');
+    }
+    return lines.join('<br>');
   }
 
   function esc(s) {
@@ -243,7 +277,7 @@
         <td class="fw-semibold"><a href="/orders/${o.id}" class="text-decoration-none">${esc(o.client_name)}</a></td>
         <td>${esc(o.reference_name) || '<span class="text-secondary">—</span>'}</td>
         <td>${esc(o.tour_code)}</td>
-        <td class="text-end">${money(o.income_total)}</td>
+        <td class="text-end">${money(o.income_by_currency)}</td>
         <td class="text-secondary">${fmtDate(o.created_at)}</td>
       </tr>`).join('');
     return `<div class="table-responsive">
